@@ -2,91 +2,66 @@ language: Finnish
 native: Suomi
 maintainer: Mikko Virtanen <virtanmi@gmail.com>
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Lisää nykyinen sivu kirjanmerkkeihin
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: Avaa asetukset
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: Poista nykyinen sivu kirjanmerkeistä
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: Uniajastus päälle
-
-id: Disable sleep timer
-msg: Uniajastus pois päältä
-
-id: Exit %s
-msg: Poistu %s
-
-id: Go to Home screen
-msg: Palaa pääsivulle
-
-id: Hide system info
-msg: Piilota järjestelmätiedot
-
-id: Master volume
-msg: Äänentaso
-
-id: Navigation
-msg: Ohjaus
-
-id: Open Settings
-msg: Avaa asetukset
-
-id: Playqueue
-msg: Soittolista
-
-id: Power off
-msg: Sulje virta
-
-id: Reload current page
-msg: Lataa sivu uusiksi
-
-id: Show system info
-msg: Näytä järjestelmätiedot
-
-id: Suspend
-msg: Keskeytä
-
-id: System
-msg: Järjestelmä
-
-id: Time until sleep
-msg: Uniajastuksen ajankohta
-
-id: dB
-msg: dB
-
-id: min
-msg: min
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: Lisää '%s' pääsivulle
-
-id: Remove '%s' from home screen
-msg: Poista '%s' pääsivulta
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Jatka kohdasta %s
-
-id: Continue playback here
-msg: Aloita toisto tästä
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: Poista
+
+id: Queue
+msg: Toistolista
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Saatavilla oleva versio:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Asennus
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Asennuksen poisto
+
+id: Upgrade
+msg: Päivitys
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Jatka kohdasta %s
 
 id: Mark as seen
 msg: Merkkaa nähdyksi
@@ -100,56 +75,58 @@ msg: Toista alusta
 id: Play until end of list
 msg: Toista listan loppuun
 
-id: Queue
-msg: Toistolista
-
-id: Star
-msg: Suosikki
-
-id: Unstar
-msg: Inhokki
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: Ääni
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: Ääniasetukset
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: Ääniraidat
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Lisää uusi nimike
 
-id: Chapters
-msg: Kappaleet
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Pois päältä
 
-id: Seek by time
-msg: Aikahaku
+id: On
+msg: Päällä
 
-id: Settings
-msg: Asetukset
-
-id: Subtitle settings
-msg: Tekstitysasetukset
-
-id: Subtitle tracks
-msg: Tekstiraidat
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Pieni
 
 id: Subtitles
 msg: Tekstitykset
 
-id: Video
-msg: Video
-
-id: Video menu
-msg: Videovalikko
-
-id: Video settings
-msg: Videoasetukset
+id: User interface
+msg: Käyttöliittymä
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d kb/s
@@ -158,31 +135,161 @@ id: Bitrate:
 msg: Bitrate:
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Systemlog
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Peru
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: Tyhjennä
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Ei mediaa ladattuna
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Asetukset
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Uniajastus päälle
+
+id: Disable sleep timer
+msg: Uniajastus pois päältä
+
+id: Exit %s
+msg: Poistu %s
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Piilota järjestelmätiedot
+
+id: Master volume
+msg: Äänentaso
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Näytä järjestelmätiedot
+
+id: Suspend
+msg: Keskeytä
+
+id: Time until sleep
+msg: Uniajastuksen ajankohta
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Ääni
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Ääniasetukset
+
+id: Subtitle settings
+msg: Tekstitysasetukset
+
+id: Video settings
+msg: Videoasetukset
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: Oletus
 
 id: Keyboard layout:
 msg: Näppäimistö
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Albumi
@@ -193,156 +300,133 @@ msg: Artisti
 id: Custom
 msg: Erikoinen
 
-id: Images
-msg: Kuvat
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Lista
 
-id: Slideshow
-msg: Diaesitys
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: TV-kanavat
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: Näytä
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Löydetyt sijainnit lähiverkosta
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: Ruudukko
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: Sovellukset
-
 id: Dismiss
 msg: Hylkää
 
-id: Search / Open URL
-msg: Etsi / avaa URL
+id: Home
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: Kamera:
-
-id: Date: 
-msg: Päiväys:
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: %s %s or newer is required
-msg: vaatimus: %s %s (tai uudempi)
-
-id: Author: 
-msg: Tekijä:
-
-id: Available version: 
-msg: Saatavilla oleva versio:
-
-id: Installed version: 
-msg: Asennettu versio:
+id: Playqueue
+msg: Soittolista
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: Pituus:
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: Tiedoston aikaleimaus:
-
-id: Genre:
-msg: Genre:
-
-id: Metadata from
-msg: Metadata: 
-
-id: Rating:
-msg: Arvostelu:
-
-id: Year:
-msg: Vuosi:
-
-id: Seen %d times
-msg[0]: Nähty %d kertaa
-msg[1]: Nähty %d kertaa
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: Lisää uusi nimike
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: No
-msg: Ei
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Yes
-msg: Kyllä
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: Pieni
-
-id: Main
-msg: Normaali
-
-id: Subs
-msg: Tekstitykset
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Install
-msg: Asennus
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: Asennuksen poisto
-
-id: Upgrade
-msg: Päivitys
-
-#
-# ./glwskins/default/pages/openerror.view
-#
-id: Unable to open %s
-msg: Ei voi avata %s
-
-id: resource
-msg: resurssi
+id: Remote control
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Track %d / %d
-msg: Raita %d / %d
+id: Audio tracks
+msg: Ääniraidat
+
+id: Audio volume adjustment: %d dB
+msg: Äänenvoimakkuuden säätö: %d dB
+
+id: CPU is too slow to decode this video
+msg: Prosessori on liian hidas purkamaan tätä videota
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
+# ./glwskins/flat/pages/tvseason.view
 #
-id: Paused
-msg: Tauolla
+id: Season %d
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s on ajantasolla
@@ -350,26 +434,22 @@ msg: %s on ajantasolla
 id: An error occured during download
 msg: Virhe tapahtui ladattaessa
 
-id: Available version:
-msg: Saatavilla oleva versio:
-
 id: Changelog for %s releases
 msg: Muutoslogi %s julkaisuille
 
 id: Check for updates now
 msg: Tarkista päivitykset nyt
 
-id: Checking for updates...
-msg: Tarkistetaan päivityksiä...
-
-id: Checking installed version of %s
-msg: Tarkistetaan asennettua versiota %s
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Nykyinen versio:
 
-id: Download and install...
-msg: Lataa ja asenna...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: Lataa %s
@@ -380,14 +460,9 @@ msg: Uusi versio saatavilla %s ladattavaksi
 id: No upgrade available
 msg: Ei päivityksiä saatavilla
 
-id: Patching %s
-msg: Päivittää... %s
-
-id: Restarting %s in %d seconds...
-msg: Uudelleenkäynnistää %s : %d sekuntia...
-
-id: Retry...
-msg: Uudelleen
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: Vakaa
@@ -399,67 +474,7 @@ id: Unable to query for new version
 msg: Uuden version haku ei onnistunut
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: A/V diff:
-
-id: Audio codec:
-msg: Ääni codec:
-
-id: Audio queue len:
-msg: Äänitejonon pituus:
-
-id: Audio volume adjustment: %d dB
-msg: Äänenvoimakkuuden säätö: %d dB
-
-id: CPU is too slow to decode this video
-msg: Prosessori on liian hidas purkamaan tätä videota
-
-id: Download speed:
-msg: Latausnopeus:
-
-id: Packet buffer:
-msg: Pakettijono:
-
-id: Playback status
-msg: Toiston tila
-
-id: Remaining buffer:
-msg: Jäljellä oleva jono:
-
-id: Remote queue drops:
-msg: Etäjono:
-
-id: Remote queue len:
-msg: Etäjonon pituus:
-
-id: Source:
-msg: Lähde:
-
-id: Video bitrate:
-msg: Videon bitrate:
-
-id: Video codec:
-msg: Video codec:
-
-id: Video decode time:
-msg: Videon purkuaika:
-
-id: Video queue len:
-msg: Videojonon pituus:
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Kappale: %d
-
-id: Title: %d
-msg: Nimike: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Domain
@@ -474,28 +489,65 @@ id: Username
 msg: Käyttäjätunnus
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Peru
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: Ei, aloita uudelleen
 
-id: Resume %s from %s
-msg: Toista %s kohdasta %s
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Kyllä
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: Ei mediaa ladattuna
+id: OK
+msg: OK
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: CPU-prosessorin lämpötila
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: Hajanaisuus (Fragmentation)
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: GPU-grafiikkaprosessorin lämpötila
@@ -503,11 +555,24 @@ msg: GPU-grafiikkaprosessorin lämpötila
 id: HDD Avail
 msg: Kiintolevy(t) saatavilla
 
-id: Inactive mem
-msg: Käyttämätöntä muistia
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Muistinkulutus
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: Järjestelmässä vapaana
@@ -515,14 +580,30 @@ msg: Järjestelmässä vapaana
 id: System Total
 msg: Järjestelmässä yhteensä
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Ääni mykistetty
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Äänentaso: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -536,10 +617,6 @@ id: Device not available
 msg: 
 
 id: Movians for remote control
-# Missing translation
-msg: 
-
-id: Remote control
 # Missing translation
 msg: 
 
@@ -618,12 +695,6 @@ msg: DTS läpitoisto
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: Pois päältä
-
-id: On
-msg: Päällä
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -729,6 +800,9 @@ msg: Torrent-syöttäjät
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: BitTorrent
+
 id: Clear cache
 msg: Tyhjennä välimuisti
 
@@ -864,20 +938,15 @@ msg: Etsi käyttäen: Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: Albumit
-
-id: Artists
-msg: Artistit
-
 id: Deleted %s
 msg: Poistettu %s
 
 id: Filename
 msg: Tiedostonimi
 
-id: Indexed mode
-msg: Indeksointitila
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 # Missing translation
@@ -911,17 +980,11 @@ msg: Etsi käyttäen Spotlightia
 id: Are you sure you want to delete:
 msg: Oletko varma että haluat poistaa:
 
-id: BitTorrent
-msg: BitTorrent
-
 id: Browse archives as folders
 msg: Käsittele pakettitiedostot kansioina
 
 id: Enable file deletion from item menu
 msg: Mahdollista tiedoston poisto valikosta
-
-id: File browsing
-msg: Tiedostoselaus
 
 id: Show filename extensions
 msg: Näytä tiedostopäätteet
@@ -1256,10 +1319,6 @@ msg: Muu
 id: Photos
 msg: Kuvat
 
-id: Remove bookmark
-# Missing translation
-msg: 
-
 id: Removed %s from homepage
 # Missing translation
 msg: 
@@ -1278,6 +1337,9 @@ msg: Tyyppi
 
 id: URL
 msg: URL
+
+id: Video
+msg: Video
 
 #
 # ./src/networking/connman.c
@@ -1319,10 +1381,29 @@ id: Standby
 msg: Sammuta
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: Vaihtoehtoinen lisäosien sijaintiosoite
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Päivitä lisäosat automaattisesti
@@ -1363,6 +1444,9 @@ msg: Tiedoston avaamisvirhe
 
 id: Home page
 msg: Pääsivu
+
+id: Images
+msg: Kuvat
 
 id: Installed
 # Missing translation
@@ -1486,9 +1570,6 @@ msg: Lopeta
 id: SSH server
 msg: SSH server
 
-id: Starting and stopping
-msg: Aloitetaan ja lopetetaan
-
 #
 # ./src/sd/sd.c
 #
@@ -1527,6 +1608,9 @@ msg: Kehittäjäasetukset
 id: Discovered media sources
 msg: Löydetyt medialähteet
 
+id: File browsing
+msg: Tiedostoselaus
+
 id: Fonts and user interface styling
 msg: Kirjasimet ja käyttöliittymäasetukset
 
@@ -1545,8 +1629,18 @@ msg: Verkkopalvelut, jne
 id: Network settings
 msg: Verkkoasetukset
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Asetuksrt kehittäjille
+
+id: Software upgrade
+msg: Ohjelmistopäivitys
+
+id: Starting and stopping
+msg: Aloitetaan ja lopetetaan
 
 id: System name
 msg: Järjestelmän nimi
@@ -1669,8 +1763,16 @@ msg: Ei voida asentaa kirjasinta: %s
 id: Use font %s for
 msg: Käytä kirjasinta %s kohteelle
 
-id: User interface
-msg: Käyttöliittymä
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
@@ -1678,6 +1780,9 @@ msg: Käyttöliittymä
 id: Dual-Shock Remote
 # Missing translation
 msg: 
+
+id: No
+msg: Ei
 
 id: Seek using L2 and R2 button
 msg: Hae käyttäen L2 ja R2 nappeja
@@ -1803,8 +1908,8 @@ msg: Muistuta päivityksistä
 id: Open download page
 msg: Avaa lataus-sivu
 
-id: Software upgrade
-msg: Ohjelmistopäivitys
+id: System
+msg: Järjestelmä
 
 id: Upgrade to releases from
 msg: Minkälaiset versiot päivitetään
@@ -1891,4 +1996,8 @@ msg: YLÖS/ALAS toiminnot videotoiston aikana
 
 id: Video acceleration and display behaviour
 msg: Videon kiihdytys ja näyttöasetukset
+
+id: Video buffer size
+# Missing translation
+msg: 
 

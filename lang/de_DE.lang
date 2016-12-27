@@ -2,91 +2,66 @@ language: German
 native: Deutsch
 maintainer: Viktor Wirt
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Aktuelle Seite zu Lesezeichen hinzufügen
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: Einstellungen öffnen
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: Aktuelle Seite aus Lesezeichen entfernen
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: Aktiviere automatisches Ausschalten
-
-id: Disable sleep timer
-msg: Deaktiviere automatisches Ausschalten
-
-id: Exit %s
-msg: %s beenden
-
-id: Go to Home screen
-msg: Zum Hauptmenü
-
-id: Hide system info
-msg: Systeminfo verbergen
-
-id: Master volume
-msg: Hauptlautstärke
-
-id: Navigation
-msg: Navigation
-
-id: Open Settings
-msg: Einstellungen öffnen
-
-id: Playqueue
-msg: Wiedergabeliste
-
-id: Power off
-msg: Ausschalten
-
-id: Reload current page
-msg: Aktuelle Seite neu laden
-
-id: Show system info
-msg: Systeminfo anzeigen
-
-id: Suspend
-msg: System ausschalten 
-
-id: System
-msg: System
-
-id: Time until sleep
-msg: Zeit bis Ausschalten
-
-id: dB
-msg: dB
-
-id: min
-msg: min
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: %s zum Hauptmenü hinzufügen
-
-id: Remove '%s' from home screen
-msg: %s aus dem Hauptmenü entfernen
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Ab %s fortsetzen
-
-id: Continue playback here
-msg: Wiedergabe von hieran fortsetzen
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: Löschen
+
+id: Queue
+msg: Liste
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Verfügbare Version:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Installieren
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Deinstallieren
+
+id: Upgrade
+msg: Update
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Ab %s fortsetzen
 
 id: Mark as seen
 msg: Markierung: "gesehen"
@@ -100,56 +75,58 @@ msg: Wiedergabe vom Anfang
 id: Play until end of list
 msg: Wiedergabe bis zum Listenende
 
-id: Queue
-msg: Liste
-
-id: Star
-msg: Stern hinzufügen
-
-id: Unstar
-msg: Stern entfernen
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: Ton
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: Toneinstellungen
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: Tonspuren
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Neuen Eintrag hinzufügen
 
-id: Chapters
-msg: Kapitel
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Aus
 
-id: Seek by time
-msg: Suchen per Zeitleiste
+id: On
+msg: An
 
-id: Settings
-msg: Einstellungen
-
-id: Subtitle settings
-msg: Untertiteleinstellungen
-
-id: Subtitle tracks
-msg: Untertitel
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: komprimiert
 
 id: Subtitles
 msg: Untertitel
 
-id: Video
-msg: Video
-
-id: Video menu
-msg: Videomenü
-
-id: Video settings
-msg: Videoeinstellungen
+id: User interface
+msg: Benutzeroberfläche
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d kb/s
@@ -158,31 +135,161 @@ id: Bitrate:
 msg: Bitrate:
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Systemlog
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Abbrechen
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: Leeren
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Keine Medien geladen
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Einstellungen
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Aktiviere automatisches Ausschalten
+
+id: Disable sleep timer
+msg: Deaktiviere automatisches Ausschalten
+
+id: Exit %s
+msg: %s beenden
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Systeminfo verbergen
+
+id: Master volume
+msg: Hauptlautstärke
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Systeminfo anzeigen
+
+id: Suspend
+msg: System ausschalten 
+
+id: Time until sleep
+msg: Zeit bis Ausschalten
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Ton
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Toneinstellungen
+
+id: Subtitle settings
+msg: Untertiteleinstellungen
+
+id: Video settings
+msg: Videoeinstellungen
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: Standard
 
 id: Keyboard layout:
 msg: Tastenanordnung
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Album
@@ -193,156 +300,133 @@ msg: Künstler
 id: Custom
 msg: Eigene
 
-id: Images
-msg: Bilder
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Liste 
 
-id: Slideshow
-msg: Slideshow
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: TV-Kanäle 
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: Ansicht
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Gefundene Quellen im lokalen Netzwerk
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: Gekachelt 
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: Apps
-
 id: Dismiss
 msg: Verwerfen
 
-id: Search / Open URL
-msg: URL suchen/öffnen
+id: Home
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: Kamera:
-
-id: Date: 
-msg: Datum: 
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: %s %s or newer is required
-msg: %s %s oder neuer ist nötig
-
-id: Author: 
-msg: Autor: 
-
-id: Available version: 
-msg: Verfügbare Version: 
-
-id: Installed version: 
-msg: Installierte Version: 
+id: Playqueue
+msg: Wiedergabeliste
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: Dauer:
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: Dateidatum:
-
-id: Genre:
-msg: Genre:
-
-id: Metadata from
-msg: Metadaten von
-
-id: Rating:
-msg: Bewertung: 
-
-id: Year:
-msg: Jahr:
-
-id: Seen %d times
-msg[0]: %d mal gesehen
-msg[1]: %d mal gesehen
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: Neuen Eintrag hinzufügen
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: No
-msg: Nein
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Yes
-msg: Ja 
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: komprimiert
-
-id: Main
-msg: Haupt
-
-id: Subs
-msg: Untertitel
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Install
-msg: Installieren
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: Deinstallieren
-
-id: Upgrade
-msg: Update
-
-#
-# ./glwskins/default/pages/openerror.view
-#
-id: Unable to open %s
-msg: Kann %s nicht öffnen
-
-id: resource
-msg: Hilfsmittel
+id: Remote control
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Track %d / %d
-msg: Titel %d / %d
+id: Audio tracks
+msg: Tonspuren
+
+id: Audio volume adjustment: %d dB
+msg: Lautstärkeanpassung: %d dB
+
+id: CPU is too slow to decode this video
+msg: CPU ist zu langsam um das Video zu dekodieren
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
+# ./glwskins/flat/pages/tvseason.view
 #
-id: Paused
-msg: Unterbrochen
+id: Season %d
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s ist aktuell
@@ -350,26 +434,22 @@ msg: %s ist aktuell
 id: An error occured during download
 msg: Fehler beim Download
 
-id: Available version:
-msg: Verfügbare Version:
-
 id: Changelog for %s releases
 msg: Änderungen %s
 
 id: Check for updates now
 msg: Jetzt auf Updates prüfen
 
-id: Checking for updates...
-msg: Prüfe auf Updates...
-
-id: Checking installed version of %s
-msg: Prüfe installierte Version von %s
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Aktuelle Version:
 
-id: Download and install...
-msg: Herunterladen und installieren...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: Lade %s herunter
@@ -380,14 +460,9 @@ msg: Neue Version %s ist verfügbar
 id: No upgrade available
 msg: Kein Update verfügbar
 
-id: Patching %s
-msg: Patche %s
-
-id: Restarting %s in %d seconds...
-msg: Neustart %s in %d Sekunden...
-
-id: Retry...
-msg: Versuche erneut...
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: stabile Version
@@ -399,70 +474,7 @@ id: Unable to query for new version
 msg: Kann nicht auf neue Version prüfen
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: A/V Diff:
-
-id: Audio codec:
-msg: Audio Codec:
-
-id: Audio queue len:
-# Missing translation
-msg: 
-
-id: Audio volume adjustment: %d dB
-msg: Lautstärkeanpassung: %d dB
-
-id: CPU is too slow to decode this video
-msg: CPU ist zu langsam um das Video zu dekodieren
-
-id: Download speed:
-msg: Download geschw:
-
-id: Packet buffer:
-msg: Paket Puffer
-
-id: Playback status
-msg: Wiedergabestatus
-
-id: Remaining buffer:
-msg: Verbliebener Puffer:
-
-id: Remote queue drops:
-# Missing translation
-msg: 
-
-id: Remote queue len:
-# Missing translation
-msg: 
-
-id: Source:
-msg: Quelle:
-
-id: Video bitrate:
-msg: Video Bitrate:
-
-id: Video codec:
-msg: Video Codec:
-
-id: Video decode time:
-msg: Video decodier Zeit:
-
-id: Video queue len:
-msg: Video Warteschlange:
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Kapitel: %d
-
-id: Title: %d
-msg: Titel: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Domain
@@ -477,28 +489,65 @@ id: Username
 msg: Benutzername
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Abbrechen
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: Nein, zum Anfang
 
-id: Resume %s from %s
-msg: Fortsetzen %s von %s
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Ja 
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: Keine Medien geladen
+id: OK
+msg: OK
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: CPU Temperatur
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: Fragmentierung
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: GPU Temperatur
@@ -506,11 +555,24 @@ msg: GPU Temperatur
 id: HDD Avail
 msg: HDD Nutzung
 
-id: Inactive mem
-msg: Inaktiver Speicher
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Speicher-Nutzung
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: System frei
@@ -518,14 +580,30 @@ msg: System frei
 id: System Total
 msg: System gesamt
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Ton aus
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Lautstärke: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -539,10 +617,6 @@ id: Device not available
 msg: 
 
 id: Movians for remote control
-# Missing translation
-msg: 
-
-id: Remote control
 # Missing translation
 msg: 
 
@@ -620,12 +694,6 @@ msg: DTS Durchlass
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: Aus
-
-id: On
-msg: An
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -730,6 +798,9 @@ msg: Torrent Seeders
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: BitTorrent
+
 id: Clear cache
 msg: Cache löschen
 
@@ -861,20 +932,15 @@ msg: Suchen per Unix Locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: Alben
-
-id: Artists
-msg: Künstler
-
 id: Deleted %s
 msg: %s gelöscht
 
 id: Filename
 msg: Dateiname
 
-id: Indexed mode
-msg: Indexmodus
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 # Missing translation
@@ -908,17 +974,11 @@ msg: Suchen per Spotlight
 id: Are you sure you want to delete:
 msg: Wirklich löschen:
 
-id: BitTorrent
-msg: BitTorrent
-
 id: Browse archives as folders
 msg: Archive als Ordner durchsuchen
 
 id: Enable file deletion from item menu
 msg: Aktiviere Löschmöglichkeit im Menü
-
-id: File browsing
-msg: Dateien durchsuchen
 
 id: Show filename extensions
 msg: Dateierweiterungen anzeigen
@@ -1245,10 +1305,6 @@ msg: Andere
 id: Photos
 msg: Foto
 
-id: Remove bookmark
-# Missing translation
-msg: 
-
 id: Removed %s from homepage
 msg: %s von Startseite entfernt
 
@@ -1266,6 +1322,9 @@ msg: Typ
 
 id: URL
 msg: URL
+
+id: Video
+msg: Video
 
 #
 # ./src/networking/connman.c
@@ -1307,10 +1366,29 @@ id: Standby
 msg: Standby
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: Alternative URL für Plugins
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Plugins automatisch updaten
@@ -1351,6 +1429,9 @@ msg: Fehler beim öffnen der Datei
 
 id: Home page
 msg: Startseite
+
+id: Images
+msg: Bilder
 
 id: Installed
 # Missing translation
@@ -1471,9 +1552,6 @@ msg: Beenden
 id: SSH server
 msg: SSH-Server
 
-id: Starting and stopping
-msg: Starten und stoppen
-
 #
 # ./src/sd/sd.c
 #
@@ -1511,6 +1589,9 @@ msg: Entwicklereinstellungen
 id: Discovered media sources
 msg: Gefundene Medienquellen
 
+id: File browsing
+msg: Dateien durchsuchen
+
 id: Fonts and user interface styling
 msg: Schriftarten und Benutzeroberfläche
 
@@ -1529,8 +1610,18 @@ msg: Netzwerkdienste, usw.
 id: Network settings
 msg: Netzwerk Einstellungen
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Nützliche Einstellungen für Entwickler
+
+id: Software upgrade
+msg: Software update
+
+id: Starting and stopping
+msg: Starten und stoppen
 
 id: System name
 msg: System Name
@@ -1653,8 +1744,16 @@ msg: Kann Schriftart: %s nicht installieren
 id: Use font %s for
 msg: Benutze Schriftart %s für 
 
-id: User interface
-msg: Benutzeroberfläche
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
@@ -1662,6 +1761,9 @@ msg: Benutzeroberfläche
 id: Dual-Shock Remote
 # Missing translation
 msg: 
+
+id: No
+msg: Nein
 
 id: Seek using L2 and R2 button
 msg: Suche per L2 und R2
@@ -1769,8 +1871,8 @@ msg: Über Updates benachrichtigen
 id: Open download page
 msg: Downloadseite öffnen
 
-id: Software upgrade
-msg: Software update
+id: System
+msg: System
 
 id: Upgrade to releases from
 msg: Update auf
@@ -1855,4 +1957,8 @@ msg: Hoch / Runter während Videoabspielens kontrolliert
 
 id: Video acceleration and display behaviour
 msg: Videobeschleunigungs- und Wiedergabeeinstellungen
+
+id: Video buffer size
+# Missing translation
+msg: 
 

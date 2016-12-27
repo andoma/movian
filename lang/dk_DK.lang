@@ -2,92 +2,66 @@
 native: Dansk
 maintainer: Klaus Rauteberg <showtime@rautenberg.dk>
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Tilføj aktuel side til bogmærker
-
-id: Open settings
-msg: Åben indstillinger
-
-id: Remove current page from bookmarks
-msg: Fjern aktuel side fra bogmærker
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: Aktivere dvale timer
-
-id: Disable sleep timer
-msg: Deaktivere dvale timer
-
-id: Exit %s
+id: Bookmark
 # Missing translation
 msg: 
 
-id: Go to Home screen
-msg: Gå til startskærm
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Hide system info
-msg: Skjul systeminfo
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-id: Master volume
-msg: Master volume
-
-id: Navigation
-msg: Navigation
-
-id: Open Settings
-msg: Åben indstillinger
-
-id: Playqueue
-msg: Afspilningskø
-
-id: Power off
-msg: Sluk
-
-id: Reload current page
-msg: Genstart aktuel side
-
-id: Show system info
-msg: Vis systeminfo
-
-id: Suspend
-msg: Suspendere
-
-id: System
-msg: System
-
-id: Time until sleep
-msg: Tid indtil dvale
-
-id: dB
-msg: dB
-
-id: min
-msg: min.
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: Tilføj 's%' til startsiden
-
-id: Remove '%s' from home screen
-msg: Fjern '%s' fra startsiden
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Fortsæt fra %s
-
-id: Continue playback here
-msg: Fortsæt afspilning her
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: Slet
+
+id: Queue
+msg: Kø
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Tilgængelig verson:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Installere
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Afinstallere
+
+id: Upgrade
+msg: Opdatere
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Fortsæt fra %s
 
 id: Mark as seen
 msg: Marker som set
@@ -101,56 +75,59 @@ msg: Afspil fra starten
 id: Play until end of list
 msg: Afspil indtil slut af liste
 
-id: Queue
-msg: Kø
-
-id: Star
-msg: Favorit
-
-id: Unstar
-msg: Fjern favorit
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: Lyd
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: Lydindstillinger
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: Lydspor
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Tilføj ny post
 
-id: Chapters
-msg: Kapitel
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Sluk
 
-id: Seek by time
-msg: Søgning efter tid
+id: On
+# Missing translation
+msg: 
 
-id: Settings
-msg: Indstillinger
-
-id: Subtitle settings
-msg: Indstillinger for undertekster
-
-id: Subtitle tracks
-msg: Undertekstspor
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Smal
 
 id: Subtitles
 msg: Undertekster
 
-id: Video
-msg: Video
-
-id: Video menu
-msg: Videomenu
-
-id: Video settings
-msg: Videoindstillinger
+id: User interface
+msg: Brugergrænseflade
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d kb/s
@@ -160,31 +137,162 @@ id: Bitrate:
 msg: 
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Systemlog
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Afbryd
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: Ryd
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Intet medie hentet
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Indstillinger
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Aktivere dvale timer
+
+id: Disable sleep timer
+msg: Deaktivere dvale timer
+
+id: Exit %s
+# Missing translation
+msg: 
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Skjul systeminfo
+
+id: Master volume
+msg: Master volume
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Vis systeminfo
+
+id: Suspend
+msg: Suspendere
+
+id: Time until sleep
+msg: Tid indtil dvale
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min.
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Lyd
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Lydindstillinger
+
+id: Subtitle settings
+msg: Indstillinger for undertekster
+
+id: Video settings
+msg: Videoindstillinger
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: Standard
 
 id: Keyboard layout:
 msg: Tastatus layout:
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Album
@@ -195,159 +303,133 @@ msg: Artist
 id: Custom
 msg: Brugerdefineret
 
-id: Images
-msg: Billeder
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Liste
 
-id: Slideshow
-msg: Slideshow
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: Tvkanaler
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: Vis
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Opdagede ressourcer på lokalt netværk
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: Brickor
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: Apps
-
 id: Dismiss
 msg: Fjern
 
-id: Search / Open URL
-msg: Søg / Åben URL
-
-#
-# ./glwskins/default/pages/iteminfo/image.view
-#
-id: Camera: 
-msg: Kamera:
-
-id: Date: 
-msg: Dato:
-
-#
-# ./glwskins/default/pages/iteminfo/plugin.view
-#
-id: %s %s or newer is required
-# Missing translation
-msg: 
-
-id: Author: 
-msg: Forfatter:
-
-id: Available version: 
-msg: Tilgængelig version:
-
-id: Installed version: 
-msg: Installeret version:
-
-#
-# ./glwskins/default/pages/iteminfo/video.view
-#
-id: Duration:
-msg: Varighed:
-
-id: File date:
-msg: Fildato:
-
-id: Genre:
-msg: Genre:
-
-id: Metadata from
-msg: Metadata fra
-
-id: Rating:
-msg: Rating:
-
-id: Year:
-msg: År:
-
-id: Seen %d times
-msg[0]: Set %d gange
-msg[1]: Set %d gang
-
-#
-# ./glwskins/default/pages/listitems/add.view
-#
-id: Add new entry
-msg: Tilføj ny post
-
-#
-# ./glwskins/default/pages/listitems/bool.view
-#
-id: No
-msg: Nej
-
-id: Yes
-msg: Ja
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: Smal
-
-id: Main
-msg: Normal
-
-id: Subs
-msg: Undertekster
-
-#
-# ./glwskins/default/pages/listitems/plugin.view
-#
-id: Install
-msg: Installere
-
-id: Uninstall
-msg: Afinstallere
-
-id: Upgrade
-msg: Opdatere
-
-#
-# ./glwskins/default/pages/openerror.view
-#
-id: Unable to open %s
-# Missing translation
-msg: 
-
-id: resource
+id: Home
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Track %d / %d
-msg: Spor %d / %d
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: Paused
-msg: Pauset
+id: Playqueue
+msg: Afspilningskø
 
 #
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+# Missing translation
+msg: 
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+# Missing translation
+msg: 
+
+id: Remote controlling %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Lydspor
+
+id: Audio volume adjustment: %d dB
+msg: Lydstyrke justering: %d dB
+
+id: CPU is too slow to decode this video
+msg: CPU'en er for langsom til at afkode denne video
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 # Missing translation
@@ -356,26 +438,22 @@ msg:
 id: An error occured during download
 msg: En fejl opstod under download
 
-id: Available version:
-msg: Tilgængelig verson:
-
 id: Changelog for %s releases
 msg: Ændringslog for %s udgivelser
 
 id: Check for updates now
 msg: Søg efter opdateringer nu
 
-id: Checking for updates...
-msg: Søger efter opdateringer...
-
-id: Checking installed version of %s
-msg: Tjekker installeret version af %s
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Aktuel version:
 
-id: Download and install...
-msg: Download og installer...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: Downloader %s
@@ -386,15 +464,9 @@ msg: Ny version %s er klar til download
 id: No upgrade available
 msg: Ingen opdatering tilgængelig
 
-id: Patching %s
-msg: Patching %s
-
-id: Restarting %s in %d seconds...
+id: Retry
 # Missing translation
 msg: 
-
-id: Retry...
-msg: Forsøg igen...
 
 id: Stable
 msg: Stabil
@@ -406,80 +478,7 @@ id: Unable to query for new version
 msg: Kan ikke forespørge efter ny version
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-# Missing translation
-msg: 
-
-id: Audio codec:
-# Missing translation
-msg: 
-
-id: Audio queue len:
-# Missing translation
-msg: 
-
-id: Audio volume adjustment: %d dB
-msg: Lydstyrke justering: %d dB
-
-id: CPU is too slow to decode this video
-msg: CPU'en er for langsom til at afkode denne video
-
-id: Download speed:
-# Missing translation
-msg: 
-
-id: Packet buffer:
-# Missing translation
-msg: 
-
-id: Playback status
-msg: Afspilningsstatus
-
-id: Remaining buffer:
-# Missing translation
-msg: 
-
-id: Remote queue drops:
-# Missing translation
-msg: 
-
-id: Remote queue len:
-# Missing translation
-msg: 
-
-id: Source:
-# Missing translation
-msg: 
-
-id: Video bitrate:
-# Missing translation
-msg: 
-
-id: Video codec:
-# Missing translation
-msg: 
-
-id: Video decode time:
-# Missing translation
-msg: 
-
-id: Video queue len:
-# Missing translation
-msg: 
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Kapitel: %d
-
-id: Title: %d
-msg: Titel: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Domæne
@@ -494,30 +493,66 @@ id: Username
 msg: Brugernavn
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Afbryd
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 # Missing translation
 msg: 
 
-id: Resume %s from %s
+id: Resume from %s
 # Missing translation
 msg: 
 
-#
-# ./glwskins/default/screensaver.view
-#
-id: No media loaded
-msg: Intet medie hentet
+id: Yes
+msg: Ja
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: CPU temp.
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: Fragmentering
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: GPU temp.
@@ -525,11 +560,24 @@ msg: GPU temp.
 id: HDD Avail
 msg: HDD status
 
-id: Inactive mem
-msg: Inaktiv humommelse
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Hukommelsesforbrug
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: System fri
@@ -537,14 +585,30 @@ msg: System fri
 id: System Total
 msg: System total
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Audio mute
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Master volume: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -558,10 +622,6 @@ id: Device not available
 msg: 
 
 id: Movians for remote control
-# Missing translation
-msg: 
-
-id: Remote control
 # Missing translation
 msg: 
 
@@ -644,13 +704,6 @@ msg:
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: Sluk
-
-id: On
-# Missing translation
-msg: 
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -756,6 +809,9 @@ msg: Torrent seeders
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: BitTorrent
+
 id: Clear cache
 msg: Tøm cache
 
@@ -893,20 +949,15 @@ msg: Søg via Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: Album
-
-id: Artists
-msg: Artister
-
 id: Deleted %s
 msg: Slettet %s
 
 id: Filename
 msg: Filnavn
 
-id: Indexed mode
-msg: Indekseret tilstand
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 # Missing translation
@@ -940,17 +991,11 @@ msg: Søg via spotlight
 id: Are you sure you want to delete:
 msg: Er du sikker på at du vil slette:
 
-id: BitTorrent
-msg: BitTorrent
-
 id: Browse archives as folders
 msg: Gennemse arkiver som mapper
 
 id: Enable file deletion from item menu
 msg: Aktivere sletning af filer fra liste menu
-
-id: File browsing
-msg: Fil søgning
 
 id: Show filename extensions
 msg: Vis ekstension på filnavn
@@ -1287,10 +1332,6 @@ msg: Andre
 id: Photos
 msg: Billeder
 
-id: Remove bookmark
-# Missing translation
-msg: 
-
 id: Removed %s from homepage
 # Missing translation
 msg: 
@@ -1309,6 +1350,9 @@ msg: Type
 
 id: URL
 msg: URL
+
+id: Video
+msg: Video
 
 #
 # ./src/networking/connman.c
@@ -1350,10 +1394,29 @@ id: Standby
 msg: Standby
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: Alternativ plugin Respository URL
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Opdater automatisk plugins
@@ -1396,6 +1459,9 @@ msg: Fil åbningsfejl
 
 id: Home page
 msg: Startside
+
+id: Images
+msg: Billeder
 
 id: Installed
 # Missing translation
@@ -1521,10 +1587,6 @@ msg:
 id: SSH server
 msg: SSH server
 
-id: Starting and stopping
-# Missing translation
-msg: 
-
 #
 # ./src/sd/sd.c
 #
@@ -1564,6 +1626,9 @@ msg: Udvikler indstillinger
 id: Discovered media sources
 msg: Mediekilder fundet
 
+id: File browsing
+msg: Fil søgning
+
 id: Fonts and user interface styling
 msg: Skrifttyper og brugergrænseflade
 
@@ -1582,8 +1647,19 @@ msg: Nætværk servicer, osv.
 id: Network settings
 msg: Netværksindstillinger
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Indstillinger nyttige for udviklere
+
+id: Software upgrade
+msg: Softwareopdatering
+
+id: Starting and stopping
+# Missing translation
+msg: 
 
 id: System name
 msg: Systemnavn
@@ -1706,8 +1782,16 @@ msg: Kan ikke installere font: %s
 id: Use font %s for
 msg: Benyt skrifttype %s til
 
-id: User interface
-msg: Brugergrænseflade
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
@@ -1715,6 +1799,9 @@ msg: Brugergrænseflade
 id: Dual-Shock Remote
 # Missing translation
 msg: 
+
+id: No
+msg: Nej
 
 id: Seek using L2 and R2 button
 msg: Søg ved at bruge L2 og R2 knap
@@ -1841,8 +1928,8 @@ msg: Informer om opdateringer
 id: Open download page
 msg: Åben downloadside
 
-id: Software upgrade
-msg: Softwareopdatering
+id: System
+msg: System
 
 id: Upgrade to releases from
 msg: Opdatere til udgivelser fra
@@ -1932,4 +2019,8 @@ msg: Op / Ned under videoafspilning kontrol
 
 id: Video acceleration and display behaviour
 msg: Videoacceleration og skærmpræsentation
+
+id: Video buffer size
+# Missing translation
+msg: 
 

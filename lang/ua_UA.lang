@@ -2,91 +2,66 @@ language: Ukrainian
 native: Українська
 maintainer: lprot <lprot@list.ru>
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Додати поточну сторінку до закладок
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: Відкрити налаштування
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: Видалити поточну сторінку з закладок
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: Увімкнути таймер сну
-
-id: Disable sleep timer
-msg: Вимкнути таймер сну
-
-id: Exit %s
-msg: Вийти з %s
-
-id: Go to Home screen
-msg: Перейти до головного екрану
-
-id: Hide system info
-msg: Сховати системну інформацію
-
-id: Master volume
-msg: Загальна гучність
-
-id: Navigation
-msg: Навігація
-
-id: Open Settings
-msg: Відкрити налаштування
-
-id: Playqueue
-msg: Черга відтворення
-
-id: Power off
-msg: Вимкнути систему
-
-id: Reload current page
-msg: Перезавантажити поточну сторінку
-
-id: Show system info
-msg: Показати системну інформацію
-
-id: Suspend
-msg: Призупинити
-
-id: System
-msg: Система
-
-id: Time until sleep
-msg: Час до початку сну
-
-id: dB
-msg: дБ
-
-id: min
-msg: мін
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: Додати '%s' на головний екран
-
-id: Remove '%s' from home screen
-msg: Видалити '%s' з головного екрану
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Продовжити з %s
-
-id: Continue playback here
-msg: Продовжити відтворення тут
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: Видалити
+
+id: Queue
+msg: Черга
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Доступні версії:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Інсталювати
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Деінсталювати
+
+id: Upgrade
+msg: Оновлення
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Продовжити з %s
 
 id: Mark as seen
 msg: Позначити як переглянуте
@@ -100,56 +75,58 @@ msg: Відтворити з початку
 id: Play until end of list
 msg: Відтворення до кінця списку
 
-id: Queue
-msg: Черга
-
-id: Star
-msg: Відмітити
-
-id: Unstar
-msg: Зняти відмітку
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: Звук
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: Налаштування звуку
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: Звукові рядки
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Додати новий запис
 
-id: Chapters
-msg: Розділи
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Вимкнено
 
-id: Seek by time
-msg: Пошук по часу
+id: On
+msg: Увімкно
 
-id: Settings
-msg: Налаштування
-
-id: Subtitle settings
-msg: Налаштування субтитрів
-
-id: Subtitle tracks
-msg: Рядки субтитрів
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Стиснутий
 
 id: Subtitles
 msg: Субтитри
 
-id: Video
-msg: Відео
-
-id: Video menu
-msg: Меню відео
-
-id: Video settings
-msg: Налаштування відео
+id: User interface
+msg: Інтерфейс користувача
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d кб/с
@@ -158,31 +135,161 @@ id: Bitrate:
 msg: Бітрейт:
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Системний лог
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Відміна
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: Очистити
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Медіа не завантажено
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Налаштування
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Увімкнути таймер сну
+
+id: Disable sleep timer
+msg: Вимкнути таймер сну
+
+id: Exit %s
+msg: Вийти з %s
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Сховати системну інформацію
+
+id: Master volume
+msg: Загальна гучність
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Показати системну інформацію
+
+id: Suspend
+msg: Призупинити
+
+id: Time until sleep
+msg: Час до початку сну
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: дБ
+
+id: min
+msg: мін
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Звук
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Налаштування звуку
+
+id: Subtitle settings
+msg: Налаштування субтитрів
+
+id: Video settings
+msg: Налаштування відео
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: По замовчуванню
 
 id: Keyboard layout:
 msg: Розкладка клавіатури:
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Альбом
@@ -193,161 +300,133 @@ msg: Виконавець
 id: Custom
 msg: Користувач
 
-id: Images
-msg: Зображення
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Список
 
-id: Slideshow
-msg: Слайд-шоу
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: ТВ канали
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: Вигляд
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Знайдені ресурси в локальній мережі
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: Плитка
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: Додатки
-
 id: Dismiss
 msg: Відхилити
 
-id: Search / Open URL
-msg: Знайти / Відкрити URL
-
-#
-# ./glwskins/default/pages/iteminfo/image.view
-#
-id: Camera: 
-# Missing translation
-msg: 
-
-id: Date: 
+id: Home
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: %s %s or newer is required
-msg: Необхідно %s %s або новійше
-
-id: Author: 
-# Missing translation
-msg: 
-
-id: Available version: 
-# Missing translation
-msg: 
-
-id: Installed version: 
+id: Unable to open resource
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: Duration:
-msg: Тривалість:
-
-id: File date:
-msg: Дата файлу:
-
-id: Genre:
-msg: Жанр:
-
-id: Metadata from
-msg: Метадані від
-
-id: Rating:
-msg: Рейтинг:
-
-id: Year:
-msg: Рік:
-
-id: Seen %d times
-msg[0]: Переглянуто раз: %d
-msg[1]: Переглянуто раз: %d
+id: Playqueue
+msg: Черга відтворення
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Add new entry
-msg: Додати новий запис
+id: Show more
+# Missing translation
+msg: 
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: No
-msg: Ні
+id: Interval: %ds
+# Missing translation
+msg: 
 
-id: Yes
-msg: Так
+id: Play/Pause
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: Стиснутий
-
-id: Main
-msg: Головний
-
-id: Subs
-msg: Субтитри
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: Install
-msg: Інсталювати
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: Деінсталювати
-
-id: Upgrade
-msg: Оновлення
-
-#
-# ./glwskins/default/pages/openerror.view
-#
-id: Unable to open %s
-msg: Неможливо відкрити %s
-
-id: resource
-msg: ресурс
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Track %d / %d
-msg: Трек %d / %d
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Paused
-msg: Пауза
+id: Audio tracks
+msg: Звукові рядки
+
+id: Audio volume adjustment: %d dB
+msg: Регулювання гучності звуку: %d дБ
+
+id: CPU is too slow to decode this video
+msg: Процесор занадто повільний для декодування цього відео
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s вже оновлено
@@ -355,26 +434,22 @@ msg: %s вже оновлено
 id: An error occured during download
 msg: Під час завантаження сталася помилка
 
-id: Available version:
-msg: Доступні версії:
-
 id: Changelog for %s releases
 msg: Перелік змін в релізі %s
 
 id: Check for updates now
 msg: Перевірити оновлення зараз
 
-id: Checking for updates...
-msg: Перевірка оновлень ...
-
-id: Checking installed version of %s
-msg: Перевірка встановленої версії %s
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Поточна версія:
 
-id: Download and install...
-msg: Завантажити і встановити...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: Завантаження %s
@@ -385,14 +460,9 @@ msg: Нова версія %s доступна для завантаження
 id: No upgrade available
 msg: Оновлення відсутні
 
-id: Patching %s
-msg: Виправлення %s
-
-id: Restarting %s in %d seconds...
-msg: Перезапуск %s через %d секунд...
-
-id: Retry...
-msg: Повторити ...
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: Стабільний
@@ -404,67 +474,7 @@ id: Unable to query for new version
 msg: Неможливо виконати запит нової версії
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: А/В різниця:
-
-id: Audio codec:
-msg: Кодек звуку:
-
-id: Audio queue len:
-msg: Довжина черги звуку:
-
-id: Audio volume adjustment: %d dB
-msg: Регулювання гучності звуку: %d дБ
-
-id: CPU is too slow to decode this video
-msg: Процесор занадто повільний для декодування цього відео
-
-id: Download speed:
-msg: Швидкість завантаження:
-
-id: Packet buffer:
-msg: Буфер пакетів:
-
-id: Playback status
-msg: Статус відтворення
-
-id: Remaining buffer:
-msg: Залишилось в буфері:
-
-id: Remote queue drops:
-msg: Розривів віддаленої черги:
-
-id: Remote queue len:
-msg: Довжина віддаленої черги:
-
-id: Source:
-msg: Джерело:
-
-id: Video bitrate:
-msg: Бітрейт відео:
-
-id: Video codec:
-msg: Кодек відео:
-
-id: Video decode time:
-msg: Час декодування відео:
-
-id: Video queue len:
-msg: Довжина відео черги:
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Розділ: %d
-
-id: Title: %d
-msg: Назва: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Домен
@@ -479,28 +489,65 @@ id: Username
 msg: Ім'я користувача
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Відміна
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: Ні, розпочати знову
 
-id: Resume %s from %s
-msg: Продовжити %s з %s
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Так
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: Медіа не завантажено
+id: OK
+msg: OK
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: Температура CPU
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: Фрагментація
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: Температура GPU
@@ -508,11 +555,24 @@ msg: Температура GPU
 id: HDD Avail
 msg: HDD доступно
 
-id: Inactive mem
-msg: Неактивна пам'ять
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Використання пам'яті
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: Вільно в системі
@@ -520,14 +580,30 @@ msg: Вільно в системі
 id: System Total
 msg: Усього в системі
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Звук вимкнено
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Загальна гучність: %d дБ
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -541,10 +617,6 @@ id: Device not available
 msg: 
 
 id: Movians for remote control
-# Missing translation
-msg: 
-
-id: Remote control
 # Missing translation
 msg: 
 
@@ -623,12 +695,6 @@ msg: Прямий DTS
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: Вимкнено
-
-id: On
-msg: Увімкно
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -734,6 +800,9 @@ msg: Торент сідерів
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: БітТорент
+
 id: Clear cache
 msg: Очистити кеш
 
@@ -869,20 +938,15 @@ msg: Пошук з використанням Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: Альбоми
-
-id: Artists
-msg: Артисти
-
 id: Deleted %s
 msg: Видалено: %s
 
 id: Filename
 msg: Ім'я файлу
 
-id: Indexed mode
-msg: Індексований режим
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 # Missing translation
@@ -916,17 +980,11 @@ msg: Пошук з використанням spotlight
 id: Are you sure you want to delete:
 msg: Ви впевнені, що хочете видалити:
 
-id: BitTorrent
-msg: БітТорент
-
 id: Browse archives as folders
 msg: Перегляди архіви як теки
 
 id: Enable file deletion from item menu
 msg: Увімкнути видалення файлів у меню елементу
-
-id: File browsing
-msg: Перегляд файлів
 
 id: Show filename extensions
 msg: Відображати розширення у файлів
@@ -1261,10 +1319,6 @@ msg: Інше
 id: Photos
 msg: Фото
 
-id: Remove bookmark
-# Missing translation
-msg: 
-
 id: Removed %s from homepage
 # Missing translation
 msg: 
@@ -1283,6 +1337,9 @@ msg: Тип
 
 id: URL
 msg: URL
+
+id: Video
+msg: Відео
 
 #
 # ./src/networking/connman.c
@@ -1324,10 +1381,29 @@ id: Standby
 msg: Режим очікування
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: Альтернативний URL для репозиторія додатків
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Автоматично оновлювати додатки
@@ -1368,6 +1444,9 @@ msg: Помилка відкриття файлу
 
 id: Home page
 msg: Головний екран
+
+id: Images
+msg: Зображення
 
 id: Installed
 # Missing translation
@@ -1491,9 +1570,6 @@ msg: Вихід
 id: SSH server
 msg: SSH сервер
 
-id: Starting and stopping
-msg: Запуск і зупинка
-
 #
 # ./src/sd/sd.c
 #
@@ -1532,6 +1608,9 @@ msg: Налаштування для розробників
 id: Discovered media sources
 msg: Знайдені медіа джерела
 
+id: File browsing
+msg: Перегляд файлів
+
 id: Fonts and user interface styling
 msg: Шрифти та інтерфейс користувача
 
@@ -1550,8 +1629,18 @@ msg: Мережеві сервіси і т.д.
 id: Network settings
 msg: Мережеві налаштування
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Налаштування корисні для розробників
+
+id: Software upgrade
+msg: Оновлення ПЗ
+
+id: Starting and stopping
+msg: Запуск і зупинка
 
 id: System name
 msg: Ім'я системи
@@ -1674,8 +1763,16 @@ msg: Неможливо встановити шрифт: %s
 id: Use font %s for
 msg: Використовувати шрифт %s для
 
-id: User interface
-msg: Інтерфейс користувача
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
@@ -1683,6 +1780,9 @@ msg: Інтерфейс користувача
 id: Dual-Shock Remote
 # Missing translation
 msg: 
+
+id: No
+msg: Ні
 
 id: Seek using L2 and R2 button
 msg: Перемотка відео кнопками L2 та R2
@@ -1808,8 +1908,8 @@ msg: Повідомляти про оновлення
 id: Open download page
 msg: Відкрити сторінку завантаження
 
-id: Software upgrade
-msg: Оновлення ПЗ
+id: System
+msg: Система
 
 id: Upgrade to releases from
 msg: Оновлення до релізу
@@ -1896,4 +1996,8 @@ msg: Вверх/вниз під час відтворення відео кер�
 
 id: Video acceleration and display behaviour
 msg: Прискорення відео і властивості зображення
+
+id: Video buffer size
+# Missing translation
+msg: 
 

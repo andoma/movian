@@ -2,103 +2,66 @@ language: Czech
 native: Česky
 maintainer: Jirka Dutka <jirka@dutka.net>
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Přidat k oblíbeným
-
-id: Open settings
-msg: Otevřít nastavení
-
-id: Remove current page from bookmarks
-msg: Odtranit z oblíbených
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
+id: Bookmark
 # Missing translation
 msg: 
 
-id: Disable sleep timer
+id: Bookmarked
 # Missing translation
 msg: 
 
-id: Exit %s
+id: Copy to clipboard
 # Missing translation
 msg: 
 
-id: Go to Home screen
-msg: Jít na úvodní stránku
-
-id: Hide system info
+id: Copy to location...
 # Missing translation
 msg: 
-
-id: Master volume
-# Missing translation
-msg: 
-
-id: Navigation
-msg: Navigace
-
-id: Open Settings
-msg: Otevřít nastavení
-
-id: Playqueue
-msg: Fronta přehrávání 
-
-id: Power off
-# Missing translation
-msg: 
-
-id: Reload current page
-msg: Obnovit stránku
-
-id: Show system info
-# Missing translation
-msg: 
-
-id: Suspend
-# Missing translation
-msg: 
-
-id: System
-# Missing translation
-msg: 
-
-id: Time until sleep
-# Missing translation
-msg: 
-
-id: dB
-# Missing translation
-msg: 
-
-id: min
-# Missing translation
-msg: 
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: Přidat '%s' na úvodní stránku
-
-id: Remove '%s' from home screen
-msg: Odebrat '%s' z úvodní stránky
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Pokračovat od %s
-
-id: Continue playback here
-msg: Přehrávat odsud
 
 id: Delete
 msg: Smazat
+
+id: Queue
+msg: Fronta
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Dostupná verze:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Instalovat
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Odnstalovat
+
+id: Upgrade
+msg: Upgradovat
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Pokračovat od %s
 
 id: Mark as seen
 msg: Označit jako přehrané
@@ -112,57 +75,61 @@ msg: Hrát od začátku
 id: Play until end of list
 msg: Hrát do konce seznamu
 
-id: Queue
-msg: Fronta
-
-id: Star
-msg: Star
-
-id: Unstar
-msg: Unstar
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
-#
-id: Audio
-msg: Audio
-
-id: Audio settings
-msg: Nastavení zvuku
-
-id: Audio tracks
-msg: Zvukové stopy
-
-id: Chapters
+id: Video Cast
 # Missing translation
 msg: 
 
-id: Seek by time
-msg: Hledat podle času
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Settings
-msg: Nastavení
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Subtitle settings
-msg: Nastavení titulků
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Přidat položku
 
-id: Subtitle tracks
-msg: Titulky
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Vyp
+
+id: On
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+# Missing translation
+msg: 
 
 id: Subtitles
 msg: Titulky
 
-id: Video
-msg: Video
-
-id: Video menu
-msg: Video menu
-
-id: Video settings
-msg: Nastavení videa
+id: User interface
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 # Missing translation
@@ -173,21 +140,163 @@ id: Bitrate:
 msg: 
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Systémové události
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Storno
-
-id: Clear
+id: A/V diff
 # Missing translation
 msg: 
 
+id: Audio bitrate
+# Missing translation
+msg: 
+
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Žádné médium
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: Nastavení
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
+id: Exit %s
+# Missing translation
+msg: 
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+# Missing translation
+msg: 
+
+id: Master volume
+# Missing translation
+msg: 
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+# Missing translation
+msg: 
+
+id: Suspend
+# Missing translation
+msg: 
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Audio
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Nastavení zvuku
+
+id: Subtitle settings
+msg: Nastavení titulků
+
+id: Video settings
+msg: Nastavení videa
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 # Missing translation
 msg: 
@@ -196,11 +305,8 @@ id: Keyboard layout:
 # Missing translation
 msg: 
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Album
@@ -212,167 +318,134 @@ msg:
 id: Custom
 msg: Uživatelské
 
-id: Images
-msg: Obrázky
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Seznam
 
-id: Slideshow
-msg: Prezentace
-
-id: Tvchannels
+id: Page layout
 # Missing translation
 msg: 
 
-id: View
-msg: Pohled
+id: Search results
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Hledám zdroje v lokální síti
-
-#
-# ./glwskins/default/pages/home.view
-#
-id: Tiled
+id: TV Season
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Apps
+id: No contents
 # Missing translation
 msg: 
 
+#
+# ./glwskins/flat/pages/home.view
+#
 id: Dismiss
 msg: Zamítnout
 
-id: Search / Open URL
+id: Home
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: Kamera
-
-id: Date: 
-msg: Datum:
-
-#
-# ./glwskins/default/pages/iteminfo/plugin.view
-#
-id: %s %s or newer is required
+id: Unable to open resource
 # Missing translation
 msg: 
 
-id: Author: 
-msg: Autor:
-
-id: Available version: 
-msg: Dostupná verze:
-
-id: Installed version: 
-msg: Instalovaná verze:
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: Fronta přehrávání 
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: Délka:
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: Čas souboru:
-
-id: Genre:
-msg: Žánr:
-
-id: Metadata from
-msg: Metadata z
-
-id: Rating:
-msg: Hodnocení:
-
-id: Year:
-msg: Rok:
-
-id: Seen %d times
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
 msg[0]: 
 msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: Přidat položku
-
-#
-# ./glwskins/default/pages/listitems/bool.view
-#
-id: No
-msg: Ne
-
-id: Yes
-msg: Ano 
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
+id: Interval: %ds
 # Missing translation
 msg: 
 
-id: Main
+id: Play/Pause
 # Missing translation
 msg: 
 
-id: Subs
+id: Stop
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: Install
-msg: Instalovat
-
-id: Uninstall
-msg: Odnstalovat
-
-id: Upgrade
-msg: Upgradovat
-
-#
-# ./glwskins/default/pages/openerror.view
-#
-id: Unable to open %s
+id: Remote control - %s
 # Missing translation
 msg: 
 
-id: resource
+id: Remote controlling %s
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Track %d / %d
-msg: Skladba %d / %d
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/pages/slideshow.view
-#
-id: Paused
+id: Remote control
 # Missing translation
 msg: 
 
 #
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Zvukové stopy
+
+id: Audio volume adjustment: %d dB
+# Missing translation
+msg: 
+
+id: CPU is too slow to decode this video
+msg: CPU je příliš pomalý pro dekódování tohoto videa
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 # Missing translation
@@ -381,27 +454,22 @@ msg:
 id: An error occured during download
 msg: Při stahování došlo k chybě
 
-id: Available version:
-msg: Dostupná verze:
-
 id: Changelog for %s releases
 msg: Seznam změn verze %s
 
 id: Check for updates now
 msg: Zkontrolovat aktualizace
 
-id: Checking for updates...
-msg: Kontroluji aktualizace:
-
-id: Checking installed version of %s
+id: Checking for updates
 # Missing translation
 msg: 
 
 id: Current version:
 msg: Současná verze:
 
-id: Download and install...
-msg: Stáhnout a nainstalovat...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 # Missing translation
@@ -413,16 +481,9 @@ msg: Nová verze %s je ke stažení
 id: No upgrade available
 msg: Upgrade není k dispozici
 
-id: Patching %s
+id: Retry
 # Missing translation
 msg: 
-
-id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
-
-id: Retry...
-msg: Zkouším znova...
 
 id: Stable
 msg: Stabilní
@@ -434,81 +495,7 @@ id: Unable to query for new version
 msg: Nepodařilo se zjistit novou verzi
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-# Missing translation
-msg: 
-
-id: Audio codec:
-# Missing translation
-msg: 
-
-id: Audio queue len:
-# Missing translation
-msg: 
-
-id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
-
-id: CPU is too slow to decode this video
-msg: CPU je příliš pomalý pro dekódování tohoto videa
-
-id: Download speed:
-# Missing translation
-msg: 
-
-id: Packet buffer:
-# Missing translation
-msg: 
-
-id: Playback status
-msg: Stav přehrávání
-
-id: Remaining buffer:
-# Missing translation
-msg: 
-
-id: Remote queue drops:
-# Missing translation
-msg: 
-
-id: Remote queue len:
-# Missing translation
-msg: 
-
-id: Source:
-# Missing translation
-msg: 
-
-id: Video bitrate:
-# Missing translation
-msg: 
-
-id: Video codec:
-# Missing translation
-msg: 
-
-id: Video decode time:
-# Missing translation
-msg: 
-
-id: Video queue len:
-# Missing translation
-msg: 
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Kapitola:
-
-id: Title: %d
-msg: Název:
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Doména
@@ -523,30 +510,66 @@ id: Username
 msg: Uživatel
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Storno
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 # Missing translation
 msg: 
 
-id: Resume %s from %s
+id: Resume from %s
 # Missing translation
 msg: 
 
-#
-# ./glwskins/default/screensaver.view
-#
-id: No media loaded
-msg: Žádné médium
+id: Yes
+msg: Ano 
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 # Missing translation
 msg: 
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
+# Missing translation
+msg: 
+
+id: Framerate
 # Missing translation
 msg: 
 
@@ -558,11 +581,23 @@ id: HDD Avail
 # Missing translation
 msg: 
 
-id: Inactive mem
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
 # Missing translation
 msg: 
 
 id: Memory usage
+# Missing translation
+msg: 
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
 # Missing translation
 msg: 
 
@@ -574,14 +609,30 @@ id: System Total
 # Missing translation
 msg: 
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Zvuk ztišen
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Hlasitost: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -595,10 +646,6 @@ id: Device not available
 msg: 
 
 id: Movians for remote control
-# Missing translation
-msg: 
-
-id: Remote control
 # Missing translation
 msg: 
 
@@ -687,13 +734,6 @@ id: DTS Pass-Through
 msg: 
 
 id: HDMI
-# Missing translation
-msg: 
-
-id: Off
-msg: Vyp
-
-id: On
 # Missing translation
 msg: 
 
@@ -823,6 +863,10 @@ msg:
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+# Missing translation
+msg: 
+
 id: Clear cache
 # Missing translation
 msg: 
@@ -966,14 +1010,6 @@ msg: Pro hledání použít Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-# Missing translation
-msg: 
-
-id: Artists
-# Missing translation
-msg: 
-
 id: Deleted %s
 # Missing translation
 msg: 
@@ -981,7 +1017,7 @@ msg:
 id: Filename
 msg: Název souboru
 
-id: Indexed mode
+id: Include in library
 # Missing translation
 msg: 
 
@@ -1019,19 +1055,11 @@ id: Are you sure you want to delete:
 # Missing translation
 msg: 
 
-id: BitTorrent
-# Missing translation
-msg: 
-
 id: Browse archives as folders
 # Missing translation
 msg: 
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
-
-id: File browsing
 # Missing translation
 msg: 
 
@@ -1396,10 +1424,6 @@ msg: Ostatní
 id: Photos
 msg: Snimky
 
-id: Remove bookmark
-# Missing translation
-msg: 
-
 id: Removed %s from homepage
 # Missing translation
 msg: 
@@ -1418,6 +1442,9 @@ msg: Typ
 
 id: URL
 msg: URL
+
+id: Video
+msg: Video
 
 #
 # ./src/networking/connman.c
@@ -1465,10 +1492,29 @@ id: Standby
 msg: 
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: URL náhradního úložiště pluginů
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Automaticky upgradovat pluginy
@@ -1516,6 +1562,9 @@ msg: Chyba při otvírání souboru
 id: Home page
 # Missing translation
 msg: 
+
+id: Images
+msg: Obrázky
 
 id: Installed
 # Missing translation
@@ -1657,10 +1706,6 @@ id: SSH server
 # Missing translation
 msg: 
 
-id: Starting and stopping
-# Missing translation
-msg: 
-
 #
 # ./src/sd/sd.c
 #
@@ -1700,6 +1745,10 @@ msg: Nastavení pro vývojáře
 id: Discovered media sources
 msg: Vyhledat zdroje videa a zvuku
 
+id: File browsing
+# Missing translation
+msg: 
+
 id: Fonts and user interface styling
 # Missing translation
 msg: 
@@ -1722,8 +1771,19 @@ id: Network settings
 # Missing translation
 msg: 
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Nastavení pro vývojáře
+
+id: Software upgrade
+msg: Upgrade aplikace
+
+id: Starting and stopping
+# Missing translation
+msg: 
 
 id: System name
 # Missing translation
@@ -1867,7 +1927,14 @@ id: Use font %s for
 # Missing translation
 msg: 
 
-id: User interface
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
 # Missing translation
 msg: 
 
@@ -1877,6 +1944,9 @@ msg:
 id: Dual-Shock Remote
 # Missing translation
 msg: 
+
+id: No
+msg: Ne
 
 id: Seek using L2 and R2 button
 # Missing translation
@@ -2007,8 +2077,9 @@ msg: Upozornit na aktualizace
 id: Open download page
 msg: Otevřít stránku s downloady
 
-id: Software upgrade
-msg: Upgrade aplikace
+id: System
+# Missing translation
+msg: 
 
 id: Upgrade to releases from
 msg: Upgradovat na vydání z
@@ -2104,4 +2175,8 @@ msg:
 
 id: Video acceleration and display behaviour
 msg: Video akcelerace a nastavení displeje
+
+id: Video buffer size
+# Missing translation
+msg: 
 

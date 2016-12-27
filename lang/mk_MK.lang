@@ -2,91 +2,66 @@ language: Macedonian
 native: Македонски
 maintainer: Gocilius <gocilius1@yahoo.de> 
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Додади во обележувачи
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: Отвори подесувања
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: Отстрани од обележувачи
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: Активирај автоматско исклучување
-
-id: Disable sleep timer
-msg: Деактивирај автоматско исклучување
-
-id: Exit %s
-msg: Затвори го %s 
-
-id: Go to Home screen
-msg: Оди на почетен екран
-
-id: Hide system info
-msg: Скриј системско инфо
-
-id: Master volume
-msg: Главна јачина на звук
-
-id: Navigation
-msg: Навигација
-
-id: Open Settings
-msg: Отвори подесувања 
-
-id: Playqueue
-msg: Плејлиста
-
-id: Power off
-msg: Исклучи
-
-id: Reload current page
-msg: Актуализирај ја страната
-
-id: Show system info
-msg: Покажи системско инфо
-
-id: Suspend
-msg: Исклучи го системот
-
-id: System
-msg: Систем
-
-id: Time until sleep
-msg: Време до исклучување
-
-id: dB
-msg: dB
-
-id: min
-msg: min
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: Додади го %s на почетниот екран
-
-id: Remove '%s' from home screen
-msg: Избриши го %s од почетниот екран
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Продолжи од %s
-
-id: Continue playback here
-msg: Продолжи од тука
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: Избриши
+
+id: Queue
+msg: Колона
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Достапна верзија:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Инсталирај
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Деинсталирај
+
+id: Upgrade
+msg: Ажурирај
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Продолжи од %s
 
 id: Mark as seen
 msg: Означи како: "гледано"
@@ -100,56 +75,58 @@ msg: Пушти од почеток
 id: Play until end of list
 msg: Пушти до крај на листата
 
-id: Queue
-msg: Колона
-
-id: Star
-msg: Маркирај
-
-id: Unstar
-msg: Отстрани маркирање
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: Звук
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: Подесување на звук
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: Аудио
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Додај нов запис
 
-id: Chapters
-msg: Поглавја
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Исклучено
 
-id: Seek by time
-msg: Барање по време
+id: On
+msg: Вклучено
 
-id: Settings
-msg: Подесувања
-
-id: Subtitle settings
-msg: Подесување на преводи
-
-id: Subtitle tracks
-msg: Преводи
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Компримирано
 
 id: Subtitles
 msg: Преводи
 
-id: Video
-msg: Видео
-
-id: Video menu
-msg: Видео мени
-
-id: Video settings
-msg: Подесување на слика
+id: User interface
+msg: Кориснички интерфејс
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d kb/s
@@ -158,31 +135,160 @@ id: Bitrate:
 msg: Брзина:
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Системски лог
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Откажи
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: Испразни
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Нема вчитан медиум
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+msg: Избриши обележувач
+
+id: Settings
+msg: Подесувања
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Активирај автоматско исклучување
+
+id: Disable sleep timer
+msg: Деактивирај автоматско исклучување
+
+id: Exit %s
+msg: Затвори го %s 
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Скриј системско инфо
+
+id: Master volume
+msg: Главна јачина на звук
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Покажи системско инфо
+
+id: Suspend
+msg: Исклучи го системот
+
+id: Time until sleep
+msg: Време до исклучување
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Звук
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Подесување на звук
+
+id: Subtitle settings
+msg: Подесување на преводи
+
+id: Video settings
+msg: Подесување на слика
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: Стандарден
 
 id: Keyboard layout:
 msg: Тастатура
 
-id: OK
-msg: Во ред
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Албум
@@ -193,156 +299,132 @@ msg: Уметник
 id: Custom
 msg: Прилагодено
 
-id: Images
-msg: Слики
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Листа 
 
-id: Slideshow
-msg: Слајдови/Презентација
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: ТВ-канали
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: Преглед
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Откриени ресурси на локалната мрежа
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: Плочки 
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: Апликации
-
 id: Dismiss
 msg: Откажи
 
-id: Search / Open URL
-msg: Барај / Отвори URL
+id: Home
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: Камера:
-
-id: Date: 
-msg: Датум: 
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: %s %s or newer is required
-msg: потребна е %s %s или понова 
-
-id: Author: 
-msg: Автор: 
-
-id: Available version: 
-msg: Достапна верзија: 
-
-id: Installed version: 
-msg: Инсталирана верзија: 
+id: Playqueue
+msg: Плејлиста
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: Траење:
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: Датум на датотека:
-
-id: Genre:
-msg: Жанр:
-
-id: Metadata from
-msg: Информации од
-
-id: Rating:
-msg: Популарност: 
-
-id: Year:
-msg: Година:
-
-id: Seen %d times
-msg[0]: %d пати гледано
-msg[1]: %d пат гледано
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: Додај нов запис
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: No
-msg: Не
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Yes
-msg: Да 
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: Компримирано
-
-id: Main
-msg: Главно
-
-id: Subs
-msg: Преводи
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Install
-msg: Инсталирај
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: Деинсталирај
-
-id: Upgrade
-msg: Ажурирај
+id: Remote control
+msg: Далечински управувач
 
 #
-# ./glwskins/default/pages/openerror.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Unable to open %s
-msg: Не може да се отвори %s 
+id: Audio tracks
+msg: Аудио
 
-id: resource
-msg: ресурси
+id: Audio volume adjustment: %d dB
+msg: Прилагодување на звук: %d dB
+
+id: CPU is too slow to decode this video
+msg: CPU е преслаб ѕа да го декодира видеото
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/tvseason.view
 #
-id: Track %d / %d
-msg: Наслов/Песна %d / %d
+id: Season %d
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
-#
-id: Paused
-msg: Паузирано
-
-#
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s е актуелна верзија
@@ -350,26 +432,22 @@ msg: %s е актуелна верзија
 id: An error occured during download
 msg: Грешка при превземање
 
-id: Available version:
-msg: Достапна верзија:
-
 id: Changelog for %s releases
 msg: Измени за %s
 
 id: Check for updates now
 msg: Провери ажурирања
 
-id: Checking for updates...
-msg: Проверувам ажурирања...
-
-id: Checking installed version of %s
-msg: Проверувам инсталирана верзија на %s
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Актуелна верзија:
 
-id: Download and install...
-msg: Превземи и инсталирај...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: %s се превзема 
@@ -380,14 +458,9 @@ msg: Нова верзија %s е достапна
 id: No upgrade available
 msg: Нема понова верзија
 
-id: Patching %s
-msg: Закрпува %s
-
-id: Restarting %s in %d seconds...
-msg: Нов старт %s за %d секунди...
-
-id: Retry...
-msg: Пробај поново...
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: Стабилна верзија
@@ -399,67 +472,7 @@ id: Unable to query for new version
 msg: Не може да се провери понова верзија
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: A/V раѕлика:
-
-id: Audio codec:
-msg: Аудио кодек:
-
-id: Audio queue len:
-msg: Должина на аудио колона
-
-id: Audio volume adjustment: %d dB
-msg: Прилагодување на звук: %d dB
-
-id: CPU is too slow to decode this video
-msg: CPU е преслаб ѕа да го декодира видеото
-
-id: Download speed:
-msg: Download брзина:
-
-id: Packet buffer:
-msg: Пакет бафер:
-
-id: Playback status
-msg: Статус на емитување
-
-id: Remaining buffer:
-msg: Преостанат бафер:
-
-id: Remote queue drops:
-msg: Губење на далечна колона
-
-id: Remote queue len:
-msg: Должина на далечна колона
-
-id: Source:
-msg: Извор:
-
-id: Video bitrate:
-msg: Видео брзина:
-
-id: Video codec:
-msg: Видео кодек:
-
-id: Video decode time:
-msg: Време на декодирање на видеото:
-
-id: Video queue len:
-msg: Видео колона:
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Поглавје: %d
-
-id: Title: %d
-msg: Наслов: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Домен
@@ -474,28 +487,65 @@ id: Username
 msg: Корисничко име
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Откажи
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: Не, од почеток
 
-id: Resume %s from %s
-msg: Продолжи %s од %s
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Да 
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: Нема вчитан медиум
+id: OK
+msg: Во ред
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: CPU Температура
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: Фрагментација
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: GPU Температура
@@ -503,11 +553,24 @@ msg: GPU Температура
 id: HDD Avail
 msg: HDD на располагање
 
-id: Inactive mem
-msg: Слободна мем
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Искористена мем
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: Слободно за системот
@@ -515,14 +578,30 @@ msg: Слободно за системот
 id: System Total
 msg: Тотално
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Без тон
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Јачина: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -535,9 +614,6 @@ msg: Уредот не е достапен
 
 id: Movians for remote control
 msg: Достапни Movian-и за далечно управување
-
-id: Remote control
-msg: Далечински управувач
 
 #
 # ./src/api/tmdb.c
@@ -613,12 +689,6 @@ msg: DTS Пропуштање
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: Исклучено
-
-id: On
-msg: Вклучено
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -722,6 +792,9 @@ msg: Торент сидери
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: BitTorrent
+
 id: Clear cache
 msg: Испразни кеш
 
@@ -845,20 +918,15 @@ msg: Барај преку Unix Locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: Албуми
-
-id: Artists
-msg: Изведувач
-
 id: Deleted %s
 msg: %s е иѕбришан
 
 id: Filename
 msg: Име на датотека
 
-id: Indexed mode
-msg: Режим на индексирање
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 msg: Почни од најновите
@@ -890,17 +958,11 @@ msg: Барај преку Spotlight
 id: Are you sure you want to delete:
 msg: Дали сакаш да го избришиш:
 
-id: BitTorrent
-msg: BitTorrent
-
 id: Browse archives as folders
 msg: Пребарувај ги архивите како папки
 
 id: Enable file deletion from item menu
 msg: Овозможи бришење датотеки директно од менито
-
-id: File browsing
-msg: Пребарување датотеки
 
 id: Show filename extensions
 msg: Покажи го типот на датотеката
@@ -1217,9 +1279,6 @@ msg: Друго
 id: Photos
 msg: Слики
 
-id: Remove bookmark
-msg: Избриши обележувач
-
 id: Removed %s from homepage
 msg: %s е избришан од почетниот екран
 
@@ -1237,6 +1296,9 @@ msg: Тип
 
 id: URL
 msg: URL
+
+id: Video
+msg: Видео
 
 #
 # ./src/networking/connman.c
@@ -1275,10 +1337,29 @@ id: Standby
 msg: Во мирување
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: Алтернативен URL за додатоци
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Автоматско ажурирање на податоци
@@ -1318,6 +1399,9 @@ msg: Датотеката не може да се отвори
 
 id: Home page
 msg: Почетен екран
+
+id: Images
+msg: Слики
 
 id: Installed
 msg: Инсталирано
@@ -1436,9 +1520,6 @@ msg: Откажи
 id: SSH server
 msg: SSH сервер
 
-id: Starting and stopping
-msg: Пуштање и гаснење
-
 #
 # ./src/sd/sd.c
 #
@@ -1475,6 +1556,9 @@ msg: Поставки за развивачи
 id: Discovered media sources
 msg: Пронајдени медиумски извори
 
+id: File browsing
+msg: Пребарување датотеки
+
 id: Fonts and user interface styling
 msg: Фонт и изглед на интерфејсот
 
@@ -1493,8 +1577,18 @@ msg: Мрежни сервиси, итн.
 id: Network settings
 msg: Мрежни поставки
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Поставки корисни за развивачи
+
+id: Software upgrade
+msg: Надградување на софтвер
+
+id: Starting and stopping
+msg: Пуштање и гаснење
 
 id: System name
 msg: Име на системот
@@ -1616,14 +1710,25 @@ msg: Фонтот: %s не може да се инсталира
 id: Use font %s for
 msg: Користи го фонтот %s за
 
-id: User interface
-msg: Кориснички интерфејс
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
 msg: Dual-Shock контролер
+
+id: No
+msg: Не
 
 id: Seek using L2 and R2 button
 msg: Пребарувај користејќи  ги L2 и R2 копчињата
@@ -1730,8 +1835,8 @@ msg: Обавести ме за достапни надградувања
 id: Open download page
 msg: Отвори ја страната за превземање
 
-id: Software upgrade
-msg: Надградување на софтвер
+id: System
+msg: Систем
 
 id: Upgrade to releases from
 msg: Надгради од
@@ -1816,4 +1921,8 @@ msg: Горе / Долу за време на емитување контрол�
 
 id: Video acceleration and display behaviour
 msg: Видео запамтените и поставки на иѕглед
+
+id: Video buffer size
+# Missing translation
+msg: 
 

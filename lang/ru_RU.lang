@@ -2,91 +2,66 @@ language: Russian
 native: Русский 
 maintainer: pvc1 <pvc1@yandex.ru> 
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: Добавить текущую страницу в закладки
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: Открыть настройки
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: Удалить текущую страницу из закладок
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: Включить таймер сна
-
-id: Disable sleep timer
-msg: Выключить таймер сна
-
-id: Exit %s
-msg: Выход
-
-id: Go to Home screen
-msg: Перейти на главный экран
-
-id: Hide system info
-msg: Скрыть системную информацию
-
-id: Master volume
-msg: Общая громкость
-
-id: Navigation
-msg: Навигация
-
-id: Open Settings
-msg: Открыть настройки
-
-id: Playqueue
-msg: Очередь воспроизведения
-
-id: Power off
-msg: Отключить систему
-
-id: Reload current page
-msg: Перезагрузить текущую страницу
-
-id: Show system info
-msg: Показать системную информацию
-
-id: Suspend
-msg: Отключить систему
-
-id: System
-msg: Система
-
-id: Time until sleep
-msg: Время до сна
-
-id: dB
-msg: дБ
-
-id: min
-msg: мин
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: Добавить '%s' на главный экран
-
-id: Remove '%s' from home screen
-msg: Удалить '%s' с главного экрана
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: Продолжить с %s
-
-id: Continue playback here
-msg: Продолжить воспроизведение здесь
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: Удалить
+
+id: Queue
+msg: Очередь
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: Доступные версии:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: Установка
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: Удаление
+
+id: Upgrade
+msg: Обновление
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Продолжить с %s
 
 id: Mark as seen
 msg: Пометить как воспроизведённое
@@ -100,56 +75,58 @@ msg: Воспроизведение с начала
 id: Play until end of list
 msg: Воспроизведение до конца списка
 
-id: Queue
-msg: Очередь
-
-id: Star
-msg: Пометить
-
-id: Unstar
-msg: Снять метку
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: Аудио
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: Настройки аудио
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: Аудио дорожки
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Добавить новую запись
 
-id: Chapters
-msg: Главы
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Выкл
 
-id: Seek by time
-msg: Поиск по времени
+id: On
+msg: Вкл
 
-id: Settings
-msg: Настройки
-
-id: Subtitle settings
-msg: Настройки субтитров
-
-id: Subtitle tracks
-msg: Дорожки субтитров
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Сжатый
 
 id: Subtitles
 msg: Субтитры
 
-id: Video
-msg: Видео
-
-id: Video menu
-msg: Меню видео
-
-id: Video settings
-msg: Настройки видео
+id: User interface
+msg: Пользовательский интерфейс
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d кб/с
@@ -158,31 +135,160 @@ id: Bitrate:
 msg: Битрейт:
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: Системный лог
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: Отмена
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: Очистить
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: Медиа-файл не загружен
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+msg: Удалить закладку
+
+id: Settings
+msg: Настройки
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Включить таймер сна
+
+id: Disable sleep timer
+msg: Выключить таймер сна
+
+id: Exit %s
+msg: Выход
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: Скрыть системную информацию
+
+id: Master volume
+msg: Общая громкость
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: Показать системную информацию
+
+id: Suspend
+msg: Отключить систему
+
+id: Time until sleep
+msg: Время до сна
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: дБ
+
+id: min
+msg: мин
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Аудио
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Настройки аудио
+
+id: Subtitle settings
+msg: Настройки субтитров
+
+id: Video settings
+msg: Настройки видео
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: По умолчанию 
 
 id: Keyboard layout:
 msg: Раскладка клавиатуры:
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: Альбом
@@ -193,156 +299,132 @@ msg: Исполнитель
 id: Custom
 msg: Пользовательский
 
-id: Images
-msg: Изображения
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: Список
 
-id: Slideshow
-msg: Слайд-шоу
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: ТВ-каналы
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: Вид
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: Обнаруженные ресурсы в локальной сети
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: Плитка
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: Приложения
-
 id: Dismiss
 msg: Отклонить
 
-id: Search / Open URL
-msg: Найти / Открыть URL
+id: Home
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: Камера:
-
-id: Date: 
-msg: Дата:
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: %s %s or newer is required
-msg: Требуется %s %s или новее
-
-id: Author: 
-msg: Автор:
-
-id: Available version: 
-msg: Доступная версия:
-
-id: Installed version: 
-msg: Установленная версия:
+id: Playqueue
+msg: Очередь воспроизведения
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: Продолжительность:
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: Дата файла:
-
-id: Genre:
-msg: Жанр:
-
-id: Metadata from
-msg: Метаданные от
-
-id: Rating:
-msg: Рейтинг:
-
-id: Year:
-msg: Год:
-
-id: Seen %d times
-msg[0]: Воспроизведено раз: %d
-msg[1]: Воспроизведено раз: %d
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: Добавить новую запись
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: No
-msg: Нет
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Yes
-msg: Дa
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: Сжатый
-
-id: Main
-msg: Основной
-
-id: Subs
-msg: Субтитры
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Install
-msg: Установка
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: Удаление
-
-id: Upgrade
-msg: Обновление
+id: Remote control
+msg: Дистанционное управление
 
 #
-# ./glwskins/default/pages/openerror.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Unable to open %s
-msg: Невозможно открыть %s
+id: Audio tracks
+msg: Аудио дорожки
 
-id: resource
-msg: ресурс
+id: Audio volume adjustment: %d dB
+msg: Регулировка громкости аудио: %d дБ
+
+id: CPU is too slow to decode this video
+msg: CPU является слишком медленным для декодирования видео
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/tvseason.view
 #
-id: Track %d / %d
-msg: Трек %d / %d
+id: Season %d
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
-#
-id: Paused
-msg: Пауза 
-
-#
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s является актуальной
@@ -350,26 +432,22 @@ msg: %s является актуальной
 id: An error occured during download
 msg: Произошла ошибка во время загрузки
 
-id: Available version:
-msg: Доступные версии:
-
 id: Changelog for %s releases
 msg: Лог изменений для релиза %s
 
 id: Check for updates now
 msg: Проверить обновления сейчас
 
-id: Checking for updates...
-msg: Проверка обновлений...
-
-id: Checking installed version of %s
-msg: Проверка установленной версии %s
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Текущая версия:
 
-id: Download and install...
-msg: Загрузить и установить...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: Загрузка %s
@@ -380,14 +458,9 @@ msg: Новая версия %s доступна для загрузки
 id: No upgrade available
 msg: Нет обновлений
 
-id: Patching %s
-msg: Исправление %s
-
-id: Restarting %s in %d seconds...
-msg: Перезапуск %s через %d секунд...
-
-id: Retry...
-msg: Повторить ...
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: Стабильный
@@ -399,67 +472,7 @@ id: Unable to query for new version
 msg: Невозможно проверить новую версию
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: A/V смещение:
-
-id: Audio codec:
-msg: Аудиокодек:
-
-id: Audio queue len:
-msg: Очередь аудио сервера:
-
-id: Audio volume adjustment: %d dB
-msg: Регулировка громкости аудио: %d дБ
-
-id: CPU is too slow to decode this video
-msg: CPU является слишком медленным для декодирования видео
-
-id: Download speed:
-msg: Скорость загрузки:
-
-id: Packet buffer:
-msg: Пакет буферизации:
-
-id: Playback status
-msg: Статус воспроизведения
-
-id: Remaining buffer:
-msg: Остаток буферизации:
-
-id: Remote queue drops:
-msg: Пакеты сервера:
-
-id: Remote queue len:
-msg: Буферизация сервера:
-
-id: Source:
-msg: Источник:
-
-id: Video bitrate:
-msg: Видео битрейт:
-
-id: Video codec:
-msg: Видеокодек:
-
-id: Video decode time:
-msg: Время видеодекодирования:
-
-id: Video queue len:
-msg: Видео буферизация сервера:
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: Раздел: %d
-
-id: Title: %d
-msg: Глава: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: Домен
@@ -474,28 +487,65 @@ id: Username
 msg: Имя пользователя
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Отмена
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: Нет, начать сначала
 
-id: Resume %s from %s
-msg: Возобновить %s с %s
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: Дa
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: Медиа-файл не загружен
+id: OK
+msg: OK
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: Температура CPU
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: Фрагментация
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: Температура GPU
@@ -503,11 +553,24 @@ msg: Температура GPU
 id: HDD Avail
 msg: HDD доступ 
 
-id: Inactive mem
-msg: Неактивная память
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Использование памяти
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: Свободно
@@ -515,14 +578,30 @@ msg: Свободно
 id: System Total
 msg: Всего
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: Звук выключен
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: Общая громкость: %d дБ
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -535,9 +614,6 @@ msg: Устройство недоступно
 
 id: Movians for remote control
 msg: Movians для дистанционного управления
-
-id: Remote control
-msg: Дистанционное управление
 
 #
 # ./src/api/tmdb.c
@@ -613,12 +689,6 @@ msg: DTS Pass-Through
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: Выкл
-
-id: On
-msg: Вкл
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -722,6 +792,9 @@ msg: Торрент сидеры
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: BitTorrent
+
 id: Clear cache
 msg: Очистка кэша
 
@@ -845,20 +918,15 @@ msg: Поиск с использованием Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: Альбомы
-
-id: Artists
-msg: Артисты
-
 id: Deleted %s
 msg: Удалено: %s
 
 id: Filename
 msg: Имя файла
 
-id: Indexed mode
-msg: Индексированный режим
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 msg: Сначала новые
@@ -890,17 +958,11 @@ msg: Поиск с использованием spotlight
 id: Are you sure you want to delete:
 msg: Вы уверены, что хотите удалить:
 
-id: BitTorrent
-msg: BitTorrent
-
 id: Browse archives as folders
 msg: Просмотр архивов как папок
 
 id: Enable file deletion from item menu
 msg: Включить удаление файла из пункта меню
-
-id: File browsing
-msg: Просмотр файлов
 
 id: Show filename extensions
 msg: Отображать расширения у файлов
@@ -1217,9 +1279,6 @@ msg: Прочее
 id: Photos
 msg: Фото
 
-id: Remove bookmark
-msg: Удалить закладку
-
 id: Removed %s from homepage
 msg: %s удалено с главного экрана
 
@@ -1237,6 +1296,9 @@ msg: Тип
 
 id: URL
 msg: URL
+
+id: Video
+msg: Видео
 
 #
 # ./src/networking/connman.c
@@ -1275,10 +1337,29 @@ id: Standby
 msg: Режим ожидания
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: Альтернативный URL-репозитория плагинов
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: Автоматическое обновление плагинов
@@ -1318,6 +1399,9 @@ msg: Ошибка при открытии файла
 
 id: Home page
 msg: Главный экран
+
+id: Images
+msg: Изображения
 
 id: Installed
 msg: Установлено
@@ -1436,9 +1520,6 @@ msg: Выход
 id: SSH server
 msg: SSH-сервер
 
-id: Starting and stopping
-msg: Запуск и остановка
-
 #
 # ./src/sd/sd.c
 #
@@ -1475,6 +1556,9 @@ msg: Настройки для разработчиков
 id: Discovered media sources
 msg: Обнаруженные медиа источники
 
+id: File browsing
+msg: Просмотр файлов
+
 id: Fonts and user interface styling
 msg: Шрифты и интерфейс пользователя
 
@@ -1493,8 +1577,18 @@ msg: Сетевые услуги и т.п.
 id: Network settings
 msg: Сетевые настройки
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
+
+id: Software upgrade
+msg: Обновление ПО
+
+id: Starting and stopping
+msg: Запуск и остановка
 
 id: System name
 msg: Имя системы
@@ -1616,14 +1710,25 @@ msg: Невозможно установить шрифт: %s
 id: Use font %s for
 msg: Использовать шрифт %s для
 
-id: User interface
-msg: Пользовательский интерфейс
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
 msg: Удаленное управление Dual-Shock
+
+id: No
+msg: Нет
 
 id: Seek using L2 and R2 button
 msg: Перемотка видео кнопками L2 и R2
@@ -1730,8 +1835,8 @@ msg: Уведомлять об обновлениях
 id: Open download page
 msg: Открыть страницу загрузки
 
-id: Software upgrade
-msg: Обновление ПО
+id: System
+msg: Система
 
 id: Upgrade to releases from
 msg: Обновление до релиза
@@ -1816,4 +1921,8 @@ msg: Контроль вверх/вниз во время воспроизвед
 
 id: Video acceleration and display behaviour
 msg: Ускорение видео и поведение изображения
+
+id: Video buffer size
+# Missing translation
+msg: 
 

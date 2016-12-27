@@ -2,91 +2,66 @@ language: Japanese
 native: 日本語
 maintainer: Kyan_dudl 
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: このページをブックマークに追加
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: 設定画面を開く
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: このページをブックマークから削除
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: スリープタイマーを有効にする
-
-id: Disable sleep timer
-msg: スリープタイマーを無効にする
-
-id: Exit %s
-msg: %sを終了する
-
-id: Go to Home screen
-msg: ホームに戻る
-
-id: Hide system info
-msg: システム情報を非表示にする
-
-id: Master volume
-msg: 主音量
-
-id: Navigation
-msg: ナビゲーション
-
-id: Open Settings
-msg: 設定画面を開く
-
-id: Playqueue
-msg: キューを再生する
-
-id: Power off
-msg: 電源を切る
-
-id: Reload current page
-msg: 現在のページを再読み込み
-
-id: Show system info
-msg: システム情報を表示する
-
-id: Suspend
-msg: サスペンド
-
-id: System
-msg: システム
-
-id: Time until sleep
-msg: スリープまでの時間
-
-id: dB
-msg: dB
-
-id: min
-msg: min
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: '%s' をホームに追加
-
-id: Remove '%s' from home screen
-msg: '%s' をホームから削除
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: %s から再生
-
-id: Continue playback here
-msg: ここから再生
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: 削除
+
+id: Queue
+msg: キューに追加
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: 利用可能なバージョン:
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: インストール
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: アンインストール
+
+id: Upgrade
+msg: アップグレード
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: %s から再生
 
 id: Mark as seen
 msg: 再生済みにする
@@ -100,56 +75,58 @@ msg: 最初から再生
 id: Play until end of list
 msg: リストを最後まで再生
 
-id: Queue
-msg: キューに追加
-
-id: Star
-msg: お気に入りに追加
-
-id: Unstar
-msg: お気に入りから削除
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: オーディオ
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: オーディオ設定
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: オーディオトラック
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: 新規作成
 
-id: Chapters
-msg: チャプター
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: オフ
 
-id: Seek by time
-msg: シーク
+id: On
+msg: オン
 
-id: Settings
-msg: 設定
-
-id: Subtitle settings
-msg: 字幕設定
-
-id: Subtitle tracks
-msg: 字幕トラック
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: コンデンス
 
 id: Subtitles
 msg: 字幕設定
 
-id: Video
-msg: ビデオ
-
-id: Video menu
-msg: ビデオメニュー
-
-id: Video settings
-msg: ビデオ設定
+id: User interface
+msg: ユーザーインターフェース
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d kb/s
@@ -158,31 +135,161 @@ id: Bitrate:
 msg: ビットレート:
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: システムログ
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: 中止
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: クリア
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: No media loaded
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+# Missing translation
+msg: 
+
+id: Settings
+msg: 設定
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: スリープタイマーを有効にする
+
+id: Disable sleep timer
+msg: スリープタイマーを無効にする
+
+id: Exit %s
+msg: %sを終了する
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: システム情報を非表示にする
+
+id: Master volume
+msg: 主音量
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: システム情報を表示する
+
+id: Suspend
+msg: サスペンド
+
+id: Time until sleep
+msg: スリープまでの時間
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: オーディオ
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: オーディオ設定
+
+id: Subtitle settings
+msg: 字幕設定
+
+id: Video settings
+msg: ビデオ設定
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: デフォルト
 
 id: Keyboard layout:
 msg: キーボードレイアウト:
 
-id: OK
-msg: OK
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: アルバム
@@ -193,156 +300,133 @@ msg: アーティスト
 id: Custom
 msg: カスタム
 
-id: Images
-msg: 画像
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: リスト
 
-id: Slideshow
-msg: スライドショー
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: TVチャンネル
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: 表示形式
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: ローカルネットワーク上のリソース
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: タイル
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: アプリケーション
-
 id: Dismiss
 msg: 消去
 
-id: Search / Open URL
-msg: 検索 / URLを表示
+id: Home
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: カメラ:
-
-id: Date: 
-msg: 日付:
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: %s %s or newer is required
-msg: %s %s 以降が必要です。
-
-id: Author: 
-msg: 作者:
-
-id: Available version: 
-msg: 利用可能なバージョン:
-
-id: Installed version: 
-msg: 現在のバージョン:
+id: Playqueue
+msg: キューを再生する
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: デュレーション:
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: 作成日時:
-
-id: Genre:
-msg: ジャンル:
-
-id: Metadata from
-msg: メタデータ:
-
-id: Rating:
-msg: レーティング:
-
-id: Year:
-msg: 年:
-
-id: Seen %d times
-msg[0]: 再生回数: %d 回
-msg[1]: 再生回数: %d 回
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: 新規作成
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: No
-msg: いいえ
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Yes
-msg: はい
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: コンデンス
-
-id: Main
-msg: メイン
-
-id: Subs
-msg: 字幕
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Install
-msg: インストール
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: アンインストール
-
-id: Upgrade
-msg: アップグレード
-
-#
-# ./glwskins/default/pages/openerror.view
-#
-id: Unable to open %s
-msg: %s を開けません。
-
-id: resource
-msg: リソース
+id: Remote control
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Track %d / %d
-msg: トラック %d / %d
+id: Audio tracks
+msg: オーディオトラック
+
+id: Audio volume adjustment: %d dB
+msg: オーディオ音量: %d dB
+
+id: CPU is too slow to decode this video
+msg: このビデオを再生するにはCPUのデコード速度が遅すぎます。
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
+# ./glwskins/flat/pages/tvseason.view
 #
-id: Paused
-msg: ポーズ
+id: Season %d
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s は最新です。
@@ -350,26 +434,22 @@ msg: %s は最新です。
 id: An error occured during download
 msg: ダウンロード中にエラーが発生しました。
 
-id: Available version:
-msg: 利用可能なバージョン:
-
 id: Changelog for %s releases
 msg: %s のアップデート内容
 
 id: Check for updates now
 msg: 最新のアップデートを確認する
 
-id: Checking for updates...
-msg: アップデートを確認中です...
-
-id: Checking installed version of %s
-msg: %s の現在のバージョンを確認
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: 現在のバージョン:
 
-id: Download and install...
-msg: ダウンロードデータをインストールします...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: ダウンロード中 %s
@@ -380,14 +460,9 @@ msg: %s の最新版をダウンロードできます。
 id: No upgrade available
 msg: 更新はありません。
 
-id: Patching %s
-msg: 更新中 %s
-
-id: Restarting %s in %d seconds...
-msg: 再起動中 %s %d 秒...
-
-id: Retry...
-msg: 再試行...
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: Stable
@@ -399,67 +474,7 @@ id: Unable to query for new version
 msg: 最新のバージョンが確認できません。
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: A/V diff:
-
-id: Audio codec:
-msg: オーディオコーデック:
-
-id: Audio queue len:
-msg: オーディオキューの長さ:
-
-id: Audio volume adjustment: %d dB
-msg: オーディオ音量: %d dB
-
-id: CPU is too slow to decode this video
-msg: このビデオを再生するにはCPUのデコード速度が遅すぎます。
-
-id: Download speed:
-msg: ダウンロード速度:
-
-id: Packet buffer:
-msg: パケットバッファ:
-
-id: Playback status
-msg: 再生情報
-
-id: Remaining buffer:
-msg: 残りバッファ:
-
-id: Remote queue drops:
-msg: 廃棄されたリモートキュー:
-
-id: Remote queue len:
-msg: リモートキュー:
-
-id: Source:
-msg: ソース:
-
-id: Video bitrate:
-msg: ビデオビットレート:
-
-id: Video codec:
-msg: ビデオコーデック:
-
-id: Video decode time:
-msg: デコード時間:
-
-id: Video queue len:
-msg: ビデオキューの長さ:
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: チャプター: %d
-
-id: Title: %d
-msg: タイトル: %d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: ドメイン
@@ -474,28 +489,65 @@ id: Username
 msg: ユーザーネーム
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: 中止
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: 始めから再生
 
-id: Resume %s from %s
-msg: リジューム再生 %s 開始位置 %s
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: はい
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: No media loaded
+id: OK
+msg: OK
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: CPU温度
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: フラグメンテーション
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: GPU温度
@@ -503,11 +555,24 @@ msg: GPU温度
 id: HDD Avail
 msg: HDD空き容量
 
-id: Inactive mem
-msg: 非アクティブメモリ
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: メモリ使用量
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: システム空き容量
@@ -515,14 +580,30 @@ msg: システム空き容量
 id: System Total
 msg: システム容量
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: ミュート
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: 主音量: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -536,10 +617,6 @@ id: Device not available
 msg: 
 
 id: Movians for remote control
-# Missing translation
-msg: 
-
-id: Remote control
 # Missing translation
 msg: 
 
@@ -617,12 +694,6 @@ msg: DTSパススルー
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: オフ
-
-id: On
-msg: オン
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -726,6 +797,9 @@ msg: シーダー
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: ビットトレント
+
 id: Clear cache
 msg: キャッシュをクリアする
 
@@ -851,20 +925,15 @@ msg: Unix locatedb を使用して検索
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: アルバム
-
-id: Artists
-msg: アーティスト
-
 id: Deleted %s
 msg: %s を削除しました。
 
 id: Filename
 msg: ファイル名順
 
-id: Indexed mode
-msg: インデックスモード
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 msg: 作成日時順(降順)
@@ -896,17 +965,11 @@ msg: spotlightで検索
 id: Are you sure you want to delete:
 msg: 本当に削除しますか？:
 
-id: BitTorrent
-msg: ビットトレント
-
 id: Browse archives as folders
 msg: フォルダとアーカイブを閲覧する
 
 id: Enable file deletion from item menu
 msg: ファイルの削除を有効にする
-
-id: File browsing
-msg: ファイルブラウザ設定
 
 id: Show filename extensions
 msg: ファイルの拡張子を表示する
@@ -1223,10 +1286,6 @@ msg: その他
 id: Photos
 msg: フォト
 
-id: Remove bookmark
-# Missing translation
-msg: 
-
 id: Removed %s from homepage
 msg: ホームページから %s を削除
 
@@ -1244,6 +1303,9 @@ msg: 種類
 
 id: URL
 msg: URL
+
+id: Video
+msg: ビデオ
 
 #
 # ./src/networking/connman.c
@@ -1285,10 +1347,29 @@ id: Standby
 msg: スタンバイ
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: プラグインリポジトリのURL
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: プラグイン自動アップグレードを有効にする
@@ -1328,6 +1409,9 @@ msg: ファイルを開けません。
 
 id: Home page
 msg: ホームページ
+
+id: Images
+msg: 画像
 
 id: Installed
 # Missing translation
@@ -1448,9 +1532,6 @@ msg: 終了
 id: SSH server
 msg: SSHサーバー
 
-id: Starting and stopping
-msg: 起動 / 終了設定
-
 #
 # ./src/sd/sd.c
 #
@@ -1488,6 +1569,9 @@ msg: 開発者向け設定
 id: Discovered media sources
 msg: 接続中のデバイス
 
+id: File browsing
+msg: ファイルブラウザ設定
+
 id: Fonts and user interface styling
 msg: フォントやインターフェースなどスタイリングに関する設定です。
 
@@ -1506,8 +1590,18 @@ msg: ネットワークサービスなどを設定します。
 id: Network settings
 msg: ネットワーク設定
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: 開発者向けオプション
+
+id: Software upgrade
+msg: ソフトウェアアップグレード
+
+id: Starting and stopping
+msg: 起動 / 終了設定
 
 id: System name
 msg: 機器名称
@@ -1629,14 +1723,25 @@ msg: %s フォントはインストールできません。
 id: Use font %s for
 msg: %s フォントを使用してください。: 
 
-id: User interface
-msg: ユーザーインターフェース
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
 msg: デュアルショックリモート
+
+id: No
+msg: いいえ
 
 id: Seek using L2 and R2 button
 msg: L2 / R2 ボタンをシークに割り当てる
@@ -1744,8 +1849,8 @@ msg: アップグレード通知を受け取る
 id: Open download page
 msg: ダウンロードページを開く
 
-id: Software upgrade
-msg: ソフトウェアアップグレード
+id: System
+msg: システム
 
 id: Upgrade to releases from
 msg: 適用するアップグレードのバージョン
@@ -1830,4 +1935,8 @@ msg: ビデオ再生中の音量調整
 
 id: Video acceleration and display behaviour
 msg: アクセラレーションとディスプレイ表示の設定をします。
+
+id: Video buffer size
+# Missing translation
+msg: 
 

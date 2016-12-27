@@ -2,91 +2,66 @@
 native: 简体中文
 maintainer: Rural Hunter<ruralhunter@gmail.com>
 #
-# ./glwskins/default/cmdmenu.view
+# ./glwskins/flat/ctxmenu/default_details.view
 #
-id: Add current page to bookmarks
-msg: 将当前页面加入书签
+id: Bookmark
+# Missing translation
+msg: 
 
-id: Open settings
-msg: 打开设置
+id: Bookmarked
+# Missing translation
+msg: 
 
-id: Remove current page from bookmarks
-msg: 将当前页从书签删除
+id: Copy to clipboard
+# Missing translation
+msg: 
 
-#
-# ./glwskins/default/cmdmenu/cmdmenu_common.view
-#
-id: Activate sleep timer
-msg: 启用定时关机
-
-id: Disable sleep timer
-msg: 禁用定时关机
-
-id: Exit %s
-msg: 退出%s
-
-id: Go to Home screen
-msg: 转至首页
-
-id: Hide system info
-msg: 隐藏系统信息
-
-id: Master volume
-msg: 主音量
-
-id: Navigation
-msg: 导航
-
-id: Open Settings
-msg: 打开设置
-
-id: Playqueue
-msg: 播放队列
-
-id: Power off
-msg: 关机
-
-id: Reload current page
-msg: 刷新
-
-id: Show system info
-msg: 显示系统信息
-
-id: Suspend
-msg: 关机
-
-id: System
-msg: 系统
-
-id: Time until sleep
-msg: 直到关机
-
-id: dB
-msg: dB
-
-id: min
-msg: 最小
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_dir.view
-#
-id: Add '%s' to home screen
-msg: 将'%s'加进首页
-
-id: Remove '%s' from home screen
-msg: 将'%s'从首页移除
-
-#
-# ./glwskins/default/cmdmenu/cmdmenu_item.view
-#
-id: Continue from %s
-msg: 从'%s'继续
-
-id: Continue playback here
-msg: 从当前位置继续
+id: Copy to location...
+# Missing translation
+msg: 
 
 id: Delete
 msg: 删除
+
+id: Queue
+msg: 队列
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+# Missing translation
+msg: 
+
+id: Available version:
+msg: 可用版本
+
+id: Changelog
+# Missing translation
+msg: 
+
+id: Install
+msg: 安装
+
+id: Installed version:
+# Missing translation
+msg: 
+
+id: Status:
+# Missing translation
+msg: 
+
+id: Uninstall
+msg: 卸载
+
+id: Upgrade
+msg: 升级
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: 从'%s'继续
 
 id: Mark as seen
 msg: 标记为已播放
@@ -100,56 +75,58 @@ msg: 从头播放
 id: Play until end of list
 msg: 播放至列表末尾
 
-id: Queue
-msg: 队列
-
-id: Star
-msg: 加星
-
-id: Unstar
-msg: 去星
+id: Video Cast
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/flat/items/details/video.view
 #
-id: Audio
-msg: 音频
+id: Season %d - Episode %d
+# Missing translation
+msg: 
 
-id: Audio settings
-msg: 音频设置
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
 
-id: Audio tracks
-msg: 音轨
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: 新增
 
-id: Chapters
-msg: 章节
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: 关闭
 
-id: Seek by time
-msg: 按时间跳转
+id: On
+msg: 启用
 
-id: Settings
-msg: 设置
-
-id: Subtitle settings
-msg: 字幕设置
-
-id: Subtitle tracks
-msg: 字幕
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: 紧凑
 
 id: Subtitles
 msg: 字幕
 
-id: Video
-msg: 视频
-
-id: Video menu
-msg: 视频菜单
-
-id: Video settings
-msg: 视频设置
+id: User interface
+msg: 用户界面
 
 #
-# ./glwskins/default/loading.view
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/loading.view
 #
 id: %d kb/s
 msg: %d kb/s
@@ -158,31 +135,160 @@ id: Bitrate:
 msg: 码率
 
 #
-# ./glwskins/default/log.view
+# ./glwskins/flat/log.view
 #
 id: System log
 msg: 系统日志
 
 #
-# ./glwskins/default/osk.view
+# ./glwskins/flat/mediainfo.view
 #
-id: Cancel
-msg: 取消
+id: A/V diff
+# Missing translation
+msg: 
 
-id: Clear
-msg: 清除
+id: Audio bitrate
+# Missing translation
+msg: 
 
+id: Audio codec
+# Missing translation
+msg: 
+
+id: Audio packets
+# Missing translation
+msg: 
+
+id: Buffer usage
+# Missing translation
+msg: 
+
+id: No media loaded
+msg: 未载入媒体
+
+id: Remaining buffer
+# Missing translation
+msg: 
+
+id: Source
+# Missing translation
+msg: 
+
+id: Video bitrate
+# Missing translation
+msg: 
+
+id: Video codec
+# Missing translation
+msg: 
+
+id: Video framerate
+# Missing translation
+msg: 
+
+id: Video packets
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+# Missing translation
+msg: 
+
+id: Page settings
+# Missing translation
+msg: 
+
+id: Paste
+# Missing translation
+msg: 
+
+id: Reload page
+# Missing translation
+msg: 
+
+id: Remove bookmark
+msg: 移除书签
+
+id: Settings
+msg: 设置
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: 启用定时关机
+
+id: Disable sleep timer
+msg: 禁用定时关机
+
+id: Exit %s
+msg: 退出%s
+
+id: Hide media info
+# Missing translation
+msg: 
+
+id: Hide system info
+msg: 隐藏系统信息
+
+id: Master volume
+msg: 主音量
+
+id: Show media info
+# Missing translation
+msg: 
+
+id: Show system info
+msg: 显示系统信息
+
+id: Suspend
+msg: 关机
+
+id: Time until sleep
+msg: 直到关机
+
+id: View log
+# Missing translation
+msg: 
+
+id: dB
+msg: dB
+
+id: min
+msg: 最小
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: 音频
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: 音频设置
+
+id: Subtitle settings
+msg: 字幕设置
+
+id: Video settings
+msg: 视频设置
+
+#
+# ./glwskins/flat/osk.view
+#
 id: Default
 msg: 默认
 
 id: Keyboard layout:
 msg: 键盘布局：
 
-id: OK
-msg: 确定
-
 #
-# ./glwskins/default/pages/directory.view
+# ./glwskins/flat/pages/directory.view
 #
 id: Album
 msg: 专辑
@@ -193,156 +299,132 @@ msg: 艺术家
 id: Custom
 msg: 定制
 
-id: Images
-msg: 图像
+id: Grid
+# Missing translation
+msg: 
 
 id: List
 msg: 列表
 
-id: Slideshow
-msg: 幻灯片演示
+id: Page layout
+# Missing translation
+msg: 
 
-id: Tvchannels
-msg: 电视频道
+id: Search results
+# Missing translation
+msg: 
 
-id: View
-msg: 视图
-
-#
-# ./glwskins/default/pages/discovered.view
-#
-id: Discovered resources on local network
-msg: 从本地网络检索资源
+id: TV Season
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home.view
+# ./glwskins/flat/pages/empty.view
 #
-id: Tiled
-msg: 平铺
+id: No contents
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/home_clist.view
+# ./glwskins/flat/pages/home.view
 #
-id: Apps
-msg: 应用
-
 id: Dismiss
 msg: 删除
 
-id: Search / Open URL
-msg: 查找/打开URL
+id: Home
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/image.view
+# ./glwskins/flat/pages/openerror.view
 #
-id: Camera: 
-msg: 相机
-
-id: Date: 
-msg: 日期
+id: Unable to open resource
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/iteminfo/plugin.view
+# ./glwskins/flat/pages/playqueue.view
 #
-id: %s %s or newer is required
-msg: 需要%s %s或更新版本
-
-id: Author: 
-msg: 作者
-
-id: Available version: 
-msg: 可用版本
-
-id: Installed version: 
-msg: 已安装版本
+id: Playqueue
+msg: 播放队列
 
 #
-# ./glwskins/default/pages/iteminfo/video.view
+# ./glwskins/flat/pages/searchresults.view
 #
-id: Duration:
-msg: 时长
+id: Show more
+# Missing translation
+msg: 
 
-id: File date:
-msg: 文件日期
-
-id: Genre:
-msg: 类型
-
-id: Metadata from
-msg: 元信息源自
-
-id: Rating:
-msg: 评分
-
-id: Year:
-msg: 年份
-
-id: Seen %d times
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
 msg[0]: 
 msg[1]: 
 
 #
-# ./glwskins/default/pages/listitems/add.view
+# ./glwskins/flat/pages/slideshow.view
 #
-id: Add new entry
-msg: 新增
+id: Interval: %ds
+# Missing translation
+msg: 
+
+id: Play/Pause
+# Missing translation
+msg: 
+
+id: Stop
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/bool.view
+# ./glwskins/flat/pages/stpp.view
 #
-id: No
-msg: 否
+id: Remote control - %s
+# Missing translation
+msg: 
 
-id: Yes
-msg: 是
-
-#
-# ./glwskins/default/pages/listitems/font.view
-#
-id: Condensed
-msg: 紧凑
-
-id: Main
-msg: 全局
-
-id: Subs
-msg: 字幕
+id: Remote controlling %s
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/listitems/plugin.view
+# ./glwskins/flat/pages/stppstpp.view
 #
-id: Install
-msg: 安装
+id: Nested remote controll is not supported
+# Missing translation
+msg: 
 
-id: Uninstall
-msg: 卸载
-
-id: Upgrade
-msg: 升级
+id: Remote control
+msg: 远程控制
 
 #
-# ./glwskins/default/pages/openerror.view
+# ./glwskins/flat/pages/stppvideo.view
 #
-id: Unable to open %s
-msg: 无法打开%s
+id: Audio tracks
+msg: 音轨
 
-id: resource
-msg: 资源
+id: Audio volume adjustment: %d dB
+msg: 音量调整：%d dB
+
+id: CPU is too slow to decode this video
+msg: 当前视频CPU解码过慢
+
+id: Next
+# Missing translation
+msg: 
+
+id: Previous
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/playqueue.view
+# ./glwskins/flat/pages/tvseason.view
 #
-id: Track %d / %d
-msg: 轨道 %d / %d
+id: Season %d
+# Missing translation
+msg: 
 
 #
-# ./glwskins/default/pages/slideshow.view
-#
-id: Paused
-msg: 已暂停
-
-#
-# ./glwskins/default/pages/upgrade.view
+# ./glwskins/flat/pages/upgrade.view
 #
 id: %s is up to date
 msg: %s已是最新
@@ -350,26 +432,22 @@ msg: %s已是最新
 id: An error occured during download
 msg: 下载失败
 
-id: Available version:
-msg: 可用版本
-
 id: Changelog for %s releases
 msg: 版本%s更新记录
 
 id: Check for updates now
 msg: 立刻检查更新
 
-id: Checking for updates...
-msg: 正在检查更新...
-
-id: Checking installed version of %s
-msg: 检查%s的安装版本
+id: Checking for updates
+# Missing translation
+msg: 
 
 id: Current version:
 msg: 当前版本：
 
-id: Download and install...
-msg: 正在下载并安装...
+id: Download and install
+# Missing translation
+msg: 
 
 id: Downloading %s
 msg: 正在下载%s
@@ -380,14 +458,9 @@ msg: 新版本%s可用
 id: No upgrade available
 msg: 无可用更新
 
-id: Patching %s
-msg: 正在更新%s
-
-id: Restarting %s in %d seconds...
-msg: %d秒后重启%s...
-
-id: Retry...
-msg: 重试...
+id: Retry
+# Missing translation
+msg: 
 
 id: Stable
 msg: 稳定版
@@ -399,67 +472,7 @@ id: Unable to query for new version
 msg: 无法检查最新版
 
 #
-# ./glwskins/default/pages/video.view
-#
-id: A/V diff:
-msg: 音视频时差：
-
-id: Audio codec:
-msg: 音频编码：
-
-id: Audio queue len:
-msg: 音频队列长度：
-
-id: Audio volume adjustment: %d dB
-msg: 音量调整：%d dB
-
-id: CPU is too slow to decode this video
-msg: 当前视频CPU解码过慢
-
-id: Download speed:
-msg: 下载速度
-
-id: Packet buffer:
-msg: 数据包缓冲池：
-
-id: Playback status
-msg: 播放信息
-
-id: Remaining buffer:
-msg: 剩余缓冲池
-
-id: Remote queue drops:
-msg: 远程队列丢弃数：
-
-id: Remote queue len:
-msg: 远程队列长度：
-
-id: Source:
-msg: 源：
-
-id: Video bitrate:
-msg: 视频码率：
-
-id: Video codec:
-msg: 视频编码：
-
-id: Video decode time:
-msg: 视频解码耗时：
-
-id: Video queue len:
-msg: 视频队列长度
-
-#
-# ./glwskins/default/playdecks/dvd.view
-#
-id: Chapter: %d
-msg: 章节：%d
-
-id: Title: %d
-msg: 标题：%d
-
-#
-# ./glwskins/default/popups/auth.view
+# ./glwskins/flat/popups/auth.view
 #
 id: Domain
 msg: 域
@@ -474,28 +487,65 @@ id: Username
 msg: 用户名
 
 #
-# ./glwskins/default/popups/resume.view
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: 取消
+
+id: Ok
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg: 
+
+id: Close
+# Missing translation
+msg: 
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg: 
+
+#
+# ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
 msg: 不，从头开始
 
-id: Resume %s from %s
-msg: 恢复播放%s（上次播放位置%s）
+id: Resume from %s
+# Missing translation
+msg: 
+
+id: Yes
+msg: 是
 
 #
-# ./glwskins/default/screensaver.view
+# ./glwskins/flat/popups/textDialog.view
 #
-id: No media loaded
-msg: 未载入媒体
+id: OK
+msg: 确定
 
 #
-# ./glwskins/default/sysinfo.view
+# ./glwskins/flat/sysinfo.view
 #
 id: CPU Temp
 msg: CPU温度
 
+id: Connected
+# Missing translation
+msg: 
+
 id: Fragmentation
 msg: 碎片
+
+id: Framerate
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: GPU温度
@@ -503,11 +553,24 @@ msg: GPU温度
 id: HDD Avail
 msg: 硬盘可用
 
-id: Inactive mem
-msg: 不活动内存
+id: IP Address
+# Missing translation
+msg: 
+
+id: Inactive memory
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: 内存占用
+
+id: Network
+# Missing translation
+msg: 
+
+id: Not available
+# Missing translation
+msg: 
 
 id: System Free
 msg: 系统剩余
@@ -515,14 +578,30 @@ msg: 系统剩余
 id: System Total
 msg: 系统总数
 
+id: VM Page In/Out
+# Missing translation
+msg: 
+
+id: Version
+# Missing translation
+msg: 
+
 #
-# ./glwskins/default/universe.view
+# ./glwskins/flat/universe.view
 #
 id: Audio muted
 msg: 已静音
 
+id: Copying %d files
+# Missing translation
+msg: 
+
 id: Master volume: %d dB
 msg: 主音量: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg: 
 
 #
 # ./src/api/stpp.c
@@ -535,9 +614,6 @@ msg: 设备不可用
 
 id: Movians for remote control
 msg: 可供远程控制的Movian
-
-id: Remote control
-msg: 远程控制
 
 #
 # ./src/api/tmdb.c
@@ -613,12 +689,6 @@ msg: DTS直通
 
 id: HDMI
 msg: HDMI
-
-id: Off
-msg: 关闭
-
-id: On
-msg: 启用
 
 #
 # ./src/arch/rpi/rpi_tv.c
@@ -722,6 +792,9 @@ msg: Torrent做种者
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: BitTorrent
+msg: BitTorrent
+
 id: Clear cache
 msg: 清除缓存
 
@@ -845,20 +918,15 @@ msg: 使用Unix locatedb搜索
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Albums
-msg: 专辑
-
-id: Artists
-msg: 歌手
-
 id: Deleted %s
 msg: 删除%s
 
 id: Filename
 msg: 文件名
 
-id: Indexed mode
-msg: 索引方式
+id: Include in library
+# Missing translation
+msg: 
 
 id: Newest first
 msg: 最新优先
@@ -890,17 +958,11 @@ msg: 使用spotlight搜索
 id: Are you sure you want to delete:
 msg: 是否确定要删除：
 
-id: BitTorrent
-msg: BitTorrent
-
 id: Browse archives as folders
 msg: 使用文件夹方式浏览归档文件
 
 id: Enable file deletion from item menu
 msg: 启用文件删除功能
-
-id: File browsing
-msg: 文件浏览
 
 id: Show filename extensions
 msg: 显示文件扩展名
@@ -1217,9 +1279,6 @@ msg: 其它
 id: Photos
 msg: 照片
 
-id: Remove bookmark
-msg: 移除书签
-
 id: Removed %s from homepage
 msg: %s已从首页移除
 
@@ -1237,6 +1296,9 @@ msg: 类型
 
 id: URL
 msg: URL
+
+id: Video
+msg: 视频
 
 #
 # ./src/networking/connman.c
@@ -1275,10 +1337,29 @@ id: Standby
 msg: 关机
 
 #
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg: 
+
+#
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
 msg: 更改插件库URL
+
+id: Audio decoders
+# Missing translation
+msg: 
+
+id: Auto install plugins on demand
+# Missing translation
+msg: 
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg: 
 
 id: Automatically upgrade plugins
 msg: 自动更新插件
@@ -1318,6 +1399,9 @@ msg: 打开文件错误
 
 id: Home page
 msg: 首页
+
+id: Images
+msg: 图像
 
 id: Installed
 msg: 已安装
@@ -1436,9 +1520,6 @@ msg: 退出
 id: SSH server
 msg: SSH服务器
 
-id: Starting and stopping
-msg: 启动和关闭
-
 #
 # ./src/sd/sd.c
 #
@@ -1475,6 +1556,9 @@ msg: 开发者设置
 id: Discovered media sources
 msg: 已检测到的媒体资源
 
+id: File browsing
+msg: 文件浏览
+
 id: Fonts and user interface styling
 msg: 字体和用户界面类型
 
@@ -1493,8 +1577,18 @@ msg: 网络服务等
 id: Network settings
 msg: 网络设置
 
+id: Reset
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: 供开发者使用的设置
+
+id: Software upgrade
+msg: 软件更新
+
+id: Starting and stopping
+msg: 启动和关闭
 
 id: System name
 msg: 系统名称
@@ -1616,14 +1710,25 @@ msg: 无法安装字体：%s
 id: Use font %s for
 msg: 使用字体%s
 
-id: User interface
-msg: 用户界面
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg: 
+
+id: Target folder
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
 msg: Dual-Shock遥控器
+
+id: No
+msg: 否
 
 id: Seek using L2 and R2 button
 msg: 使用L2/R2快速进退
@@ -1730,8 +1835,8 @@ msg: 通知版本更新
 id: Open download page
 msg: 打开下载页面
 
-id: Software upgrade
-msg: 软件更新
+id: System
+msg: 系统
 
 id: Upgrade to releases from
 msg: 更新选择
@@ -1816,4 +1921,8 @@ msg: 视频播放时上/下键控制
 
 id: Video acceleration and display behaviour
 msg: 视频加速及显示方式
+
+id: Video buffer size
+# Missing translation
+msg: 
 
