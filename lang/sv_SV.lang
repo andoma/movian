@@ -1,24 +1,20 @@
 language: Swedish
 native: Svenska
-maintainer: Andreas Öman <andreas@lonelycoder.com>
+maintainer: Andreas Smas <andreas@lonelycoder.com>
 #
 # ./glwskins/flat/ctxmenu/default_details.view
 #
 id: Bookmark
-# Missing translation
-msg: 
+msg: Bookmärke
 
 id: Bookmarked
-# Missing translation
-msg: 
+msg: Sparad som bokmärke
 
 id: Copy to clipboard
-# Missing translation
-msg: 
+msg: Kopiera till urklipp
 
 id: Copy to location...
-# Missing translation
-msg: 
+msg: Kopiera till plats...
 
 id: Delete
 msg: Radera
@@ -30,26 +26,22 @@ msg: Köa
 # ./glwskins/flat/ctxmenu/plugin_details.view
 #
 id: Author:
-# Missing translation
-msg: 
+msg: Upphovsman
 
 id: Available version:
 msg: Tillgänglig version:
 
 id: Changelog
-# Missing translation
-msg: 
+msg: Förändringar
 
 id: Install
 msg: Installera
 
 id: Installed version:
-# Missing translation
-msg: 
+msg: Installerad version:
 
 id: Status:
-# Missing translation
-msg: 
+msg: Status:
 
 id: Uninstall
 msg: Avinstallera
@@ -76,19 +68,17 @@ id: Play until end of list
 msg: Spela till slutet av listan
 
 id: Video Cast
-# Missing translation
-msg: 
+msg: Skådespelare
 
 #
 # ./glwskins/flat/items/details/video.view
 #
 id: Season %d - Episode %d
-# Missing translation
-msg: 
+msg: Säsong %d - Episod %d
 
 id: Seen %d times, %s
-msg[0]: 
-msg[1]: 
+msg[0]: Sedd %d gånger, %s
+msg[1]: Sedd %d gång, %s
 
 #
 # ./glwskins/flat/items/list/add.view
@@ -121,8 +111,7 @@ msg: Användargränsnitt
 # ./glwskins/flat/items/list/tvepisode.view
 #
 id: Episode %d - %s
-# Missing translation
-msg: 
+msg: Episod %d - %s
 
 #
 # ./glwskins/flat/loading.view
@@ -143,74 +132,58 @@ msg: Systemlog
 # ./glwskins/flat/mediainfo.view
 #
 id: A/V diff
-# Missing translation
-msg: 
+msg: A/V differans
 
 id: Audio bitrate
-# Missing translation
-msg: 
+msg: Ljudbithastighet
 
 id: Audio codec
-# Missing translation
-msg: 
+msg: Ljudkodec
 
 id: Audio packets
-# Missing translation
-msg: 
+msg: Ljudpaket
 
 id: Buffer usage
-# Missing translation
-msg: 
+msg: Bufferanvänding
 
 id: No media loaded
 msg: Ingen media laddad
 
 id: Remaining buffer
-# Missing translation
-msg: 
+msg: Kvarvarande buffer
 
 id: Source
-# Missing translation
-msg: 
+msg: Källa
 
 id: Video bitrate
-# Missing translation
-msg: 
+msg: Videobithastighet
 
 id: Video codec
-# Missing translation
-msg: 
+msg: Videokodec
 
 id: Video framerate
-# Missing translation
-msg: 
+msg: Bildhastighet
 
 id: Video packets
-# Missing translation
-msg: 
+msg: Videopaket
 
 #
 # ./glwskins/flat/menu/sidebar.view
 #
 id: Bookmark page
-# Missing translation
-msg: 
+msg: Bokmärk sida
 
 id: Page settings
-# Missing translation
-msg: 
+msg: Sidinställningar
 
 id: Paste
-# Missing translation
-msg: 
+msg: Klistra in
 
 id: Reload page
-# Missing translation
-msg: 
+msg: Ladda om sida
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Ta bort bokmärke
 
 id: Settings
 msg: Inställningar
@@ -228,8 +201,7 @@ id: Exit %s
 msg: Avsluta %s
 
 id: Hide media info
-# Missing translation
-msg: 
+msg: Göm mediainformation
 
 id: Hide system info
 msg: Dölj systeminformation
@@ -238,8 +210,7 @@ id: Master volume
 msg: Huvudvolym
 
 id: Show media info
-# Missing translation
-msg: 
+msg: Visa mediainformation
 
 id: Show system info
 msg: Visa systeminformation
@@ -251,8 +222,7 @@ id: Time until sleep
 msg: Tid tills sovning
 
 id: View log
-# Missing translation
-msg: 
+msg: Visa log
 
 id: dB
 msg: dB
@@ -300,30 +270,25 @@ id: Custom
 msg: Speciell
 
 id: Grid
-# Missing translation
-msg: 
+msg: Rutnät
 
 id: List
 msg: Lista
 
 id: Page layout
-# Missing translation
-msg: 
+msg: Sidlayout
 
 id: Search results
-# Missing translation
-msg: 
+msg: Sökresultat
 
 id: TV Season
-# Missing translation
-msg: 
+msg: TV-Säsong
 
 #
 # ./glwskins/flat/pages/empty.view
 #
 id: No contents
-# Missing translation
-msg: 
+msg: Inget innehåll
 
 #
 # ./glwskins/flat/pages/home.view
@@ -332,15 +297,13 @@ id: Dismiss
 msg: Ta bort
 
 id: Home
-# Missing translation
-msg: 
+msg: Hem
 
 #
 # ./glwskins/flat/pages/openerror.view
 #
 id: Unable to open resource
-# Missing translation
-msg: 
+msg: Kan ej öppna resurs
 
 #
 # ./glwskins/flat/pages/playqueue.view
@@ -352,49 +315,41 @@ msg: Spelkö
 # ./glwskins/flat/pages/searchresults.view
 #
 id: Show more
-# Missing translation
-msg: 
+msg: Visa mer
 
 id: %d hits
-msg[0]: 
-msg[1]: 
+msg[0]: %d träff
+msg[1]: %d träffar
 
 #
 # ./glwskins/flat/pages/slideshow.view
 #
 id: Interval: %ds
-# Missing translation
-msg: 
+msg: Inverval: %ds
 
 id: Play/Pause
-# Missing translation
-msg: 
+msg: Play/Pause
 
 id: Stop
-# Missing translation
-msg: 
+msg: Stop
 
 #
 # ./glwskins/flat/pages/stpp.view
 #
 id: Remote control - %s
-# Missing translation
-msg: 
+msg: Fjärrstyrning - %s
 
 id: Remote controlling %s
-# Missing translation
-msg: 
+msg: Fjärrstyr %s
 
 #
 # ./glwskins/flat/pages/stppstpp.view
 #
 id: Nested remote controll is not supported
-# Missing translation
-msg: 
+msg: Fjärrstyra en fjärrstyrande enhet går ej
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Fjärrstyrning
 
 #
 # ./glwskins/flat/pages/stppvideo.view
@@ -409,19 +364,16 @@ id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
 
 id: Next
-# Missing translation
-msg: 
+msg: Nästa
 
 id: Previous
-# Missing translation
-msg: 
+msg: Föregående
 
 #
 # ./glwskins/flat/pages/tvseason.view
 #
 id: Season %d
-# Missing translation
-msg: 
+msg: Säsong %d
 
 #
 # ./glwskins/flat/pages/upgrade.view
@@ -439,15 +391,13 @@ id: Check for updates now
 msg: Leta efter uppgraderingar nu
 
 id: Checking for updates
-# Missing translation
-msg: 
+msg: Kontrollera efter uppdateringar
 
 id: Current version:
 msg: Nuvarande version:
 
 id: Download and install
-# Missing translation
-msg: 
+msg: Ladda ner och installera
 
 id: Downloading %s
 msg: Laddar ner %s
@@ -459,8 +409,7 @@ id: No upgrade available
 msg: Ingen uppgradering tillgänglig
 
 id: Retry
-# Missing translation
-msg: 
+msg: Försök igen
 
 id: Stable
 msg: Stabil
@@ -493,23 +442,19 @@ id: Cancel
 msg: Avbryt
 
 id: Ok
-# Missing translation
-msg: 
+msg: Ok
 
 #
 # ./glwskins/flat/popups/filepicker.view
 #
 id: Back
-# Missing translation
-msg: 
+msg: Bakåt
 
 id: Close
-# Missing translation
-msg: 
+msg: Stäng
 
 id: Folder select mode, press right to open subfolder
-# Missing translation
-msg: 
+msg: Väljer kataloge, tryck höger för att öppna underkatalog
 
 #
 # ./glwskins/flat/popups/resume.view
@@ -518,8 +463,7 @@ id: No, Start over
 msg: Nej, Starta om
 
 id: Resume from %s
-# Missing translation
-msg: 
+msg: Återuppta från %s
 
 id: Yes
 msg: Ja
@@ -537,15 +481,13 @@ id: CPU Temp
 msg: CPU Temp
 
 id: Connected
-# Missing translation
-msg: 
+msg: Ansluten
 
 id: Fragmentation
 msg: Fragmentering
 
 id: Framerate
-# Missing translation
-msg: 
+msg: Bildhastighet
 
 id: GPU Temp
 msg: GPU Temp
@@ -554,23 +496,19 @@ id: HDD Avail
 msg: Hårddisk tillgängligt
 
 id: IP Address
-# Missing translation
-msg: 
+msg: IP-Adress
 
 id: Inactive memory
-# Missing translation
-msg: 
+msg: Inaktivt minne
 
 id: Memory usage
 msg: Minnesanvändning
 
 id: Network
-# Missing translation
-msg: 
+msg: Nätverk
 
 id: Not available
-# Missing translation
-msg: 
+msg: Inte tillgänglig
 
 id: System Free
 msg: Ledigt system
@@ -579,12 +517,10 @@ id: System Total
 msg: System totalt
 
 id: VM Page In/Out
-# Missing translation
-msg: 
+msg: VM Sidor In/Ut
 
 id: Version
-# Missing translation
-msg: 
+msg: Version
 
 #
 # ./glwskins/flat/universe.view
@@ -593,30 +529,25 @@ id: Audio muted
 msg: Ljud tyst
 
 id: Copying %d files
-# Missing translation
-msg: 
+msg: Kopierar %d filer
 
 id: Master volume: %d dB
 msg: Huvudvolym: %d dB
 
 id: Overscan adjustment\nPosition border at screen edges
-# Missing translation
-msg: 
+msg: Overscanjustering\nPositionera ramen vid skärmens kanter
 
 #
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Tillåt fjärrstyrning
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Enheten är inte tillgänglig
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Movians tillgängliga för fjärrstyrning
 
 #
 # ./src/api/tmdb.c
@@ -856,8 +787,7 @@ msg: Inspelare
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: Kan ej öppna spellista
 
 #
 # ./src/backend/search.c
@@ -902,8 +832,7 @@ id: Checking file contents
 msg: Kontrollerar filens innehåll
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: Felaktig URL för omdirigering
 
 id: Unable to open file: %s
 msg: Kan ej öppna fil: %s
@@ -930,8 +859,7 @@ id: Filename
 msg: Filnamn
 
 id: Include in library
-# Missing translation
-msg: 
+msg: Inkludera i bibliotek
 
 id: Newest first
 msg: Nyast först
@@ -1330,16 +1258,13 @@ msg: Servern's TCP port
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Stäng av
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Startar om
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Startar om
 
 id: Standby
 msg: Viloläge
@@ -1348,8 +1273,7 @@ msg: Viloläge
 # ./src/notifications.c
 #
 id: Show news on home screen
-# Missing translation
-msg: 
+msg: Visa nyheter på hemskärmen
 
 #
 # ./src/plugins.c
@@ -1358,16 +1282,13 @@ id: Alternate plugin Repository URL
 msg: Alternativ URL för pluginmagasin
 
 id: Audio decoders
-# Missing translation
-msg: 
+msg: Ljudavkodare
 
 id: Auto install plugins on demand
-# Missing translation
-msg: 
+msg: Installera tillägg automatiskt vid behov
 
 id: Auto installed plugin %s (Version %s)
-# Missing translation
-msg: 
+msg: Installerade tillägg %s automatiskt (version %s)
 
 id: Automatically upgrade plugins
 msg: Updatera plugin automatiskt
@@ -1412,8 +1333,7 @@ id: Images
 msg: Bilder
 
 id: Installed
-# Missing translation
-msg: 
+msg: Installerad
 
 id: Installed plugins
 msg: Installerade plugins
@@ -1503,8 +1423,7 @@ msg: Videoströmning
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: Andra enheten avslutade
 
 #
 # ./src/runcontrol.c
@@ -1546,8 +1465,7 @@ id: Local network
 msg: Lokala nätverket
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Ta bort från hemsidan
 
 #
 # ./src/settings.c
@@ -1589,8 +1507,7 @@ id: Network settings
 msg: Nätverkstjänster
 
 id: Reset
-# Missing translation
-msg: 
+msg: Starta om
 
 id: Settings useful for developers
 msg: Inställningar användbara för utvecklare
@@ -1725,12 +1642,10 @@ msg: Använd typsnitt %s till
 # ./src/ui/clipboard.c
 #
 id: Copy failed: %s
-# Missing translation
-msg: 
+msg: Kopiering misslyckades: %s
 
 id: Target folder
-# Missing translation
-msg: 
+msg: Målkatalog
 
 #
 # ./src/ui/glw/glw_ps3.c
@@ -1775,8 +1690,7 @@ id: Screensaver delay
 msg: Skärmsläckartid
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Sekunder per bild
 
 id: Use Bing images of the day
 msg: Använd dagens Bing-bild
@@ -1935,6 +1849,5 @@ id: Video acceleration and display behaviour
 msg: Videoacceleration och inställningar för videopresentation
 
 id: Video buffer size
-# Missing translation
-msg: 
+msg: Videobufferstorlek
 
