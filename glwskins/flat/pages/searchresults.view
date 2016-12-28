@@ -27,8 +27,6 @@ widget(container_z, {
       });
 
       widget(container_x, {
-
-        height: 5em;
         padding: [2em, 0];
         spacing: $view.width / 30;
 
