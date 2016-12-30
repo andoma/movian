@@ -182,6 +182,7 @@ typedef enum {
   FAP_EXIST             =  -6,
 } fa_err_code_t;
 
+const char *fa_err_code_str(fa_err_code_t errcode);
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 int fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize,

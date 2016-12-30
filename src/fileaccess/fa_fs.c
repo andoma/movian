@@ -34,9 +34,10 @@
 
 #include "fa_proto.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
 #include <sys/xattr.h>
 #endif
+
 
 typedef struct part {
   int fd;
@@ -710,7 +711,7 @@ fs_normalize(struct fa_protocol *fap, const char *url, char *dst, size_t dstlen)
 #endif
 
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
 /**
  *
  */
@@ -719,16 +720,31 @@ fs_set_xattr(struct fa_protocol *fap, const char *url,
              const char *name,
              const void *data, size_t len)
 {
+#ifdef __linux__
+  char name2[512];
+  snprintf(name2, sizeof(name2), "user.%s", name);
+  name = name2;
+#endif
+
   if(data == NULL) {
-    removexattr(url, name, 0);
+    removexattr(url, name
+#ifdef __APPLE__
+                ,0
+#endif
+                );
     return 0;
   }
 
-  if(!setxattr(url, name, data, len, 0, 0))
+  if(!setxattr(url, name, data, len
+#ifdef __APPLE__
+               , 0
+#endif
+               , 0))
     return 0;
 
   switch(errno) {
   case EROFS:
+    return FAP_PERMISSION_DENIED;
   case ENOTSUP:
     return FAP_NOT_SUPPORTED;
   default:
@@ -745,10 +761,24 @@ fs_get_xattr(struct fa_protocol *fap, const char *url,
              const char *name,
              void **datap, size_t *lenp)
 {
-  int len = getxattr(url, name, NULL, 0, 0, 0);
+#ifdef __linux__
+  char name2[512];
+  snprintf(name2, sizeof(name2), "user.%s", name);
+  name = name2;
+#endif
+
+  int len = getxattr(url, name, NULL, 0
+#ifdef __APPLE__
+                     ,0, 0
+#endif
+                     );
   if(len < 0) {
     switch(errno) {
+#ifdef __APPLE__
     case ENOATTR:
+#else
+    case ENODATA:
+#endif
       *datap = NULL;
       *lenp = 0;
       return 0;
@@ -760,7 +790,11 @@ fs_get_xattr(struct fa_protocol *fap, const char *url,
   }
   *datap = malloc(len);
   *lenp = len;
-  if(getxattr(url, name, *datap, len, 0, 0) < 0) {
+  if(getxattr(url, name, *datap, len
+#ifdef __APPLE__
+              , 0, 0
+#endif
+              ) < 0) {
     free(*datap);
     *datap = NULL;
     return FAP_ERROR;
@@ -852,7 +886,7 @@ fa_protocol_t fa_protocol_fs = {
 #endif
   .fap_makedir = fs_makedir,
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
   .fap_set_xattr = fs_set_xattr,
   .fap_get_xattr = fs_get_xattr,
 #endif

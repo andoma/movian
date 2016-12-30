@@ -732,18 +732,28 @@ kv_url_opt_get_int64(const char *url, int domain, const char *key, int64_t def)
   size_t size;
   fa_err_code_t err = opt_get_ea(url, domain, key, &data, &size);
 
-  if(err == 0 && size == 8) {
-    int64_t rval = *(int64_t *)data;
-#if !defined(__BIG_ENDIAN__)
-    rval = __builtin_bswap64(rval);
-#endif
+  if(err == 0) {
+    int ok = 0;
+    int64_t rval = 0;
+
+    if(size == 8) {
+      rval = rd64_be(data);
+      ok = 1;
+    } else if(size == 4) {
+      rval = rd32_be(data);
+      ok = 1;
+    } else {
+      ok = 0;
+    }
     free(data);
 
-    if(gconf.enable_kvstore_debug)
-      TRACE(TRACE_DEBUG, "kvstore",
-            "GET XA url=%s key=%s domain=%d value=%"PRId64,
-            url, key, domain, rval);
-    return rval;
+    if(ok) {
+      if(gconf.enable_kvstore_debug)
+        TRACE(TRACE_DEBUG, "kvstore",
+              "GET XA url=%s key=%s domain=%d value=%"PRId64,
+              url, key, domain, rval);
+      return rval;
+    }
   }
 
 
@@ -852,10 +862,7 @@ kv_write_xattr(const kvstore_write_t *kw)
   const char *value = vtmp;
 
   char ea[512];
-  uint8_t d4[4];
-#if !defined(__BIG_ENDIAN__)
-  int64_t i64;
-#endif
+  uint8_t buf[8];
   const void *data;
   size_t size;
   snprintf(ea, sizeof(ea), "showtime.default.%s.%s",
@@ -863,20 +870,16 @@ kv_write_xattr(const kvstore_write_t *kw)
 
   switch(kw->kw_type) {
   case KVSTORE_SET_INT:
-    wr32_be(d4, kw->kw_int);
-    data = d4;
+    wr32_be(buf, kw->kw_int);
+    data = buf;
     size = 4;
     snprintf(vtmp, sizeof(vtmp), "%d", kw->kw_int);
     break;
 
   case KVSTORE_SET_INT64:
     size = 8;
-#if defined(__BIG_ENDIAN__)
-    data = &kw->kw_int64;
-#else
-    i64 = __builtin_bswap64(kw->kw_int64);
-    data = &i64;
-#endif
+    wr64_be(buf, kw->kw_int64);
+    data = buf;
     snprintf(vtmp, sizeof(vtmp), "%"PRId64, kw->kw_int64);
     break;
 
@@ -898,8 +901,9 @@ kv_write_xattr(const kvstore_write_t *kw)
 
   if(gconf.enable_kvstore_debug)
     TRACE(TRACE_DEBUG, "kvstore",
-          "SET XA url=%s key=%s domain=%d value=%s rc=%d",
-          kw->kw_url, kw->kw_key, kw->kw_domain, value, rc);
+          "SET XA url=%s key=%s domain=%d value=%s -- %s",
+          kw->kw_url, kw->kw_key, kw->kw_domain, value,
+          fa_err_code_str(rc));
 
   return !!rc;
 }

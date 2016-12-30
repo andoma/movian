@@ -2104,3 +2104,18 @@ fa_sanitize_filename(char *f)
     f++;
   }
 }
+
+const char *
+fa_err_code_str(fa_err_code_t errcode)
+{
+  switch(errcode) {
+  case FAP_OK: return "OK";
+  case FAP_ERROR: return "Error";
+  case FAP_NEED_AUTH: return "Authentication needed";
+  case FAP_NOT_SUPPORTED: return "Operation not supported";
+  case FAP_PERMISSION_DENIED: return "Permission denied";
+  case FAP_NOENT: return "No such entry";
+  case FAP_EXIST: return "Item already exist";
+  default: return "Unmapped errorcode";
+  }
+}

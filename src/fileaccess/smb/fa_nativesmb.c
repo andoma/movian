@@ -2617,9 +2617,18 @@ smb_set_xattr(struct fa_protocol *fap, const char *url,
   uint32_t errcode = letoh_32(reply->errorcode);
   free(rbuf);
   cifs_release_tree(ct, 0);
-
-  if(errcode)
+  switch(errcode) {
+  case 0:
+    return FAP_OK;
+  case 0xC0000022:
+    return FAP_PERMISSION_DENIED;
+  case 0xC000004F:
+  case 0x03E20001:
     return FAP_NOT_SUPPORTED;
+
+  default:
+    return FAP_ERROR;
+  }
 
   return FAP_OK;
 }
