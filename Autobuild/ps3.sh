@@ -49,6 +49,7 @@ fi
 
 ./configure.ps3 --build=${TARGET} \
     ${RELEASE} \
+    ${VERSIONARGS} \
     --cleanbuild \
     ${USE_CCACHE} \
     --downloadcache="${WORKINGDIR}/downloadcache"

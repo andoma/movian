@@ -50,6 +50,7 @@ set -x
 ./configure.rpi --build=${TARGET} \
     --toolchain="${TOOLCHAIN}/host/usr/bin/arm-buildroot-linux-gnueabihf-" \
     --sysroot="${TOOLCHAIN}/host/usr/arm-buildroot-linux-gnueabihf/sysroot" \
+    ${VERSIONARGS} \
     ${RELEASE} \
     --cleanbuild \
     ${USE_CCACHE} \

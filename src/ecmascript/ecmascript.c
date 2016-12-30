@@ -478,7 +478,7 @@ es_create_env(es_context_t *ec, const char *loaddir, const char *storage)
   duk_push_int(ctx, app_get_version_int());
   duk_put_prop_string(ctx, obj_idx, "currentVersionInt");
 
-  duk_push_string(ctx, htsversion);
+  duk_push_string(ctx, appversion);
   duk_put_prop_string(ctx, obj_idx, "currentVersionString");
 
   duk_push_string(ctx, gconf.device_id);

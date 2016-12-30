@@ -1540,7 +1540,7 @@ peer_send_extension_handshake(peer_t *p)
   htsmsg_add_u32(m, "ut_metadata", EXTENSION_MSGID_METADATA);
   htsmsg_add_msg(handshake, "m", m);
 
-  snprintf(version, sizeof(version), APPNAMEUSER" %s", htsversion);
+  snprintf(version, sizeof(version), APPNAMEUSER" %s", appversion);
   htsmsg_add_str(handshake, "v", version);
   peer_send_extension_msg(p, handshake, EXTENSION_MSGID_HANDSHAKE);
 }

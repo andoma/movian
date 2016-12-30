@@ -256,7 +256,7 @@ static int
 cmd_SYST(ftp_connection_t *fc, char *args)
 {
   ftp_write(fc, 215, "UNIX Type: L8 Version: %s %s",
-             htsversion, arch_get_system_type());
+             appversion, arch_get_system_type());
   return 0;
 }
 
@@ -868,7 +868,7 @@ ftp_session(void *aux)
   net_fmt_host(buf, sizeof(buf), &fc->fc_local_addr);
 
   ftp_write(fc, 220, "%s FTP server (%s  Version %s) ready.",
-            buf, gconf.system_name, htsversion);
+            buf, gconf.system_name, appversion);
 
   while(1) {
     if(tcp_read_line(fc->fc_tc, buf, sizeof(buf)))

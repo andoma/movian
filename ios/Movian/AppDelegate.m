@@ -21,8 +21,7 @@
 
 @import MediaPlayer;
 
-const char *htsversion;
-const char *htsversion_full;
+const char *appversion;
 
 uint32_t
 parse_version_int(const char *str)
@@ -31,17 +30,17 @@ parse_version_int(const char *str)
   int minor = 0;
   int commit = 0;
   sscanf(str, "%d.%d.%d", &major, &minor, &commit);
-  
+
   return
-  major * 10000000 +
-  minor *   100000 +
-  commit;
+    major * 10000000 +
+    minor *   100000 +
+    commit;
 }
 
 uint32_t
 app_get_version_int(void)
 {
-  return parse_version_int(htsversion);
+  return parse_version_int(appversion);
 }
 
 
@@ -224,8 +223,8 @@ static void set_media_type(void *opaque, const char *str)
 
   NSDictionary* infoDict = [[NSBundle mainBundle] infoDictionary];
   NSString* version = [infoDict objectForKey:@"CFBundleShortVersionString"];
-  htsversion_full = htsversion = strdup([version UTF8String]);
-  
+  appversion = strdup([version UTF8String]);
+
   gconf.concurrency = (int)[[NSProcessInfo processInfo] activeProcessorCount];
 
 #ifdef TARGET_OS_TV

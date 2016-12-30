@@ -26,6 +26,7 @@ do
 	  ;;
       v)
 	  VERSION="$OPTARG"
+	  VERSIONARGS="--version=$OPTARG"
 	  ;;
   esac
 done

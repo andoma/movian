@@ -9,6 +9,7 @@ fi
 
 ./configure.android --build=${TARGET} \
     ${RELEASE} \
+    ${VERSIONARGS} \
     --cleanbuild \
     ${USE_CCACHE} \
     --downloadcache="${WORKINGDIR}/downloadcache" \

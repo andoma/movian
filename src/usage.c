@@ -119,7 +119,6 @@ try_send(void *aux)
     htsmsg_add_u32(m, "begin_session", 1);
 
     htsmsg_t *metrics = htsmsg_create_map();
-    extern const char *htsversion_full;
 
     htsmsg_add_str(metrics, "_os", arch_get_system_type());
 
@@ -135,7 +134,7 @@ try_send(void *aux)
     else
       htsmsg_add_str(metrics, "_carrier", "none");
 
-    htsmsg_add_str(metrics, "_app_version", htsversion_full);
+    htsmsg_add_str(metrics, "_app_version", appversion);
     htsmsg_add_str(metrics, "_locale", gconf.lang);
 
     htsmsg_add_msg(m, "metrics", metrics);

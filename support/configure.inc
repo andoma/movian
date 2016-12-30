@@ -220,6 +220,7 @@ common_help(){
   echo "Standard options:"
   echo "  --help                   Print this message"
   echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
+  echo "  --version=VERSION        Override version from git-describe"
   echo "  --release                Stage for release"
   echo "  --cleanbuild             Erase builddir before configuring"
   echo "  --ccache                 Enable use of ccache"
@@ -239,6 +240,8 @@ common_opt(){
   case "$1" in
 
   --build=*) BUILD="$2"
+  ;;
+  --version=*) VERSIONOVERRIDE="$2"
   ;;
   --extra-cflags=*) EXTRA_CFLAGS="$2"
   ;;
@@ -352,6 +355,13 @@ EOF
 #define SHOWTIME_DEFAULT_UI "${DEFAULT_UI}"
 #define SHOWTIME_DEFAULT_LOGTARGET "${DEFAULT_LOGTARGET}"
 EOF
+
+#
+# Version override
+#
+if [ -n "$VERSIONOVERRIDE" ]; then
+    echo >>${CONFIG_H} "#define VERSIONOVERRIDE \"${VERSIONOVERRIDE}\""
+fi
 
 #
 # sanitize

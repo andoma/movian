@@ -145,12 +145,10 @@ static void
 init_global_info(void)
 {
   prop_t *s = prop_create(prop_get_global(), "app");
-  extern const char *htsversion;
-  extern const char *htsversion_full;
 
   prop_set(s, "name", PROP_SET_STRING, APPNAMEUSER);
-  prop_set(s, "version", PROP_SET_STRING, htsversion);
-  prop_set(s, "fullversion", PROP_SET_STRING, htsversion_full);
+  prop_set(s, "version", PROP_SET_STRING, appversion);
+  prop_set(s, "fullversion", PROP_SET_STRING, appversion);
   prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2016 Lonelycoder AB");
 }
 
@@ -538,7 +536,7 @@ parse_opts(int argc, char **argv)
 	     "  URL is any URL-type supported, "
 	     "e.g., \"file:///...\"\n"
 	     "\n",
-	     htsversion_full,
+	     appversion,
 	     argv0,
 	     gconf.cache_path,
 	     gconf.persistent_path);

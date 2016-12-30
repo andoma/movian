@@ -20,8 +20,11 @@
 #include "buildversion.h"
 #include "config.h"
 
-const char *htsversion=BUILD_VERSION;
-const char *htsversion_full=BUILD_VERSION;
+#ifdef VERSIONOVERRIDE
+const char *appversion=VERSIONOVERRIDE;
+#else
+const char *appversion=BUILD_VERSION;
+#endif
 
 #include "main.h"
 #include <stdio.h>
@@ -35,14 +38,14 @@ parse_version_int(const char *str)
   sscanf(str, "%d.%d.%d", &major, &minor, &commit);
 
   return
-    major * 10000000 + 
+    major * 10000000 +
     minor *   100000 +
     commit;
 }
 
 uint32_t
-app_get_version_int(void) 
+app_get_version_int(void)
 {
-  return parse_version_int(BUILD_VERSION);
+  return parse_version_int(appversion);
 }
 

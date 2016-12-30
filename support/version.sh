@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 revision=`$1/support/getver.sh`
 
 NEW_REVISION="#define BUILD_VERSION \"$revision\""

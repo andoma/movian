@@ -341,8 +341,7 @@ typedef struct gconf {
 extern gconf_t gconf;
 
 /* From version.c */
-extern const char *htsversion;
-extern const char *htsversion_full;
+extern const char *appversion;
 
 typedef struct inithelper {
   LIST_ENTRY(inithelper) link;

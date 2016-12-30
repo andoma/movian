@@ -55,10 +55,10 @@ m_about(GtkWidget *menu_item, gpointer callback_data)
   gu_window_t *gw = callback_data;
 
   gtk_show_about_dialog(GTK_WINDOW(gw->gw_window),
-			"program-name", "HTS Showtime",
-			"version", htsversion,
-			"website", "http://www.lonelycoder.com/hts",
-			"copyright", "2006 - 2009 Andreas Öman, et al.",
+			"program-name", APPNAMEUSER,
+			"version", appversion,
+			"website", "https://movian.tv/",
+			"copyright", "Lonelycoder AB",
 			NULL);
 }
 

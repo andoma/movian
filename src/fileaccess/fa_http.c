@@ -971,7 +971,7 @@ http_headers_init(struct http_header_list *l, const http_file_t *hf)
   http_header_add(l, "Connection",
 		  hf->hf_want_close ? "close" : "keep-alive", 0);
   snprintf(str, sizeof(str), APPNAMEUSER" %s %s",
-	   arch_get_system_type(), htsversion);
+	   arch_get_system_type(), appversion);
   http_header_add(l, "User-Agent", str, 0);
 }
 

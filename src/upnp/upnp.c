@@ -153,7 +153,7 @@ send_dev_description(http_connection_t *hc, const char *remain, void *opaque,
 		 "<presentationURL>/</presentationURL>"
 		 "<serviceList>",
 		 gconf.system_name,
-		 htsversion_full,
+		 appversion,
 		 upnp_uuid);
 
 

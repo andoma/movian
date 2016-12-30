@@ -366,7 +366,7 @@ linux_trap_init(void)
     self[r] = 0;
 
   snprintf(line1, sizeof(line1),
-	   "PRG: "APPNAMEUSER" (%s) EXE: %s, CWD: %s ", htsversion_full,
+	   "PRG: "APPNAMEUSER" (%s) EXE: %s, CWD: %s ", appversion,
 	   self, getcwd(path, sizeof(path)));
 
   dl_iterate_phdr(callback, NULL);

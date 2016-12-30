@@ -339,11 +339,10 @@ trace_init(void)
   log_root = prop_create(prop_get_global(), "logbuffer");
   hts_mutex_init(&trace_mutex);
   trace_initialized = 1;
-  extern const char *htsversion_full;
 
   TRACE(TRACE_INFO, "SYSTEM",
         APPNAMEUSER" %s starting. %d CPU cores. Systemtype:%s OS:%s",
-        htsversion_full, gconf.concurrency,
+        appversion, gconf.concurrency,
         arch_get_system_type(),
         gconf.os_info[0] ? gconf.os_info : "<unknown>");
 }

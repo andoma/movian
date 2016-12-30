@@ -118,7 +118,7 @@ hc_root_old(http_connection_t *hc)
 		 "<html><body>"
 		 "<h2>%s</h2><p>Version %s"
 		 , gconf.system_name,
-		 htsversion_full);
+		 appversion);
 
   htsbuf_qprintf(&out, 
 		 "<form name=\"input\" method=\"get\">"
@@ -343,13 +343,12 @@ hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
 {
   htsbuf_queue_t out;
   htsbuf_queue_init(&out, 0);
-  extern const char *htsversion_full;
 
-  htsbuf_qprintf(&out, 
+  htsbuf_qprintf(&out,
 		 "<html><body>"
 		 "<strong>%s</strong> Version %s<br><br>"
 		 , gconf.system_name,
-		 htsversion_full);
+		 appversion);
 
   diag_html(hc, &out);
 

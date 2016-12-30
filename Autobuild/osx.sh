@@ -12,6 +12,7 @@ set -e
 
 set -x
 ./configure.osx ${RELEASE} --cleanbuild ${USE_CCACHE} \
+    ${VERSIONARGS} \
     --downloadcache="${WORKINGDIR}/downloadcache"
 
 set +x

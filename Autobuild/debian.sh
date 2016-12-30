@@ -11,6 +11,7 @@ echo >>${CHANGELOG} " -- Andreas Öman <andreas@lonelycoder.com>  ${NOW}"
 
 export JARGS
 export ARCH
+export VERSIONARGS
 
 if ccache=$(which ccache); then
     echo "Using ccache"
