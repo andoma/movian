@@ -34,7 +34,8 @@
 
 #include "fa_proto.h"
 
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(__APPLE__) || (defined(__linux__) && !defined(__ANDROID__))
+#define HAVE_XATTR
 #include <sys/xattr.h>
 #endif
 
@@ -711,7 +712,7 @@ fs_normalize(struct fa_protocol *fap, const char *url, char *dst, size_t dstlen)
 #endif
 
 
-#if defined(__APPLE__) || defined(__linux__)
+#ifdef HAVE_XATTR
 /**
  *
  */
@@ -886,7 +887,7 @@ fa_protocol_t fa_protocol_fs = {
 #endif
   .fap_makedir = fs_makedir,
 
-#if defined(__APPLE__) || defined(__linux__)
+#ifdef HAVE_XATTR
   .fap_set_xattr = fs_set_xattr,
   .fap_get_xattr = fs_get_xattr,
 #endif
