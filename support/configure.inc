@@ -361,6 +361,7 @@ EOF
 #
 if [ -n "$VERSIONOVERRIDE" ]; then
     echo >>${CONFIG_H} "#define VERSIONOVERRIDE \"${VERSIONOVERRIDE}\""
+    echo >>${CONFIG_MAK} "VERSION=\"${VERSIONOVERRIDE}\""
 fi
 
 #
