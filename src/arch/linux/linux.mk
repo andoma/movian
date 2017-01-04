@@ -39,31 +39,38 @@ DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFI
 #
 
 
-MAN = man/showtime.1
-DESKTOP = support/gnome/showtime.desktop
-ICON = support/gnome/showtime.svg
+MAN = man/movian.1
+DESKTOP = support/gnome/movian.desktop
+ICON = support/gnome/movian.svg
 
 INSTDESKTOP= ${DESTDIR}$(prefix)/share/applications
 INSTICON= ${DESTDIR}$(prefix)/share/icons/hicolor/scalable/apps
 
 
 install: ${PROG}.datadir ${MAN} ${DESKTOP} ${ICON}
-	install -D ${PROG}.datadir ${bindir}/showtime
-	install -D ${MAN} ${mandir}/showtime.1
+	install -D ${PROG}.datadir ${bindir}/movian
+	install -D ${MAN} ${mandir}/movian.1
 
-	install -D ${DESKTOP} ${INSTDESKTOP}/showtime.desktop
-	install -D ${ICON} ${INSTICON}/showtime.svg
+	install -D ${DESKTOP} ${INSTDESKTOP}/movian.desktop
+	install -D ${ICON} ${INSTICON}/movian.svg
 
 	for bundle in ${BUNDLES}; do \
 		mkdir -p ${datadir}/$$bundle ;\
 		cp -r $$bundle/*  ${datadir}/$$bundle ;\
 	done
 
+	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
+
 uninstall:
+	rm -f ${bindir}/movian
+	rm -f ${mandir}/movian.1
+	rm -f ${INSTDESKTOP}/movian.desktop
+	rm -f ${INSTICON}/movian.svg
+
+# remove old showtime
 	rm -f ${bindir}/showtime
 	rm -f ${mandir}/showtime.1
 	rm -f ${INSTDESKTOP}/showtime.desktop
 	rm -f ${INSTICON}/showtime.svg
 
-#	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
 
