@@ -1,0 +1,97 @@
+
+How to compile, install and make rpm packages of showtime in Fedora 25
+
+This document is written so you can start with a clean install of Fedora 25 Workstation 
+
+
+###############################################################################
+
+Section 1 - RPMFusion Repositories (3rd party repository) this might not be needed, but nice to have.
+Section 2 - Install Development packages
+Section 3 - Movian Source
+Section 4 - RPM (only if you need to make an rpm. You can install from source in Section 3 if you like.)
+
+
+###############################################################################
+
+
+
+###############################################################################
+## Section 1 - RPMFusion Repositories
+###############################################################################
+
+
+Setup your Fedora to use RPMfusion as 3'rd party repositories by web or command line
+
+Browse to rpmfusion.org and goto the configuration page and install both the free and nonfree libraries that is correct for this version or do it command line stile.
+
+root@computer ~]# su -c 'dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm'
+
+
+###############################################################################
+## Section 2 - Install Development packages
+###############################################################################
+
+
+Become root in a shell (su -) and add theese groups to make the computer a basic development workstation
+
+root@computer ~]# dnf groupinstall "Development Tools" "Development Libraries"
+
+Next add the development packages that Movian depends on. This will trigger some dependencies.
+
+root@computer ~]# dnf install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver-devel libXv-devel avahi-devel libvdpau-devel mesa-libGLw-devel mesa-libGLU-devel librtmp-devel
+
+
+###############################################################################
+## Section 3 - Showtime Source
+###############################################################################
+
+
+//as user
+
+user@computer ~]$ git clone git://github.com/andoma/movian
+
+//if you intend to make an rpm package stop here and go to the next section. Do not run ./configure in the folder.. (will fail to build later because folder will be renamed)
+
+go to movian folder
+user@computer ~]$ cd movian
+
+If you just want to compile and install do on 64bit install of fedora
+user@computer movian]$ ./configure --prefix=/usr --datadir="\${prefix}/share/movian" --libdir="\${prefix}/lib64/movian" --release
+
+If you just want to compile and install do on 32bit install of fedora
+user@computer movian]$ ./configure --prefix=/usr --datadir="\${prefix}/share/movian" --libdir="\${prefix}/lib/movian" --release
+
+user@computer movian]$ make -j4   // use make -j(number of cpu threads to use) to compile the source
+
+//as superuser (root) do the system install
+
+root@computer movian]# make install
+
+
+###############################################################################
+## Section 4 - RPM
+###############################################################################
+
+
+add rpmdevtools to create rpm packages 
+root@computer ~]# dnf install rpmdevtools
+
+Then in you home folder as user (not as root) run
+user@computer ~]$ rpmdev-setuptree
+
+copy movian.spec from the $HOME/showtime/support/fedora folder into $HOME/rpmbuild/SPEC directory
+
+Check the spec file for the version it intends to build and rename the movian folder to movian-x.y.z if x.y.z is the version in the spec file
+
+Add that folder to a bz2 archive.  movian-x.y.z.tar.bz2 (this archive now has the movian folder and all it's subcontents within.
+
+Move the archive to your newly created $home/rpmbuild/SOURCES folder (was created with rpmdev-setuptree)
+
+change directory to $home/rpmbuild/SPEC  and make the rpm files.
+
+user@computer ~]$ rpmbuild -ba movian.spec
+user@computer ~]$ rpmbuild -ba --target i686 movian.spec  //if you are on a 64bit machine and need to make the 32bit rpm
+
+
+root@computer ~]$
