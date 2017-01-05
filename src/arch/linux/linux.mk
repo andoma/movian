@@ -64,7 +64,7 @@ install: ${PROG}.datadir ${MAN} ${DESKTOP} ${ICON}
 		cp -r $$bundle/*  ${datadir}/$$bundle ;\
 	done
 
-	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
+#	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
 
 uninstall:
 	rm -f ${bindir}/${appname}
