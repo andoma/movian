@@ -312,8 +312,8 @@ fill_frame_info_from_pts(frame_info_t *fi,
                          android_video_codec_t *avc,
                          int64_t pts)
 {
-  fi->fi_dar_num = avc->avc_out_width;
-  fi->fi_dar_den = avc->avc_out_height;
+  fi->fi_dar_num = avc->avc_width;
+  fi->fi_dar_den = avc->avc_height;
   fi->fi_pts = pts;
 
   for(int i = 0; i < VIDEO_DECODER_REORDER_SIZE; i++) {
@@ -845,8 +845,13 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   int surface;
   if(avc->avc_direct) {
+    const frame_info_t fi = {
+      .fi_dar_num = avc->avc_width,
+      .fi_dar_den = avc->avc_height,
+      .fi_height = avc->avc_height,
+    };
     surface = mp->mp_set_video_codec('SURF', mc, mp->mp_video_frame_opaque,
-                                     NULL);
+                                     &fi);
   } else {
     surface = 0;
   }
