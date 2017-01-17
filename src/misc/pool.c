@@ -154,11 +154,17 @@ mark_segments(pool_t *p)
 
   for(pi = p->p_item; pi != NULL; pi = pi->link) {
     LIST_FOREACH(ps, &p->p_segments, ps_link) {
-      if((intptr_t)pi >= (intptr_t)ps->ps_addr &&
-         (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_avail_size) {
-        size_t off = ((void *)pi - ps->ps_addr) / p->p_item_size;
+      size_t off = (void *)pi - ps->ps_addr;
+
+      if(off < ps->ps_avail_size) {
+        off /= p->p_item_size;
         ps->ps_mark[off] = 0;
+        break;
       }
+    }
+    if(ps == NULL) {
+      TRACE(TRACE_ERROR, "POOL", "%s: Item %p is not part of pool segment",
+            p->p_name, pi);
     }
   }
 }
@@ -298,9 +304,20 @@ pool_put(pool_t *p, void *ptr)
 #ifdef POOL_DEBUG
   pool_segment_t *ps;
   LIST_FOREACH(ps, &p->p_segments, ps_link)
-    if((intptr_t)pi >= (intptr_t)ps->ps_addr && 
-       (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_avail_size)
+    if((uintptr_t)pi >= (uintptr_t)ps->ps_addr &&
+       (uintptr_t)pi < (uintptr_t)ps->ps_addr + ps->ps_avail_size)
       break;
+
+  if(ps == NULL) {
+    TRACE(TRACE_ERROR, "POOL", "%s: Item %p not in any segment",
+          p->p_name, pi);
+    pool_segment_t *ps;
+    LIST_FOREACH(ps, &p->p_segments, ps_link) {
+      TRACE(TRACE_ERROR, "POOL", "    segment %p +%zd\n",
+            ps->ps_addr, ps->ps_avail_size);
+    }
+    abort();
+  }
 
   assert(ps != NULL);
 
