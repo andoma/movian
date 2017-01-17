@@ -490,9 +490,11 @@ slideshow_nodes(void *opaque, prop_event_t event, ...)
   case PROP_HAVE_MORE_CHILDS_YES:
   case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_SUGGEST_FOCUS:
+  case PROP_SELECT_CHILD:
     break;
 
   default:
+    TRACE(TRACE_ERROR, "Slideshow", "Unhandleded prop event %d", event);
     abort();
   }
   va_end(ap);
