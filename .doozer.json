@@ -152,7 +152,17 @@
 
     "osx": {
       "buildenv": "osx",
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
+      "homebrew": {
+        "formulae": ["yasm", "ccache"]
+      },
+      "artifacts": [
+        "build.osx/Movian.zip",
+        "build.osx/movian.bin"
+      ],
+      "buildcmd": [
+        "./configure.osx --release --version=${VERSION} --cleanbuild --ccache",
+        "make -j ${PARALLEL} dist",
+      ]
     }
   }
 }
