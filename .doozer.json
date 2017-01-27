@@ -1,4 +1,5 @@
 {
+  "submodules": ["ext/libav", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser"],
   "targets": {
     "android": {
       "buildenv": "jessie-i386",
