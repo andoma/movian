@@ -34,3 +34,5 @@ exports.format = function(d) {
 
 exports.parse = string.parseURL;
 
+exports.resolve = string.resolveURL;
+

@@ -359,6 +359,20 @@ es_parseURL(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_resolveURL(duk_context *ctx)
+{
+  const char *base = duk_require_string(ctx, 0);
+  const char *url  = duk_require_string(ctx, 1);
+  char *newurl = url_resolve_relative_from_base(base, url);
+  duk_push_string(ctx, newurl);
+  free(newurl);
+  return 1;
+}
+
 
 static const duk_function_list_entry fnlist_string[] = {
   { "isUtf8",                es_is_utf8_duk,           1 },
@@ -370,6 +384,7 @@ static const duk_function_list_entry fnlist_string[] = {
   { "durationToString",      es_durationtostring,      1 },
   { "parseTime",             es_parseTime,             1 },
   { "parseURL",              es_parseURL,              2 },
+  { "resolveURL",            es_resolveURL,            2 },
   { NULL, NULL, 0}
 };
 
