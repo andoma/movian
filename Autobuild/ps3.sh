@@ -1,16 +1,13 @@
-TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/481515bbfbfbe22f775ff5d42095be75eccc7373
-TOOLCHAIN_HASH=`echo ${TOOLCHAIN_URL} | sha1sum  | awk '{print $1}'`
-TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
+TOOLCHAIN_URL=https://movian.tv/static/ps3dev.tar.gz
+TOOLCHAIN="${WORKINGDIR}/ps3dev"
 
 cleanup() {
     echo "Cleaning up"
-    rm -rf ${TOOLCHAIN}.broken
-    mv ${TOOLCHAIN} ${TOOLCHAIN}.broken
     exit 1
 }
 
-export PS3DEV=${TOOLCHAIN}/ps3dev
-export PSL1GHT=${TOOLCHAIN}/PSL1GHT
+export PS3DEV=${TOOLCHAIN}
+export PSL1GHT=${TOOLCHAIN}/psl1ght
 export PATH=$PATH:$PS3DEV/bin:$PS3DEV/host/ppu/bin:$PS3DEV/host/spu/bin
 export PATH=$PATH:$PSL1GHT/host/bin
 
@@ -22,11 +19,8 @@ else
     trap cleanup SIGINT
     (
 	set -eu
-	mkdir -p ${TOOLCHAIN}
-	cd ${TOOLCHAIN}
+	cd ${WORKINGDIR}
 	curl -L "${TOOLCHAIN_URL}" | tar xfz -
-	cd *
-	PARALLEL=${JARGS} ./toolchain.sh 1 2 3 4 5 11 12
     )
 
     STATUS=$?
