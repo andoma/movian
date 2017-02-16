@@ -5,20 +5,16 @@ maintainer: Döme Gergely István <domegergely@hotmail.com>
 # ./glwskins/flat/ctxmenu/default_details.view
 #
 id: Bookmark
-# Missing translation
-msg: 
+msg: Könyvjelzők
 
 id: Bookmarked
-# Missing translation
-msg: 
+msg: Könyvjelző rögzítve
 
 id: Copy to clipboard
-# Missing translation
-msg: 
+msg: Vágólapra másolva
 
 id: Copy to location...
-# Missing translation
-msg: 
+msg: Másolás ide... 
 
 id: Delete
 msg: Törlés
@@ -30,29 +26,25 @@ msg: Lejátszási lista
 # ./glwskins/flat/ctxmenu/plugin_details.view
 #
 id: Author:
-# Missing translation
-msg: 
+msg: Készitő:
 
 id: Available version:
 msg: Elérhető verzió:
 
 id: Changelog
-# Missing translation
-msg: 
+msg: Változás lista
 
 id: Install
 msg: Telepít
 
 id: Installed version:
-# Missing translation
-msg: 
+msg: Telepített verzió:
 
 id: Status:
-# Missing translation
-msg: 
+msg: Státusz:
 
 id: Uninstall
-msg: Töröl
+msg: Törlés
 
 id: Upgrade
 msg: Frissítés
@@ -77,19 +69,18 @@ msg: Lejátszás a lista végéig
 
 id: Video Cast
 # Missing translation
-msg: 
+msg:
 
 #
 # ./glwskins/flat/items/details/video.view
 #
 id: Season %d - Episode %d
-# Missing translation
-msg: 
+msg: Évad %d - Epizód %d
 
 id: Seen %d times, %s
 # Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
-msg[0]: 
-msg[1]: 
+msg[0]: Megtekintve %d alkalommal, %s
+msg[1]: Megtekintve %d alkalommal, %s
 
 #
 # ./glwskins/flat/items/list/add.view
@@ -122,8 +113,7 @@ msg: Felhasználói felület
 # ./glwskins/flat/items/list/tvepisode.view
 #
 id: Episode %d - %s
-# Missing translation
-msg: 
+msg: Epizód %d - %s
 
 #
 # ./glwskins/flat/loading.view
@@ -144,70 +134,55 @@ msg: Rendszernapló
 # ./glwskins/flat/mediainfo.view
 #
 id: A/V diff
-# Missing translation
-msg: 
+msg: A/V diff
 
 id: Audio bitrate
-# Missing translation
-msg: 
+msg: Audió bitráta
 
 id: Audio codec
-# Missing translation
-msg: 
+msg: Audió dekóder
 
 id: Audio packets
-# Missing translation
-msg: 
+msg: Audió csomagok 
 
 id: Buffer usage
-# Missing translation
-msg: 
+msg: Buffer használat
 
 id: No media loaded
 msg: Nincs média betöltve
 
 id: Remaining buffer
-# Missing translation
-msg: 
+msg: Fennmaradó buffer
 
 id: Source
-# Missing translation
-msg: 
+msg: Forrás
 
 id: Video bitrate
-# Missing translation
-msg: 
+msg: Videó bitráta
 
 id: Video codec
-# Missing translation
-msg: 
+msg: Videó dekóder
 
 id: Video framerate
-# Missing translation
-msg: 
+msg: Videó képkocka/ms
 
 id: Video packets
-# Missing translation
-msg: 
+msg: Videó csomagok
 
 #
 # ./glwskins/flat/menu/sidebar.view
 #
 id: Bookmark page
-# Missing translation
-msg: 
+msg: Oldal hozzáadása könyvjelzőhöz
 
 id: Page settings
-# Missing translation
-msg: 
+msg: Oldal beállítások
 
 id: Paste
-# Missing translation
-msg: 
+msg: Beillesztés
 
 id: Reload page
-# Missing translation
-msg: 
+msg: Oldal újratöltése
 
 id: Remove bookmark
 msg: Könyvjelző törlése
@@ -228,8 +203,7 @@ id: Exit %s
 msg: Kilépés a %s-ból
 
 id: Hide media info
-# Missing translation
-msg: 
+msg: Média információ elrejtése
 
 id: Hide system info
 msg: Rendszer információk elrejtése
@@ -238,8 +212,7 @@ id: Master volume
 msg: Fő hangerő
 
 id: Show media info
-# Missing translation
-msg: 
+msg: Média információ megjelenítése
 
 id: Show system info
 msg: Rendszerinformációk megjelenítése
@@ -251,8 +224,7 @@ id: Time until sleep
 msg: Idő az alvó módba lépésig
 
 id: View log
-# Missing translation
-msg: 
+msg: Napló megtekintése
 
 id: dB
 msg: dB
@@ -300,30 +272,25 @@ id: Custom
 msg: Saját
 
 id: Grid
-# Missing translation
-msg: 
+msg: Rács
 
 id: List
 msg: Lista
 
 id: Page layout
-# Missing translation
-msg: 
+msg: Oldal kiosztás
 
 id: Search results
-# Missing translation
-msg: 
+msg: Keresési eredmény
 
 id: TV Season
-# Missing translation
-msg: 
+msg: TV Évad
 
 #
 # ./glwskins/flat/pages/empty.view
 #
 id: No contents
-# Missing translation
-msg: 
+msg: Nincs tartalom
 
 #
 # ./glwskins/flat/pages/home.view
@@ -332,15 +299,13 @@ id: Dismiss
 msg: Megszakít
 
 id: Home
-# Missing translation
-msg: 
+msg: Főmenü
 
 #
 # ./glwskins/flat/pages/openerror.view
 #
 id: Unable to open resource
-# Missing translation
-msg: 
+msg: Nem lehet megnyitni a forrást
 
 #
 # ./glwskins/flat/pages/playqueue.view
@@ -352,46 +317,39 @@ msg: Lejátszási lista
 # ./glwskins/flat/pages/searchresults.view
 #
 id: Show more
-# Missing translation
-msg: 
+msg: Mutass többet
 
 id: %d hits
 # Missing plural translation for '%d hits' and '%d hit'
-msg[0]: 
-msg[1]: 
+msg[0]: %d találat
+msg[1]: %d találat
 
 #
 # ./glwskins/flat/pages/slideshow.view
 #
 id: Interval: %ds
-# Missing translation
-msg: 
+msg: Időtartam : %ds
 
 id: Play/Pause
-# Missing translation
-msg: 
+msg: Lejátszás/Szünet
 
 id: Stop
-# Missing translation
-msg: 
+msg: Leállítás
 
 #
 # ./glwskins/flat/pages/stpp.view
 #
 id: Remote control - %s
-# Missing translation
-msg: 
+msg: Távoli hozzáférés - %s
 
 id: Remote controlling %s
-# Missing translation
-msg: 
+msg:  Távoli hozzáférés - %s
 
 #
 # ./glwskins/flat/pages/stppstpp.view
 #
 id: Nested remote controll is not supported
-# Missing translation
-msg: 
+msg: A beágyazott távoli vezérlés nem támogatott
 
 id: Remote control
 msg: Távvezérlés
@@ -409,19 +367,16 @@ id: CPU is too slow to decode this video
 msg: A processzor túl lassú hogy dekódolja ezt a videót
 
 id: Next
-# Missing translation
-msg: 
+msg: Következő
 
 id: Previous
-# Missing translation
-msg: 
+msg: Előző
 
 #
 # ./glwskins/flat/pages/tvseason.view
 #
 id: Season %d
-# Missing translation
-msg: 
+msg: Évad %d
 
 #
 # ./glwskins/flat/pages/upgrade.view
@@ -439,15 +394,13 @@ id: Check for updates now
 msg: Frissítés keresése most
 
 id: Checking for updates
-# Missing translation
-msg: 
+msg: Frissítések keresése
 
 id: Current version:
 msg: Jelenlegi verzió:
 
 id: Download and install
-# Missing translation
-msg: 
+msg: Letöltés és telepítés
 
 id: Downloading %s
 msg: %s letöltése
@@ -456,11 +409,10 @@ id: New version %s is available for download
 msg: A %s verzió elérhető
 
 id: No upgrade available
-msg: Frissítés nem található
+msg: Nincs elérhető frissítés
 
 id: Retry
-# Missing translation
-msg: 
+msg: Újra
 
 id: Stable
 msg: Stabil
@@ -493,23 +445,19 @@ id: Cancel
 msg: Mégse
 
 id: Ok
-# Missing translation
-msg: 
+msg: Ok
 
 #
 # ./glwskins/flat/popups/filepicker.view
 #
 id: Back
-# Missing translation
-msg: 
+msg: Vissza
 
 id: Close
-# Missing translation
-msg: 
+msg: Bezár
 
 id: Folder select mode, press right to open subfolder
-# Missing translation
-msg: 
+msg: Mappa választása, nyomjon jobbrát az almappa megnyitásához
 
 #
 # ./glwskins/flat/popups/resume.view
@@ -518,8 +466,7 @@ id: No, Start over
 msg: Nem, kezdje elölről
 
 id: Resume from %s
-# Missing translation
-msg: 
+msg: Folytatás %s-től
 
 id: Yes
 msg: Igen
@@ -537,15 +484,13 @@ id: CPU Temp
 msg: CPU Hő
 
 id: Connected
-# Missing translation
-msg: 
+msg: Csatlakozva
 
 id: Fragmentation
 msg: Töredezettség
 
 id: Framerate
-# Missing translation
-msg: 
+msg: Képkocka/ms
 
 id: GPU Temp
 msg: GPU Hő
@@ -554,23 +499,19 @@ id: HDD Avail
 msg: HDD
 
 id: IP Address
-# Missing translation
-msg: 
+msg: IP Cím
 
 id: Inactive memory
-# Missing translation
-msg: 
+msg: Inaktív memória
 
 id: Memory usage
 msg: Memória használat
 
 id: Network
-# Missing translation
-msg: 
+msg: Hálózat
 
 id: Not available
-# Missing translation
-msg: 
+msg: Nem elérhető
 
 id: System Free
 msg: Szabad ram
@@ -579,12 +520,10 @@ id: System Total
 msg: Össz. ram
 
 id: VM Page In/Out
-# Missing translation
-msg: 
+msg: VM naplózás Ki/Be
 
 id: Version
-# Missing translation
-msg: 
+msg: Verzió
 
 #
 # ./glwskins/flat/universe.view
@@ -593,15 +532,13 @@ id: Audio muted
 msg: Hang némítva
 
 id: Copying %d files
-# Missing translation
-msg: 
+msg: %d fájl másolása
 
 id: Master volume: %d dB
 msg: Fő hangerő: %d dB
 
 id: Overscan adjustment\nPosition border at screen edges
-# Missing translation
-msg: 
+msg: Túlméretezés finomhangolás\nÁllítsa a széleket a képernyő széléhez
 
 #
 # ./src/api/stpp.c
@@ -658,13 +595,13 @@ id: Unable to accelerate %s, library not loaded.
 msg: Nem gyorsítható a %s, a könyvtár nincs betöltve.
 
 id: Unable to open Cell codec. Error 0x%x
-msg: A Cell kodek nem indítható. Hibakód 0x%x
+msg: A Cell dekóder nem indítható. Hibakód 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: A Cell kodek nem indítható. Nem foglalható le %d bájt RAM.
+msg: A Cell dekóder nem indítható. Nem foglalható le %d bájt RAM.
 
 id: Unable to query Cell codec. Error 0x%x
-msg: A Cell kodek nem indítható. Hibakód 0x%x
+msg: A Cell dekóder nem indítható. Hibakód 0x%x
 
 #
 # ./src/arch/rpi/rpi_audio.c
@@ -925,8 +862,7 @@ id: Filename
 msg: Fájlnév
 
 id: Include in library
-# Missing translation
-msg: 
+msg: Hozzáadás a könyvtárhoz
 
 id: Newest first
 msg: Újabb előre
@@ -935,7 +871,7 @@ id: Oldest first
 msg: Régebbi előre
 
 id: Show only supported files
-msg: Csak támogatott fájltípusok megjelenítése
+msg: Csak támogatott fájltípusok
 
 id: Sort folders first
 msg: Először a mappák
@@ -1340,8 +1276,7 @@ msg: Készenlét
 # ./src/notifications.c
 #
 id: Show news on home screen
-# Missing translation
-msg: 
+msg: Hírek mutatása a főképernyőn
 
 #
 # ./src/plugins.c
@@ -1350,16 +1285,13 @@ id: Alternate plugin Repository URL
 msg: Alternatív plugin tároló URL
 
 id: Audio decoders
-# Missing translation
-msg: 
+msg: Audió dekóderek
 
 id: Auto install plugins on demand
-# Missing translation
-msg: 
+msg: Azonnal telepítse a pluginokat automatikusan
 
 id: Auto installed plugin %s (Version %s)
-# Missing translation
-msg: 
+msg: Automatikusan telepített plugin %s (%s verzió)
 
 id: Automatically upgrade plugins
 msg: Pluginok automatikus frissítése
@@ -1578,8 +1510,7 @@ id: Network settings
 msg: Hálózati beállítások
 
 id: Reset
-# Missing translation
-msg: 
+msg: Újraindítás
 
 id: Settings useful for developers
 msg: Hasznos beállítások fejlesztőknek
@@ -1714,12 +1645,10 @@ msg: A %s készlet használata a
 # ./src/ui/clipboard.c
 #
 id: Copy failed: %s
-# Missing translation
-msg: 
+msg: A másolás sikertelen: %s
 
 id: Target folder
-# Missing translation
-msg: 
+msg: Cél mappa
 
 #
 # ./src/ui/glw/glw_ps3.c
@@ -1920,9 +1849,8 @@ id: Up / Down during video playback controls
 msg: Le / fel gomb videó lejátszás közben
 
 id: Video acceleration and display behaviour
-msg: Videó gyorsítás és képernyő megjelenítés
+msg: Videó dekódolás és képernyő megjelenítés
 
 id: Video buffer size
-# Missing translation
-msg: 
+msg: Videó buffer méret
 
