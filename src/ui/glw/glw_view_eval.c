@@ -4982,7 +4982,7 @@ glwf_isFocused(glw_view_eval_context_t *ec, struct token *self,
   ec->dynamic_eval |= GLW_VIEW_EVAL_FHP_CHANGE;
 
   r = eval_alloc(self, ec, TOKEN_INT);
-  r->t_int = glw_is_focused(ec->w);
+  r->t_int = glw_is_focused(ec->w) && ec->w->glw_root->gr_keyboard_mode;
   eval_push(ec, r);
   return 0;
 }

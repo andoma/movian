@@ -433,8 +433,7 @@ update_in_path(glw_t *w)
   glw_t *p;
 
   for(p = w->glw_parent; p != NULL; p = p->glw_parent) {
-    if(p == gr->gr_current_focus && gr->gr_keyboard_mode)
-      f |= GLW_IN_FOCUS_PATH;
+    if(p == gr->gr_current_focus) f |= GLW_IN_FOCUS_PATH;
     if(p == gr->gr_pointer_hover) f |= GLW_IN_HOVER_PATH;
     if(p == gr->gr_pointer_press) f |= GLW_IN_PRESSED_PATH;
   }
@@ -1175,11 +1174,6 @@ glw_path_flood(glw_t *w, int or, int and)
 void
 glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
 {
-  if(!w->glw_root->gr_keyboard_mode) {
-    set &= ~GLW_IN_FOCUS_PATH;
-    clr |= GLW_IN_FOCUS_PATH;
-  }
-
   clr = ~clr; // Invert so we can just AND it
 
   glw_path_flood(w, set, clr);
@@ -1189,10 +1183,9 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
     int old_flags = w->glw_flags;
     glw_fhp_update(w, set, clr);
 
-    if((set | clr) & GLW_IN_FOCUS_PATH) {
-      if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
-        glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
-                             "GainedFocus" : "LostFocus");
+    if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH) {
+      glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
+                           "GainedFocus" : "LostFocus");
     }
 
     if(w->glw_flags & GLW_FHP_SPILL_TO_CHILDS) {
@@ -1462,7 +1455,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 
     gr->gr_last_focus = w;
 
-    glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
+    glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, NULL);
 
 
     if(how) {
@@ -2190,8 +2183,11 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   if(gpe->type == GLW_POINTER_TOUCH_START) {
     gr->gr_touch_start_x = gpe->screen_x;
     gr->gr_touch_start_y = gpe->screen_y;
-    gr->gr_touch_mode = 1;
-    prop_set(gr->gr_prop_ui, "touch", PROP_SET_INT, 1);
+    if(gr->gr_touch_mode == 0) {
+      TRACE(TRACE_DEBUG, "GLW", "Operating in touch mode");
+      gr->gr_touch_mode = 1;
+      prop_set(gr->gr_prop_ui, "touch", PROP_SET_INT, 1);
+    }
   }
 
   if(gpe->type == GLW_POINTER_TOUCH_MOVE) {
@@ -2489,6 +2485,7 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
            event_is_action(e, ACTION_LEFT) ||
            event_is_action(e, ACTION_RIGHT))
           return;
+
       }
     }
     if(glw_kill_screensaver(gr)) {
@@ -3466,12 +3463,6 @@ glw_set_keyboard_mode(glw_root_t *gr, int on)
   if(gr->gr_universe != NULL)
     glw_update_dynamics_r(gr->gr_universe, GLW_VIEW_EVAL_FHP_CHANGE);
 
-  if(gr->gr_current_focus != NULL) {
-    if(on)
-      glw_path_modify(gr->gr_current_focus, GLW_IN_FOCUS_PATH, 0, NULL);
-    else
-      glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH, NULL);
-  }
   glw_need_refresh(gr, 0);
   return 1;
 }
