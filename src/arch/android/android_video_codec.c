@@ -26,7 +26,6 @@
 #include "main.h"
 #include "video/video_decoder.h"
 #include "video/video_settings.h"
-#include "video/h264_annexb.h"
 #include "video/h264_parser.h"
 
 extern JavaVM *JVM;
@@ -88,20 +87,12 @@ typedef struct android_video_codec {
   jmethodID avc_releaseOutputBuffer;
   jmethodID avc_releaseOutputBufferTimed;
 
-
-  void *avc_extradata;
-  int avc_extradata_size;
-
   int avc_out_width;
   int avc_out_height;
   int avc_out_stride;
   int avc_out_fmt;
 
-  h264_annexb_ctx_t avc_annexb;
-
   const char *avc_nicename;
-
-  int avc_slot_issues;
 
   int64_t avc_ts1;
   int64_t avc_ts2;
@@ -116,9 +107,25 @@ typedef struct android_video_codec {
 
   h264_parser_t avc_h264_parser;
 
+  AVBitStreamFilterContext *avc_bsf;
+
+  prop_t *avc_codec_info;
+
 } android_video_codec_t;
 
 
+
+/**
+ *
+ */
+static int
+getInteger(JNIEnv *env, jobject obj, const char *name)
+{
+  jclass class = (*env)->GetObjectClass(env, obj);
+  jmethodID mid = (*env)->GetMethodID(env, class, "getInteger",
+                                      "(Ljava/lang/String;)I");
+  return (*env)->CallIntMethod(env, obj, mid, (*env)->NewStringUTF(env, name));
+}
 
 
 JNIEXPORT jint JNICALL
@@ -187,7 +194,20 @@ Java_com_lonelycoder_mediaplayer_Core_vdOutputFormatChanged(JNIEnv *env,
                                                             int jopaque,
                                                             jobject jinfo)
 {
-  TRACE(TRACE_DEBUG, "AVC", "%s", __FUNCTION__);
+  android_video_codec_t *avc = (android_video_codec_t *)jopaque;
+
+  int width   = getInteger(env, jinfo, "width");
+  int height  = getInteger(env, jinfo, "height");
+  int stride  = getInteger(env, jinfo, "stride");
+  int out_fmt = getInteger(env, jinfo, "color-format");
+
+  TRACE(TRACE_DEBUG, "VIDEO", "Output format changed to %d x %d [%d] colfmt:%d",
+        width, height, stride, out_fmt);
+
+  char codec_info[64];
+  snprintf(codec_info, sizeof(codec_info), "%s %dx%d (Accelerated)",
+           avc->avc_nicename, width, height);
+  prop_set_string(avc->avc_codec_info, codec_info);
   return 0;
 }
 
@@ -243,18 +263,6 @@ avc_enq(JNIEnv *env, android_video_codec_t *avc, void *data, int size,
 }
 
 
-/**
- *
- */
-static int
-getInteger(JNIEnv *env, jobject obj, const char *name)
-{
-  jclass class = (*env)->GetObjectClass(env, obj);
-  jmethodID mid = (*env)->GetMethodID(env, class, "getInteger",
-                                      "(Ljava/lang/String;)I");
-  return (*env)->CallIntMethod(env, obj, mid, (*env)->NewStringUTF(env, name));
-}
-
 
 /**
  *
@@ -282,7 +290,7 @@ update_output_format(JNIEnv *env, android_video_codec_t *avc,
   snprintf(codec_info, sizeof(codec_info), "%s %dx%d (Accelerated)",
            avc->avc_nicename,
            avc->avc_out_width, avc->avc_out_height);
-  prop_set_string(mp->mp_video.mq_prop_codec, codec_info);
+  prop_set_string(avc->avc_codec_info, codec_info);
 }
 
 
@@ -464,20 +472,21 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
   (*env)->PushLocalFrame(env, 64);
 
-  if(avc->avc_annexb.extradata != NULL && !avc->avc_annexb.extradata_injected) {
-    avc_enq(env, avc, avc->avc_annexb.extradata,
-            avc->avc_annexb.extradata_size, 0, 0, 10000);
-    avc->avc_annexb.extradata_injected = 1;
+  uint8_t *converted = NULL;
+  uint8_t *data = mb->mb_data;
+  int size = mb->mb_size;
+
+  if(avc->avc_bsf) {
+    int rval = av_bitstream_filter_filter(avc->avc_bsf, mc->fmt_ctx, NULL,
+                                          &converted, &size, data, size,
+                                          mb->mb_keyframe);
+    if(rval < 0)
+      return;
+    if(rval == 1)
+      data = converted;
   }
 
-  uint8_t *data = mb->mb_data;
-  size_t size = mb->mb_size;
-
-  if(avc->avc_annexb.extradata_injected)
-    h264_to_annexb(&avc->avc_annexb, &data, &size);
-
   int64_t pts = store_metadata(vd, mb, avc, mc, data, size);
-
   int timeout = 0;
   const int flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
   while(1) {
@@ -494,6 +503,7 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
     break;
   }
   (*env)->PopLocalFrame(env, NULL);
+  av_freep(&converted);
 }
 
 
@@ -585,29 +595,23 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
 
   hts_mutex_unlock(&vd->vd_mp->mp_mutex);
 
-  int rval;
 
-  uint8_t *data;
-  size_t size;
-  int64_t pts;
-  int flags;
+  uint8_t *converted = NULL;
+  uint8_t *data = mb->mb_data;
+  int size = mb->mb_size;
 
-  if(avc->avc_annexb.extradata != NULL && !avc->avc_annexb.extradata_injected) {
-    data = avc->avc_annexb.extradata;
-    size = avc->avc_annexb.extradata_size;
-    pts = 0;
-    flags = 1;
-    rval = 1;
-    avc->avc_annexb.extradata_injected = 1;
-  } else {
-    data = mb->mb_data;
-    size = mb->mb_size;
-    h264_to_annexb(&avc->avc_annexb, &data, &size);
-
-    pts = store_metadata(vd, mb, avc, mc, data, size);
-    flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
-    rval = 0;
+  if(avc->avc_bsf) {
+    int rval = av_bitstream_filter_filter(avc->avc_bsf, mc->fmt_ctx, NULL,
+                                          &converted, &size, data, size,
+                                          mb->mb_keyframe);
+    if(rval < 0)
+      return 1;
+    if(rval == 1)
+      data = converted;
   }
+
+  int64_t pts = store_metadata(vd, mb, avc, mc, data, size);
+  int flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
 
 
   JNIEnv *env;
@@ -623,7 +627,8 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
   if(bb_size < size) {
     TRACE(TRACE_ERROR, "android", "Video packet buffer too small %d < %d",
           bb_size, size);
-    return rval;
+    av_freep(&converted);
+    return 0;
   }
   memcpy(bb_buf, data, size);
 
@@ -635,7 +640,8 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
   (*env)->PopLocalFrame(env, NULL);
 
   hts_mutex_lock(&vd->vd_mp->mp_mutex);
-  return rval;
+  av_freep(&converted);
+  return 0;
 }
 
 
@@ -670,8 +676,11 @@ android_codec_close(struct media_codec *mc)
 
   (*env)->PopLocalFrame(env, NULL);
 
-  free(avc->avc_extradata);
+  prop_ref_dec(avc->avc_codec_info);
+
   h264_parser_fini(&avc->avc_h264_parser);
+  if(avc->avc_bsf)
+    av_bitstream_filter_close(avc->avc_bsf);
   free(avc);
 }
 
@@ -696,9 +705,9 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     type = "video/avc";
     nicename = "h264";
     break;
-  case AV_CODEC_ID_VP8:
-    type = "video/x-vnd.on2.vp8";
-    nicename = "vp8";
+  case AV_CODEC_ID_HEVC:
+    type = "video/hevc";
+    nicename = "h265";
     break;
 
   default:
@@ -732,6 +741,9 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   }
 
   android_video_codec_t *avc = calloc(1, sizeof(android_video_codec_t));
+
+  avc->avc_codec_info = prop_ref_inc(mp->mp_video.mq_prop_codec);
+
   avc->avc_decoder = (*env)->NewGlobalRef(env, decoder);
 
   avc->avc_MediaCodec =
@@ -744,15 +756,14 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     avc->avc_width  = mcp->width;
     avc->avc_height = mcp->height;
 
-    if(mcp->extradata != NULL && mcp->extradata_size) {
-
-      if(mc->codec_id == AV_CODEC_ID_H264) {
-        h264_to_annexb_init(&avc->avc_annexb, mcp->extradata,
-                            mcp->extradata_size);
-      } else {
-        avc->avc_extradata = malloc(mcp->extradata_size);
-        memcpy(avc->avc_extradata, mcp->extradata, mcp->extradata_size);
-        avc->avc_extradata_size = mcp->extradata_size;
+    if(mc->fmt_ctx) {
+      switch(mc->codec_id) {
+      case AV_CODEC_ID_H264:
+        avc->avc_bsf = av_bitstream_filter_init("h264_mp4toannexb");
+        break;
+      case AV_CODEC_ID_HEVC:
+        avc->avc_bsf = av_bitstream_filter_init("hevc_mp4toannexb");
+        break;
       }
     }
   } else {
