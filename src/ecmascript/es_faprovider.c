@@ -473,7 +473,7 @@ static int64_t
 es_fap_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   es_fa_handle_t *fah = (es_fa_handle_t *)handle;
-  int np;
+  int64_t np;
 
   switch(whence) {
   case SEEK_SET:
