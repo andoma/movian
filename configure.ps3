@@ -66,7 +66,7 @@ setup_env "$@"
 
 mkdir -p ${BUILDDIR}/libav
 ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/support/mallocstub.c
-LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o"
+LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o -B${PS3DEV}/host/ppu/lib"
 
 bzip2_setup
 ext_setup
