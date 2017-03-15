@@ -562,6 +562,10 @@ if enabled nvctrl; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lXNVCtrl"
 fi
 
+echo >>${CONFIG_MAK} "FRIBIDI_BUILD_DIR=${FRIBIDI_BUILD_DIR}"
+echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/local/include/fribidi `pkg-config --cflags glib-2.0`"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/local/lib/ -lfribidi `pkg-config --libs glib-2.0`"
+ 
 
 #
 # Check for valgrind include files

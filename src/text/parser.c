@@ -25,7 +25,49 @@
 #include "misc/minmax.h"
 
 #include "text.h"
+#include<fribidi.h>
 
+typedef int Bool;
+#define True 1
+#define False 0
+
+static char *bidi_convert( const char *logical_str, const char *charset, int *out_len )
+{
+  char *visual_str=NULL;
+  FriBidiCharSet fribidi_charset;
+  FriBidiChar *logical_unicode_str;
+  FriBidiChar *visual_unicode_str;
+  FriBidiParType pbase_dir = FRIBIDI_TYPE_ON;
+  if (logical_str == NULL || charset == NULL)
+  {
+    return NULL;
+  }
+  int str_len = (int)strlen(logical_str);
+  fribidi_charset = fribidi_parse_charset((char *)charset);
+  if (fribidi_charset == FRIBIDI_CHAR_SET_NOT_FOUND)
+  {
+    return NULL;
+  }
+  logical_unicode_str = (FriBidiChar *)malloc((str_len + 1) * sizeof(FriBidiChar));
+  str_len = fribidi_charset_to_unicode(
+      fribidi_charset, (char *)logical_str, str_len,
+      logical_unicode_str);
+  visual_unicode_str = (FriBidiChar *)malloc((str_len + 1) * sizeof(FriBidiChar));
+  if (!fribidi_log2vis(
+          logical_unicode_str, str_len, &pbase_dir,
+          visual_unicode_str, NULL, NULL, NULL))
+  {
+    return NULL;
+  }
+
+  visual_str = malloc((4 * str_len + 1) * sizeof(char));
+  *out_len = fribidi_unicode_to_charset(
+      fribidi_charset, visual_unicode_str, str_len, visual_str);
+
+  free(logical_unicode_str);
+  free(visual_unicode_str);
+  return visual_str;
+}
 
 /**
  *
@@ -466,14 +508,24 @@ text_parse(const char *str, int *lenp, int flags,
     if((prefix[i] & 0xff000000) == TR_CODE_COLOR)
       default_color = prefix[i] & 0xffffff;
   }
+  int out_len =0;
+  char *str_final = bidi_convert(str, "UTF-8", &out_len);
 
-  *lenp = parse_str(NULL, str, flags, context, default_color);
-  if(*lenp == 0)
+  if (str_final == NULL)
+    *lenp = parse_str(NULL, str, flags, context, default_color);
+  else
+    *lenp = parse_str(NULL, str_final, flags, context, default_color);
+  if (*lenp == 0)
     return NULL;
   *lenp += prefixlen;
   buf = malloc(*lenp * sizeof(int));
   memcpy(buf, prefix, prefixlen * sizeof(int));
-  parse_str(buf+prefixlen, str, flags, context, default_color);
+  if (str_final == NULL)
+    parse_str(buf + prefixlen, str, flags, context, default_color);
+  else
+    parse_str(buf + prefixlen, str_final, flags, context, default_color);
+  if (str_final != NULL)
+    free(str_final);
   return buf;
   
 }
