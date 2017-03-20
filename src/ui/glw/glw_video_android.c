@@ -65,6 +65,7 @@ android_init(glw_video_t *gv)
 
   android_video_t *av = calloc(1, sizeof(android_video_t));
   gv->gv_aux = av;
+  av->av_pts = PTS_UNSET;
 
   av->av_VideoRenderer = (*env)->NewGlobalRef(env, vr);
 
@@ -305,14 +306,15 @@ static int
 surface_deliver(const frame_info_t *fi, glw_video_t *gv,
                 struct glw_video_engine *gve)
 {
-  JNIEnv *env;
-  (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
-
   if(glw_video_configure(gv, gve))
     return -1;
 
   android_video_t *av = gv->gv_aux;
   media_pipe_t *mp = gv->gv_mp;
+  if(fi->fi_update_pts_only) {
+    av->av_pts = fi->fi_pts;
+    return 0;
+  }
 
   int64_t aclock;
   int a_epoch;
