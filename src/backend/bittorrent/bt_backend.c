@@ -326,10 +326,7 @@ bt_playvideo(const char *url, media_pipe_t *mp,
   torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
 
-  video_args_t va = *va0;
-  va.canonical_url = newurl;
-
-  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, &va);
+  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, va0);
 
   hts_mutex_lock(&bittorrent_mutex);
   torrent_release(to);

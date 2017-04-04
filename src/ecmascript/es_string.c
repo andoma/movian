@@ -116,7 +116,9 @@ es_utf8_from_bytes_duk(duk_context *duk)
 
   const char *csname = duk_safe_to_string(duk, 1);
 
-  if(!strcasecmp(csname, "utf-8") || !strcasecmp(csname, "utf8")) {
+  if(!strcasecmp(csname, "\"utf-8\"") ||
+     !strcasecmp(csname, "utf-8") ||
+     !strcasecmp(csname, "utf8")) {
 
     duk_push_lstring(duk, bytes, size);
     const char *str = duk_require_string(duk, -1);
