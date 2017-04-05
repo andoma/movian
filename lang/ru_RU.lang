@@ -29,7 +29,7 @@ id: Author:
 msg: Автор:
 
 id: Available version:
-msg: Доступные версии:
+msg: Доступная версия:
 
 id: Changelog
 msg: Список изменений
@@ -38,16 +38,16 @@ id: Install
 msg: Установка
 
 id: Installed version:
-msg: Установленная версия
+msg: Установлен:
 
 id: Status:
-msg: Состояние
+msg: Состояние:
 
 id: Uninstall
-msg: Удаление
+msg: Удалить
 
 id: Upgrade
-msg: Обновление
+msg: Обновить
 
 #
 # ./glwskins/flat/ctxmenu/video_details.view
@@ -86,7 +86,7 @@ msg[1]: Просмотрено %d раз, %s
 # ./glwskins/flat/items/list/add.view
 #
 id: Add new entry
-msg: Добавить новую запись
+msg: Добавить
 
 #
 # ./glwskins/flat/items/list/bool.view
@@ -128,7 +128,7 @@ msg: Битрейт:
 # ./glwskins/flat/log.view
 #
 id: System log
-msg: Системный лог
+msg: Системный журнал
 
 #
 # ./glwskins/flat/mediainfo.view
@@ -174,7 +174,7 @@ msg: Пакетов видео
 # ./glwskins/flat/menu/sidebar.view
 #
 id: Bookmark page
-msg: Страница закладок
+msg: Сделать закладку
 
 id: Page settings
 msg: Настройки
@@ -201,7 +201,7 @@ id: Disable sleep timer
 msg: Выключить таймер сна
 
 id: Exit %s
-msg: Выход %s
+msg: Выход
 
 id: Hide media info
 msg: Скрыть медиа-информацию
@@ -389,7 +389,7 @@ id: An error occured during download
 msg: Произошла ошибка во время загрузки
 
 id: Changelog for %s releases
-msg: Лог изменений для релиза %s
+msg: Журнал изменений для релиза %s
 
 id: Check for updates now
 msg: Проверить обновления сейчас
@@ -398,7 +398,7 @@ id: Checking for updates
 msg: Проверка обновлений
 
 id: Current version:
-msg: Текущая версия:
+msg: Установленная версия:
 
 id: Download and install
 msg: Скачать и установить
@@ -422,7 +422,7 @@ id: Testing
 msg: Тестовый
 
 id: Unable to query for new version
-msg: Невозможно проверить новую версию
+msg: Невозможно проверить наличие обновлений
 
 #
 # ./glwskins/flat/popups/auth.view
@@ -503,10 +503,10 @@ id: IP Address
 msg: IP Адрес
 
 id: Inactive memory
-msg: Свободной памяти
+msg: Свободно RAM
 
 id: Memory usage
-msg: Используется памяти
+msg: Используется RAM
 
 id: Network
 msg: Сеть
@@ -515,10 +515,10 @@ id: Not available
 msg: Не доступно
 
 id: System Free
-msg: Свободно
+msg: Свободно памяти
 
 id: System Total
-msg: Всего
+msg: Всего памяти
 
 id: VM Page In/Out
 # Missing translation
@@ -615,7 +615,7 @@ id: AC3 Pass-Through
 msg: Сквозная передача AC3
 
 id: Analog
-msg: Аналог
+msg: Аналоговый
 
 id: Audio output port
 msg: Аудиовыход
@@ -708,7 +708,7 @@ msg: Невозможно открыть торрент: %s
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-msg: Кэш торрента использует %d МБ из разрешенных %d МБ. Итого свободного места на томе: %d МБ
+msg: Кэш торрента использует %d МБ из разрешенных %d МБ. Всего на диске свободно: %d МБ
 
 #
 # ./src/backend/bittorrent/fa_torrent.c
@@ -744,7 +744,7 @@ id: Max upload speed
 msg: Максимальная скорость отдачи
 
 id: Max usage of free space for caching torrents
-msg: Максимальное использование свободного пространства для кэширования торрентов
+msg: Максимальный размер кэша на диске
 
 id: Status
 msg: Статус
@@ -873,7 +873,7 @@ id: Oldest first
 msg: Сначала старые
 
 id: Show only supported files
-msg: Показывать только поддерживаемые файлы
+msg: Только поддерживаемые файлы
 
 id: Sort folders first
 msg: Сначала сортировать папки
@@ -906,7 +906,7 @@ id: Show filename extensions
 msg: Отображать расширения у файлов
 
 id: Store per-file settings in filesystem
-msg: Сохранять настройки отдельных файлов в файловой системе
+msg: Сохранять настройки отдельных файлов в системе
 
 id: %d archive parts
 msg[0]: частей архива: %d
@@ -990,19 +990,19 @@ id: Time format
 msg: Формат времени
 
 id: Timezone
-msg: Часовой пояс
+msg: Часовой пояс (по gmt)
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-msg: Удерживайте SELECT для входа в меню
+msg: Вход в меню удержанием SELECT
 
 id: Switch TV input source
 msg: Изменить источник ТВ сигнала
 
 id: Use STOP key for combo input
-msg: Используйте кнопку STOP для комбинированного ввода
+msg: Использовать кнопку STOP для комбинированного ввода
 
 #
 # ./src/keyring.c
@@ -1038,10 +1038,10 @@ id: Horizontal scale
 msg: Горизонтальный масштаб
 
 id: Reset defaults for folder '%s'
-msg: Сброс настроек по умолчанию для папки '%s'
+msg: Сброс настроек для папки '%s'
 
 id: Save as defaults for folder '%s'
-msg: Сохранить как настройки по умолчанию для папки '%s'
+msg: Сохранить настройки для папки '%s'
 
 id: Save as global default
 msg: Сохранить как настройки по умолчанию 
@@ -1110,7 +1110,7 @@ msg: Трек %d
 # ./src/metadata/metadata_sources.c
 #
 id: Enabled
-msg: Включено
+msg: Использовать
 
 id: Metadata
 msg: Метаданные
@@ -1203,7 +1203,7 @@ id: Bookmarks
 msg: Закладки
 
 id: Icon
-msg: Иконка
+msg: Значок
 
 id: Music
 msg: Музыка
@@ -1353,7 +1353,7 @@ id: List of albums
 msg: Список альбомов
 
 id: Loading screen
-msg: Загрузочный экран
+msg: Экран загрузки 
 
 id: Movies
 msg: Фильмы
@@ -1389,10 +1389,10 @@ id: Plugins
 msg: Плагины
 
 id: Preferred views from plugins
-msg: Предпочтительный вид при установленных плагинах
+msg: Плагины используемые по умолчанию
 
 id: Screen saver
-msg: Хранитель экрана
+msg: Заставка
 
 id: TV channels
 msg: ТВ каналы
@@ -1458,7 +1458,7 @@ msg: SSH-сервер
 # ./src/sd/sd.c
 #
 id: Enabled on home screen
-msg: Включено на домашнем экране
+msg: Показывать на домашнем экране
 
 id: Name
 msg: Имя
@@ -1479,7 +1479,7 @@ id: About
 msg: О программе
 
 id: Applications and installed plugins
-msg: Приложения и установленные плагины
+msg: Приложения и плагины
 
 id: Configure communications with your TV
 msg: Настройка связи с телевизором
@@ -1500,7 +1500,7 @@ id: General
 msg: Общее
 
 id: Global settings
-msg: Главные настройки
+msg: Основные настройки
 
 id: Look and feel
 msg: Внешний вид
@@ -1618,7 +1618,7 @@ msg: Субтитры с соответствующим именем файла 
 # ./src/text/fontstash.c
 #
 id: Defaults
-msg: По умолчанию
+msg: Сброс
 
 id: Fonts
 msg: Шрифты
@@ -1630,13 +1630,13 @@ id: Narrow text
 msg: Узкий шрифт
 
 id: Reset main font to default
-msg: Сброс основного шрифта по умолчанию
+msg: Сброс основного шрифта
 
 id: Reset narrow font to default
-msg: Сброс узкого шрифта по умолчанию
+msg: Сброс узкого шрифта
 
 id: Reset subtitle font to default
-msg: Сброс шрифта субтитров по умолчанию
+msg: Сброс шрифта субтитров
 
 id: Unable to install font: %s
 msg: Невозможно установить шрифт: %s 
@@ -1678,7 +1678,7 @@ id: Emulate Up/Down buttons with mouse wheel
 msg: Эмулировать кнопки Вверх/Вниз с помощью колеса прокрутки 
 
 id: Folder for screensaver images
-msg: Папка с изображениями заставки
+msg: Папка с изображениями для заставки
 
 id: Font and icon size
 msg: Размер шрифта и значков
@@ -1687,19 +1687,19 @@ id: Interface horizontal shrink
 msg: Горизонтальное сжатие интерфейса
 
 id: Interface vertical shrink
-msg: Вертикальное сжатие интерфейска
+msg: Вертикальное сжатие интерфейса
 
 id: Screensaver
-msg: Экранная заставка
+msg: Заставка
 
 id: Screensaver delay
-msg: Задержка заставки
+msg: Задержка включения заставки
 
 id: Seconds per image
-msg: Секунд на изображение
+msg: Задержка смены изображений
 
 id: Use Bing images of the day
-msg: Испозовать изображения дня из Bing
+msg: Использовать изображения дня из Bing
 
 id: Wrap when reaching beginning/end of lists
 msg: Переход при достижении начала/конца списка
