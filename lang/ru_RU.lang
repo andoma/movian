@@ -5,10 +5,10 @@ maintainer: pvc1 <pvc1@yandex.ru>
 # ./glwskins/flat/ctxmenu/default_details.view
 #
 id: Bookmark
-msg: Закладка
+msg: Сделать закладку
 
 id: Bookmarked
-msg: Отмечено
+msg: Удалить закладку
 
 id: Copy to clipboard
 msg: Скопировать в буфер обмена
