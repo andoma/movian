@@ -33,7 +33,7 @@
 #include <libavutil/mathematics.h>
 
 #include "fileaccess/svfs.h"
-#include "dvdnav/dvdnav.h"
+#include <dvdnav/dvdnav/dvdnav.h>
 #include "usage.h"
 
 static char *make_nice_title(const char *t);
@@ -88,50 +88,6 @@ static char *make_nice_title(const char *t);
 
 const static AVRational mpeg_tc = {1, 90000};
 
-
-static void *
-dvd_fa_open(const char *url)
-{
-  return fa_open_ex(url, NULL, 0, FA_BUFFERED_BIG, NULL);
-}
-
-static int
-dvd_fa_stat(const char *url, struct stat *st)
-{
-  struct fa_stat fs;
-
-  if(fa_stat(url, &fs, NULL, 0))
-    return -1;
-
-  if(fs.fs_size == -1)
-    return -1; // Not a seekable file
-
-  st->st_size  = fs.fs_size;
-  st->st_mode  = fs.fs_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
-  st->st_mtime = fs.fs_mtime;
-  return 0;
-}
-
-
-static int64_t
-dvd_fa_seek(void *fh, int64_t pos, int whence)
-{
-  return fa_seek(fh, pos, whence);
-}
-
-
-
-/**
- *
- */
-static struct svfs_ops faops = {
-  .open = dvd_fa_open,
-  .close = fa_close,
-  .read = fa_read,
-  .seek = dvd_fa_seek,
-  .stat = dvd_fa_stat,
-  .findfile = fa_findfile,
-};
 
 /**
  *
@@ -667,11 +623,11 @@ dvd_update_streams(dvd_player_t *dp)
 
       const char *format;
       switch(dvdnav_audio_stream_format(dp->dp_dvdnav, i)) {
-      case DVDNAV_FORMAT_AC3:       format = "AC3";  break;
-      case DVDNAV_FORMAT_MPEGAUDIO: format = "MPEG"; break;
-      case DVDNAV_FORMAT_LPCM:      format = "PCM";  break;
-      case DVDNAV_FORMAT_DTS:       format = "DTS";  break;
-      case DVDNAV_FORMAT_SDDS:      format = "SDDS"; break;
+      case DVD_AUDIO_FORMAT_AC3:       format = "AC3";  break;
+      case DVD_AUDIO_FORMAT_MPEG: format = "MPEG"; break;
+      case DVD_AUDIO_FORMAT_LPCM:      format = "PCM";  break;
+      case DVD_AUDIO_FORMAT_DTS:       format = "DTS";  break;
+      case DVD_AUDIO_FORMAT_SDDS:      format = "SDDS"; break;
       default:                      format = "???";  break;
       }
 
@@ -791,8 +747,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 0;
 
-  if(dvdnav_open(&dp->dp_dvdnav, url, 
-		 vfs ? &faops : NULL) != DVDNAV_STATUS_OK) {
+  if(dvdnav_open(&dp->dp_dvdnav, url) != DVDNAV_STATUS_OK) {
     snprintf(errstr, errlen, "dvdnav: Unable to open DVD");
     free(dp);
     return NULL;
@@ -873,7 +828,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dvd_set_audio_stream(dp, "auto", 0);
       dvd_set_spu_stream(dp, "auto", 0);
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
-      dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
+      dvdnav_get_video_resolution(dp->dp_dvdnav, (uint32_t*)&dp->dp_vwidth, (uint32_t*)&dp->dp_vheight);
       mp_bump_epoch(mp);
       dvd_update_streams(dp);
       update_duration(dp, mp);

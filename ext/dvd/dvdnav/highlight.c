@@ -1,24 +1,21 @@
-/* 
+/*
  * Copyright (C) 2000 Rich Wareham <richwareham@users.sourceforge.net>
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: highlight.c 1092 2008-06-08 09:03:10Z nicodvb $
- *
+ * You should have received a copy of the GNU General Public License along
+ * with libdvdnav; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -32,14 +29,12 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/time.h>
-#include <libdvdread/nav_types.h>
-#include "dvd_types.h"
-#include "remap.h"
+#include <libdvdread/dvdread/nav_types.h>
+#include "dvdnav/dvdnav.h"
 #include "vm/decoder.h"
 #include "vm/vm.h"
 #include "vm/vmcmd.h"
 #include "dvdnav_internal.h"
-#include "dvdnav.h"
 
 /*
 #define BUTTON_TESTING
@@ -48,7 +43,7 @@
 #ifdef BUTTON_TESTING
 
 #include "nav_print.h"
-#if 0
+
 static void print_time(dvd_time_t *dtime) {
   const char *rate;
 
@@ -214,7 +209,6 @@ void nav_print_PCI(pci_t *pci) {
 
 #endif
 
-#endif
 
 /* Highlighting API calls */
 
@@ -222,7 +216,7 @@ dvdnav_status_t dvdnav_get_current_highlight(dvdnav_t *this, int32_t *button) {
   /* Simply return the appropriate value based on the SPRM */
   if(((*button) = this->position_current.button) == -1)
     (*button) = this->vm->state.HL_BTNN_REG >> 10;
-  
+
   return DVDNAV_STATUS_OK;
 }
 
@@ -242,19 +236,24 @@ static btni_t *get_current_button(dvdnav_t *this, pci_t *pci) {
 #ifdef BUTTON_TESTING
   nav_print_PCI(pci);
 #endif
-  
+
   return &(pci->hli.btnit[button-1]);
 }
 
 static dvdnav_status_t button_auto_action(dvdnav_t *this, pci_t *pci) {
-  if (get_current_button(this, pci)->auto_action_mode)
+  btni_t *button_ptr;
+  if ((button_ptr = get_current_button(this, pci)) == NULL)
+      return DVDNAV_STATUS_ERR;
+
+  if (button_ptr->auto_action_mode)
     return dvdnav_button_activate(this, pci);
+
   return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
-  
+
   if(!(button_ptr = get_current_button(this, pci)))
     return DVDNAV_STATUS_ERR;
 
@@ -264,7 +263,7 @@ dvdnav_status_t dvdnav_upper_button_select(dvdnav_t *this, pci_t *pci) {
 
 dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
-  
+
   if(!(button_ptr = get_current_button(this, pci)))
     return DVDNAV_STATUS_ERR;
 
@@ -274,7 +273,7 @@ dvdnav_status_t dvdnav_lower_button_select(dvdnav_t *this, pci_t *pci) {
 
 dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
-  
+
   if(!(button_ptr = get_current_button(this, pci)))
     return DVDNAV_STATUS_ERR;
 
@@ -284,7 +283,7 @@ dvdnav_status_t dvdnav_right_button_select(dvdnav_t *this, pci_t *pci) {
 
 dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this, pci_t *pci) {
   btni_t *button_ptr;
-  
+
   if(!(button_ptr = get_current_button(this, pci)))
     return DVDNAV_STATUS_ERR;
 
@@ -292,14 +291,14 @@ dvdnav_status_t dvdnav_left_button_select(dvdnav_t *this, pci_t *pci) {
   return button_auto_action(this, pci);
 }
 
-dvdnav_status_t dvdnav_get_highlight_area(pci_t *nav_pci , int32_t button, int32_t mode, 
-					  dvdnav_highlight_area_t *highlight) {
+dvdnav_status_t dvdnav_get_highlight_area(pci_t *nav_pci , int32_t button, int32_t mode,
+                                          dvdnav_highlight_area_t *highlight) {
   btni_t *button_ptr;
 
 #ifdef BUTTON_TESTING
   fprintf(MSG_OUT, "libdvdnav: Button get_highlight_area %i\n", button);
 #endif
-  
+
   if(!nav_pci->hli.hl_gi.hli_ss)
     return DVDNAV_STATUS_ERR;
   if((button <= 0) || (button > nav_pci->hli.hl_gi.btn_ns))
@@ -342,7 +341,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
     printerr("This NAV has already been left.");
     return DVDNAV_STATUS_ERR;
   }
-  hts_mutex_lock(&this->vm_lock); 
+  pthread_mutex_lock(&this->vm_lock);
 
   button = this->vm->state.HL_BTNN_REG >> 10;
 
@@ -362,18 +361,22 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
       this->position_current.still = 0;
       this->sync_wait = 0;
       this->last_cmd_nav_lbn = pci->pci_gi.nv_pck_lbn;
-      hts_mutex_unlock(&this->vm_lock);
+      pthread_mutex_unlock(&this->vm_lock);
       /* clear error message */
       printerr("");
       return DVDNAV_STATUS_OK;
     }
-    hts_mutex_unlock(&this->vm_lock); 
+    pthread_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
-  
-  button_ptr = get_current_button(this, pci);
+
+  if ((button_ptr = get_current_button(this, pci)) == NULL) {
+    pthread_mutex_unlock(&this->vm_lock);
+    return DVDNAV_STATUS_ERR;
+  }
+
   /* Finally, make the VM execute the appropriate code and probably
-   * scedule a jump */
+   * schedule a jump */
 #ifdef BUTTON_TESTING
   fprintf(MSG_OUT, "libdvdnav: Evaluating Button Activation commands.\n");
 #endif
@@ -383,14 +386,14 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
     this->position_current.still = 0;
     this->last_cmd_nav_lbn = pci->pci_gi.nv_pck_lbn;
   }
-  
-  hts_mutex_unlock(&this->vm_lock); 
+
+  pthread_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cmd_t *cmd)
 {
-  hts_mutex_lock(&this->vm_lock);
+  pthread_mutex_lock(&this->vm_lock);
   /* make the VM execute the appropriate code and probably
    * schedule a jump */
 #ifdef BUTTON_TESTING
@@ -406,9 +409,9 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cm
   /* Always remove still, because some still menus have no buttons. */
   this->position_current.still = 0;
   this->sync_wait = 0;
-  hts_mutex_unlock(&this->vm_lock);
+  pthread_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
-}  
+}
 
 dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int32_t button) {
   if(!pci->hli.hl_gi.hli_ss) {
@@ -419,24 +422,24 @@ dvdnav_status_t dvdnav_button_select(dvdnav_t *this, pci_t *pci, int32_t button)
     printerr("This NAV has already been left.");
     return DVDNAV_STATUS_ERR;
   }
- 
+
 #ifdef BUTTON_TESTING
-  fprintf(MSG_OUT, "libdvdnav: Button select %i\n", button); 
+  fprintf(MSG_OUT, "libdvdnav: Button select %i\n", button);
 #endif
-  
+
   if((button <= 0) || (button > pci->hli.hl_gi.btn_ns)) {
     printerr("Button does not exist.");
     return DVDNAV_STATUS_ERR;
   }
-  
+
   this->vm->state.HL_BTNN_REG = (button << 10);
-  this->position_current.button = -1; /* Force Highligh change */
+  this->position_current.button = -1; /* Force Highlight change */
 
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, pci_t *pci, 
-						  int32_t button) {
+dvdnav_status_t dvdnav_button_select_and_activate(dvdnav_t *this, pci_t *pci,
+                                                  int32_t button) {
   /* A trivial function */
   if(dvdnav_button_select(this, pci, button) != DVDNAV_STATUS_ERR)
     return dvdnav_button_activate(this, pci);
@@ -461,7 +464,7 @@ dvdnav_status_t dvdnav_mouse_select(dvdnav_t *this, pci_t *pci, int32_t x, int32
 
   best = 0;
   dist = 0x08000000; /* >> than  (720*720)+(567*567); */
-  
+
   /* Loop through all buttons */
   for(button = 1; button <= pci->hli.hl_gi.btn_ns; button++) {
     btni_t *button_ptr = &(pci->hli.btnit[button-1]);

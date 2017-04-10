@@ -1,36 +1,39 @@
 /**
  * \file dvdcss.h
- * \author Stéphane Borel <stef@via.ecp.fr>
- * \author Samuel Hocevar <sam@zoy.org>
+ * \author StÃ©phane Borel <stef@via.ecp.fr>
+ * \author Sam Hocevar <sam@zoy.org>
+ *
  * \brief The \e libdvdcss public header.
  *
- * This header contains the public types and functions that applications
- * using \e libdvdcss may use.
+ * Public types and functions that describe the API of the \e libdvdcss library.
  */
 
 /*
- * Copyright (C) 1998-2002 VideoLAN
- * $Id: dvdcss.h 20443 2006-10-25 13:08:08Z diego $
+ * Copyright (C) 1998-2008 VideoLAN
  *
- * This program is free software; you can redistribute it and/or modify
+ * libdvdcss is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * libdvdcss is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
+ * You should have received a copy of the GNU General Public License along
+ * with libdvdcss; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef _DVDCSS_DVDCSS_H
+#ifndef DVDCSS_DVDCSS_H
 #ifndef _DOXYGEN_SKIP_ME
-#define _DVDCSS_DVDCSS_H 1
+#define DVDCSS_DVDCSS_H 1
 #endif
+
+#include <stdint.h>
+
+#include "version.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +41,17 @@ extern "C" {
 
 /** Library instance handle, to be used for each library call. */
 typedef struct dvdcss_s* dvdcss_t;
+
+/** Set of callbacks to access DVDs in custom ways. */
+typedef struct dvdcss_stream_cb
+{
+    /** custom seek callback */
+    int ( *pf_seek )  ( void *p_stream, uint64_t i_pos);
+    /** custom read callback */
+    int ( *pf_read )  ( void *p_stream, void *buffer, int i_read);
+    /** custom vectored read callback */
+    int ( *pf_readv ) ( void *p_stream, const void *p_iovec, int i_blocks);
+} dvdcss_stream_cb;
 
 
 /** The block size of a DVD. */
@@ -56,25 +70,26 @@ typedef struct dvdcss_s* dvdcss_t;
 #define DVDCSS_SEEK_KEY        (1 << 1)
 
 
+/** Macro for setting symbol storage-class or visibility.
+ * Define LIBDVDCSS_IMPORTS before importing this header to get the
+ * correct DLL storage-class when using \e libdvdcss from MSVC. */
 #if defined(LIBDVDCSS_EXPORTS)
 #define LIBDVDCSS_EXPORT __declspec(dllexport) extern
 #elif defined(LIBDVDCSS_IMPORTS)
 #define LIBDVDCSS_EXPORT __declspec(dllimport) extern
+#elif defined(SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT)
+#define LIBDVDCSS_EXPORT __attribute__((visibility("default"))) extern
 #else
 #define LIBDVDCSS_EXPORT extern
 #endif
 
-/*
- * Our version number. The variable name contains the interface version.
- */
-LIBDVDCSS_EXPORT char *        dvdcss_interface_2;
 
-struct svfs_ops;
 /*
  * Exported prototypes.
  */
-LIBDVDCSS_EXPORT dvdcss_t dvdcss_open  ( char *psz_target, 
-					 struct svfs_ops *svfs_ops );
+LIBDVDCSS_EXPORT dvdcss_t dvdcss_open  ( const char *psz_target );
+LIBDVDCSS_EXPORT dvdcss_t dvdcss_open_stream( void *p_stream,
+                                              dvdcss_stream_cb *p_stream_cb );
 LIBDVDCSS_EXPORT int      dvdcss_close ( dvdcss_t );
 LIBDVDCSS_EXPORT int      dvdcss_seek  ( dvdcss_t,
                                int i_blocks,
@@ -87,20 +102,12 @@ LIBDVDCSS_EXPORT int      dvdcss_readv ( dvdcss_t,
                                void *p_iovec,
                                int i_blocks,
                                int i_flags );
-LIBDVDCSS_EXPORT char *   dvdcss_error ( dvdcss_t );
+LIBDVDCSS_EXPORT const char *dvdcss_error ( const dvdcss_t );
 
-
-/*
- * Deprecated stuff.
- */
-#ifndef _DOXYGEN_SKIP_ME
-#define dvdcss_title(a,b) dvdcss_seek(a,b,DVDCSS_SEEK_KEY)
-#define dvdcss_handle dvdcss_t
-#endif
-
+LIBDVDCSS_EXPORT int      dvdcss_is_scrambled ( dvdcss_t );
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* <dvdcss/dvdcss.h> */
+#endif /* DVDCSS_DVDCSS_H  */

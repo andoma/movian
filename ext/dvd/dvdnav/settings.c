@@ -1,24 +1,21 @@
-/* 
+/*
  * Copyright (C) 2000 Rich Wareham <richwareham@users.sourceforge.net>
- * 
+ *
  * This file is part of libdvdnav, a DVD navigation library.
- * 
+ *
  * libdvdnav is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * libdvdnav is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
- * $Id: settings.c 1092 2008-06-08 09:03:10Z nicodvb $
- *
+ * You should have received a copy of the GNU General Public License along
+ * with libdvdnav; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -29,13 +26,11 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/time.h>
-#include "dvd_types.h"
-#include <libdvdread/nav_types.h>
-#include <libdvdread/ifo_types.h>
-#include "remap.h"
+#include "dvdnav/dvdnav.h"
+#include <libdvdread/dvdread/nav_types.h>
+#include <libdvdread/dvdread/ifo_types.h>
 #include "vm/decoder.h"
 #include "vm/vm.h"
-#include "dvdnav.h"
 #include "dvdnav_internal.h"
 
 /* Characteristics/setting API calls */
@@ -46,9 +41,9 @@ dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int32_t *region) {
 }
 
 dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *this, int32_t mask) {
-  hts_mutex_lock(&this->vm_lock);
+  pthread_mutex_lock(&this->vm_lock);
   this->vm->state.registers.SPRM[20] = (mask & 0xff);
-  hts_mutex_unlock(&this->vm_lock);
+  pthread_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 
@@ -67,10 +62,10 @@ static dvdnav_status_t set_language_register(dvdnav_t *this, char *code, int reg
     printerr("Passed illegal language code.");
     return DVDNAV_STATUS_ERR;
   }
-  
-  hts_mutex_lock(&this->vm_lock);
+
+  pthread_mutex_lock(&this->vm_lock);
   this->vm->state.registers.SPRM[reg] = (code[0] << 8) | code[1];
-  hts_mutex_unlock(&this->vm_lock);
+  pthread_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 

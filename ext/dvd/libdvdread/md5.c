@@ -1,4 +1,3 @@
-/* -*- c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /* md5.c - Functions to compute MD5 message digest of files or memory blocks
    according to the definition of MD5 in RFC 1321 from April 1992.
    Copyright (C) 1995, 1996, 2001 Free Software Foundation, Inc.
@@ -17,27 +16,19 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.  */
 
 /* Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.  */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
+#include "config.h"
 #include <sys/types.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "md5.h"
-//#include "unlocked-io.h"
+/* #include "unlocked-io.h" */
 
-#ifdef _LIBC
-# include <endian.h>
-# if __BYTE_ORDER == __BIG_ENDIAN
-#  define WORDS_BIGENDIAN 1
-# endif
-#endif
 
 #ifdef WORDS_BIGENDIAN
 # define SWAP(n)                                                        \
@@ -161,7 +152,7 @@ md5_stream (stream, resblock)
 
       /* Process buffer with BLOCKSIZE bytes.  Note that
          BLOCKSIZE % 64 == 0
-      */
+       */
       md5_process_block (buffer, BLOCKSIZE, &ctx);
     }
 
@@ -309,7 +300,7 @@ md5_process_block (buffer, len, ctx)
 
          T[i] = (int) (4294967296.0 * fabs (sin (i))), i=1..64, or
          perl -e 'foreach(1..64){printf "0x%08x\n", int (4294967296 * abs (sin $_))}'
-      */
+       */
 
       /* Round 1.  */
       OP (A, B, C, D,  7, 0xd76aa478);
