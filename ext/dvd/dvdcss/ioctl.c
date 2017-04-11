@@ -48,8 +48,10 @@
 #   include <os2.h>
 #   include <sys/ioctl.h>
 #else
+#if !defined(WII) && !defined(PS3)
 #   include <netinet/in.h>
 #   include <sys/ioctl.h>
+#endif
 #endif
 
 #ifdef DVD_STRUCT_IN_SYS_CDIO_H
@@ -218,7 +220,8 @@ int ioctl_ReadCopyright( int i_fd, int i_layer, int *pi_copyright )
                         p_buffer, sizeof(p_buffer), &ulDataLen);
 
     *pi_copyright = p_buffer[ 4 ];
-
+#elif defined( WII ) || defined(PS3)
+    return -1;
 #else
 #   error "DVD ioctls are unavailable on this system"
 
@@ -351,6 +354,8 @@ int ioctl_ReadDiscKey( int i_fd, const int *pi_agid, uint8_t *p_key )
     }
 
     memcpy( p_key, p_buffer + 4, DVD_DISCKEY_SIZE );
+#elif defined( WII ) || defined(PS3)
+    return -1;
 
 #else
 #   error "DVD ioctls are unavailable on this system"
@@ -481,6 +486,8 @@ int ioctl_ReadTitleKey( int i_fd, const int *pi_agid, int i_pos, uint8_t *p_key 
                         p_buffer, sizeof(p_buffer), &ulDataLen);
 
     memcpy( p_key, p_buffer + 5, DVD_KEY_SIZE );
+#elif defined( WII ) || defined(PS3)
+    return -1;
 
 #else
 #   error "DVD ioctls are unavailable on this system"
@@ -578,6 +585,8 @@ int ioctl_ReportAgid( int i_fd, int *pi_agid )
                         p_buffer, sizeof(p_buffer), &ulDataLen);
 
     *pi_agid = p_buffer[ 7 ] >> 6;
+#elif defined( WII ) || defined(PS3)
+    return -1;
 
 #else
 #   error "DVD ioctls are unavailable on this system"
@@ -686,6 +695,8 @@ int ioctl_ReportChallenge( int i_fd, const int *pi_agid, uint8_t *p_challenge )
                         p_buffer, sizeof(p_buffer), &ulDataLen);
 
     memcpy( p_challenge, p_buffer + 4, DVD_CHALLENGE_SIZE );
+#elif defined( WII ) || defined(PS3)
+    return -1;
 
 #else
 #   error "DVD ioctls are unavailable on this system"
@@ -796,6 +807,8 @@ int ioctl_ReportASF( int i_fd, int *pi_asf )
                         p_buffer, sizeof(p_buffer), &ulDataLen);
 
     *pi_asf = p_buffer[ 7 ] & 1;
+#elif defined( WII ) || defined(PS3)
+    return -1;
 
 #else
 #   error "DVD ioctls are unavailable on this system"
@@ -899,6 +912,8 @@ int ioctl_ReportKey1( int i_fd, const int *pi_agid, uint8_t *p_key )
                         p_buffer, sizeof(p_buffer), &ulDataLen);
 
     memcpy( p_key, p_buffer + 4, DVD_KEY_SIZE );
+#elif defined( WII ) || defined(PS3)
+    return -1;
 
 #else
 #   error "DVD ioctls are unavailable on this system"
@@ -983,6 +998,8 @@ int ioctl_InvalidateAgid( int i_fd, int *pi_agid )
     i_ret = DosDevIOCtl(i_fd, IOCTL_CDROMDISK, CDROMDISK_EXECMD,
                         &sdc, sizeof(sdc), &ulParamLen,
                         NULL, 0, &ulDataLen);
+#elif defined( WII ) || defined(PS3)
+    return -1;
 #else
 #   error "DVD ioctls are unavailable on this system"
 
@@ -1092,6 +1109,8 @@ int ioctl_SendChallenge( int i_fd, const int *pi_agid, const uint8_t *p_challeng
                          &sdc, sizeof(sdc), &ulParamLen,
                          p_buffer, sizeof(p_buffer), &ulDataLen );
 
+#elif defined( WII ) || defined(PS3)
+    return -1;
 #else
 #   error "DVD ioctls are unavailable on this system"
 
@@ -1201,6 +1220,8 @@ int ioctl_SendKey2( int i_fd, const int *pi_agid, const uint8_t *p_key )
                          &sdc, sizeof(sdc), &ulParamLen,
                          p_buffer, sizeof(p_buffer), &ulDataLen );
 
+#elif defined( WII ) || defined(PS3)
+    return -1;
 #else
 #   error "DVD ioctls are unavailable on this system"
 
@@ -1328,6 +1349,8 @@ int ioctl_ReportRPC( int i_fd, int *p_type, int *p_mask, int *p_scheme )
     *p_mask = p_buffer[ 5 ];
     *p_scheme = p_buffer[ 6 ];
 
+#elif defined( WII ) || defined(PS3)
+    return -1;
 #else
 #   error "DVD ioctls are unavailable on this system"
 

@@ -41,9 +41,9 @@ dvdnav_status_t dvdnav_get_region_mask(dvdnav_t *this, int32_t *region) {
 }
 
 dvdnav_status_t dvdnav_set_region_mask(dvdnav_t *this, int32_t mask) {
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   this->vm->state.registers.SPRM[20] = (mask & 0xff);
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 
@@ -63,9 +63,9 @@ static dvdnav_status_t set_language_register(dvdnav_t *this, char *code, int reg
     return DVDNAV_STATUS_ERR;
   }
 
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   this->vm->state.registers.SPRM[reg] = (code[0] << 8) | code[1];
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 

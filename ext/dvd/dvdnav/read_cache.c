@@ -67,7 +67,7 @@ struct read_cache_s {
   uint32_t            read_ahead_size;
   int                 read_ahead_incr;
   int                 last_sector;
-  pthread_mutex_t     lock;
+  hts_mutex_t     lock;
 
   /* Bit of strange cross-linking going on here :) -- Gotta love C :) */
   dvdnav_t           *dvd_self;
@@ -107,7 +107,7 @@ read_cache_t *dvdnav_read_cache_new(dvdnav_t* dvd_self) {
 
   self->dvd_self = dvd_self;
   self->read_ahead_size = READ_AHEAD_SIZE_MIN;
-  pthread_mutex_init(&self->lock, NULL);
+  hts_mutex_init(&self->lock);
   dvdnav_read_cache_clear(self);
   for (i = 0; i < READ_CACHE_CHUNKS; i++) {
     self->chunk[i].cache_buffer = NULL;
@@ -121,21 +121,21 @@ void dvdnav_read_cache_free(read_cache_t* self) {
   dvdnav_t *tmp;
   int i;
 
-  pthread_mutex_lock(&self->lock);
+  hts_mutex_lock(&self->lock);
   self->freeing = 1;
   for (i = 0; i < READ_CACHE_CHUNKS; i++)
     if (self->chunk[i].cache_buffer && self->chunk[i].usage_count == 0) {
       free(self->chunk[i].cache_buffer_base);
       self->chunk[i].cache_buffer = NULL;
     }
-  pthread_mutex_unlock(&self->lock);
+  hts_mutex_unlock(&self->lock);
 
   for (i = 0; i < READ_CACHE_CHUNKS; i++)
     if (self->chunk[i].cache_buffer) return;
 
   /* all buffers returned, free everything */
   tmp = self->dvd_self;
-  pthread_mutex_destroy(&self->lock);
+  hts_mutex_destroy(&self->lock);
   free(self);
   free(tmp);
 }
@@ -147,10 +147,10 @@ void dvdnav_read_cache_clear(read_cache_t *self) {
   if(!self)
    return;
 
-  pthread_mutex_lock(&self->lock);
+  hts_mutex_lock(&self->lock);
   for (i = 0; i < READ_CACHE_CHUNKS; i++)
     self->chunk[i].cache_valid = 0;
-  pthread_mutex_unlock(&self->lock);
+  hts_mutex_unlock(&self->lock);
 }
 
 /* This function is called just after reading the NAV packet. */
@@ -163,7 +163,7 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
   if(!self->dvd_self->use_read_ahead)
     return;
 
-  pthread_mutex_lock(&self->lock);
+  hts_mutex_lock(&self->lock);
 
   /* find a free cache chunk that best fits the required size */
   use = -1;
@@ -218,7 +218,7 @@ void dvdnav_pre_cache_blocks(read_cache_t *self, int sector, size_t block_count)
   } else {
     dprintf("pre_caching was impossible, no cache chunk available\n");
   }
-  pthread_mutex_unlock(&self->lock);
+  hts_mutex_unlock(&self->lock);
 }
 
 int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, uint8_t **buf) {
@@ -268,12 +268,12 @@ int dvdnav_read_cache_block(read_cache_t *self, int sector, size_t block_count, 
      *   self->chunk[*].cache_malloc_size
      *   self->chunk[*].usage_count
      */
-    pthread_mutex_lock(&self->lock);
+    hts_mutex_lock(&self->lock);
     chunk = &self->chunk[use];
     read_ahead_buf = chunk->cache_buffer + chunk->cache_read_count * DVD_VIDEO_LB_LEN;
     *buf = chunk->cache_buffer + (sector - chunk->cache_start_sector) * DVD_VIDEO_LB_LEN;
     chunk->usage_count++;
-    pthread_mutex_unlock(&self->lock);
+    hts_mutex_unlock(&self->lock);
 
     dprintf("libdvdnav: sector=%d, start_sector=%d, last_sector=%d\n", sector, chunk->cache_start_sector, chunk->cache_start_sector + chunk->cache_block_count);
 
@@ -332,14 +332,14 @@ dvdnav_status_t dvdnav_free_cache_block(dvdnav_t *self, unsigned char *buf) {
   if (!cache)
     return DVDNAV_STATUS_ERR;
 
-  pthread_mutex_lock(&cache->lock);
+  hts_mutex_lock(&cache->lock);
   for (i = 0; i < READ_CACHE_CHUNKS; i++) {
     if (cache->chunk[i].cache_buffer && buf >= cache->chunk[i].cache_buffer &&
         buf < cache->chunk[i].cache_buffer + cache->chunk[i].cache_malloc_size * DVD_VIDEO_LB_LEN) {
       cache->chunk[i].usage_count--;
     }
   }
-  pthread_mutex_unlock(&cache->lock);
+  hts_mutex_unlock(&cache->lock);
 
   if (cache->freeing)
     /* when we want to dispose the cache, try freeing it now */

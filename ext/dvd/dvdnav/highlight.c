@@ -341,7 +341,7 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
     printerr("This NAV has already been left.");
     return DVDNAV_STATUS_ERR;
   }
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
 
   button = this->vm->state.HL_BTNN_REG >> 10;
 
@@ -361,17 +361,17 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
       this->position_current.still = 0;
       this->sync_wait = 0;
       this->last_cmd_nav_lbn = pci->pci_gi.nv_pck_lbn;
-      pthread_mutex_unlock(&this->vm_lock);
+      hts_mutex_unlock(&this->vm_lock);
       /* clear error message */
       printerr("");
       return DVDNAV_STATUS_OK;
     }
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
   if ((button_ptr = get_current_button(this, pci)) == NULL) {
-    pthread_mutex_unlock(&this->vm_lock);
+    hts_mutex_unlock(&this->vm_lock);
     return DVDNAV_STATUS_ERR;
   }
 
@@ -387,13 +387,13 @@ dvdnav_status_t dvdnav_button_activate(dvdnav_t *this, pci_t *pci) {
     this->last_cmd_nav_lbn = pci->pci_gi.nv_pck_lbn;
   }
 
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 
 dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cmd_t *cmd)
 {
-  pthread_mutex_lock(&this->vm_lock);
+  hts_mutex_lock(&this->vm_lock);
   /* make the VM execute the appropriate code and probably
    * schedule a jump */
 #ifdef BUTTON_TESTING
@@ -409,7 +409,7 @@ dvdnav_status_t dvdnav_button_activate_cmd(dvdnav_t *this, int32_t button, vm_cm
   /* Always remove still, because some still menus have no buttons. */
   this->position_current.still = 0;
   this->sync_wait = 0;
-  pthread_mutex_unlock(&this->vm_lock);
+  hts_mutex_unlock(&this->vm_lock);
   return DVDNAV_STATUS_OK;
 }
 
