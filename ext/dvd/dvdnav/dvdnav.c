@@ -133,7 +133,7 @@ dvdnav_status_t dvdnav_free_dup(dvdnav_t *this) {
   return DVDNAV_STATUS_OK;
 }
 
-dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
+dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path, void *svfs_ops) {
   dvdnav_t *this;
   struct timeval time;
 
@@ -144,7 +144,7 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
   this = (dvdnav_t*)calloc(1, sizeof(dvdnav_t));
   if(!this)
     return DVDNAV_STATUS_ERR;
-
+  this->svfs_ops = svfs_ops;
   hts_mutex_init(&this->vm_lock);
   /* Initialise the error string */
   printerr("");
@@ -155,7 +155,8 @@ dvdnav_status_t dvdnav_open(dvdnav_t** dest, const char *path) {
     printerr("Error initialising the DVD VM.");
     goto fail;
   }
-  if(!vm_reset(this->vm, path)) {
+  if(!vm_reset(this->vm, path, this->svfs_ops)) {
+    TRACE(TRACE_ERROR, "dvdnav", "Unable to start VM: %s", path);
     printerr("Error starting the VM / opening the DVD device.");
     goto fail;
   }
@@ -238,7 +239,7 @@ dvdnav_status_t dvdnav_reset(dvdnav_t *this) {
 #ifdef LOG_DEBUG
   fprintf(MSG_OUT, "libdvdnav: reseting vm\n");
 #endif
-  if(!vm_reset(this->vm, NULL)) {
+  if(!vm_reset(this->vm, NULL, this->svfs_ops)) {
     printerr("Error restarting the VM.");
     hts_mutex_unlock(&this->vm_lock); 
     return DVDNAV_STATUS_ERR;

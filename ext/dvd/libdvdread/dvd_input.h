@@ -22,6 +22,8 @@
 #ifndef LIBDVDREAD_DVD_INPUT_H
 #define LIBDVDREAD_DVD_INPUT_H
 
+#include "fileaccess/svfs.h"
+
 /**
  * Defines and flags.  Make sure they fit the libdvdcss API!
  */
@@ -53,7 +55,7 @@ typedef struct dvd_input_s *dvd_input_t;
  * Function pointers that will be filled in by the input implementation.
  * These functions provide the main API.
  */
-extern dvd_input_t (*dvdinput_open)  (const char *);
+extern dvd_input_t (*dvdinput_open)  (const char *, struct svfs_ops *svfs_ops);
 extern int         (*dvdinput_close) (dvd_input_t);
 extern int         (*dvdinput_seek)  (dvd_input_t, int);
 extern int         (*dvdinput_title) (dvd_input_t, int);

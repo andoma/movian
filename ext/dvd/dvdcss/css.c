@@ -48,11 +48,10 @@
 #endif
 #include <fcntl.h>
 
-#include "dvdcss/dvdcss.h"
-
 #include "common.h"
-#include "css.h"
 #include "libdvdcss.h"
+#include "css.h"
+#include "dvdcss/dvdcss.h"
 #include "csstables.h"
 #include "ioctl.h"
 #include "device.h"
@@ -1550,7 +1549,7 @@ static int CrackTitleKey( dvdcss_t dvdcss, int i_pos, int i_len,
 
                 /* Reset the drive before trying to continue */
                 dvdcss_close_device( dvdcss );
-                dvdcss_open_device( dvdcss );
+                dvdcss_open_device( dvdcss, dvdcss->svfs_ops );
 
                 b_read_error = 1;
                 continue;

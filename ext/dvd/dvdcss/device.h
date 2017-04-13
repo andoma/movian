@@ -57,7 +57,7 @@ struct iovec
  *****************************************************************************/
 int  dvdcss_use_ioctls   ( dvdcss_t );
 void dvdcss_check_device ( dvdcss_t );
-int  dvdcss_open_device  ( dvdcss_t );
+int  dvdcss_open_device  ( dvdcss_t,  struct svfs_ops *svfs_ops );
 int  dvdcss_close_device ( dvdcss_t );
 
 #endif /* DVDCSS_DEVICE_H */

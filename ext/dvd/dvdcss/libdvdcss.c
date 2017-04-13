@@ -121,11 +121,11 @@
 #   include <shlobj.h>
 #endif
 
-#include "dvdcss/dvdcss.h"
 
 #include "common.h"
-#include "css.h"
 #include "libdvdcss.h"
+#include "css.h"
+#include "dvdcss/dvdcss.h"
 #include "ioctl.h"
 #include "device.h"
 
@@ -145,7 +145,7 @@
 
 
 static dvdcss_t dvdcss_open_common ( const char *psz_target, void *p_stream,
-                                     dvdcss_stream_cb *p_stream_cb );
+                                     dvdcss_stream_cb *p_stream_cb, struct svfs_ops *svfs_ops );
 static void set_verbosity( dvdcss_t dvdcss )
 {
     const char *psz_verbose = getenv( "DVDCSS_VERBOSE" );
@@ -471,9 +471,9 @@ static void init_cache( dvdcss_t dvdcss )
  * calls. \e libdvdcss checks whether ioctls can be performed on the disc,
  * and when possible, the disc key is retrieved.
  */
-LIBDVDCSS_EXPORT dvdcss_t dvdcss_open ( const char *psz_target )
+LIBDVDCSS_EXPORT dvdcss_t dvdcss_open ( const char *psz_target, struct svfs_ops *svfs_ops )
 {
-    return dvdcss_open_common( psz_target, NULL, NULL );
+    return dvdcss_open_common( psz_target, NULL, NULL, svfs_ops );
 }
 
 /**
@@ -488,11 +488,11 @@ LIBDVDCSS_EXPORT dvdcss_t dvdcss_open ( const char *psz_target )
 LIBDVDCSS_EXPORT dvdcss_t dvdcss_open_stream ( void *p_stream,
                                                dvdcss_stream_cb *p_stream_cb )
 {
-    return dvdcss_open_common( NULL, p_stream, p_stream_cb );
+    return dvdcss_open_common( NULL, p_stream, p_stream_cb, NULL );
 }
 
 static dvdcss_t dvdcss_open_common ( const char *psz_target, void *p_stream,
-                                     dvdcss_stream_cb *p_stream_cb )
+                                     dvdcss_stream_cb *p_stream_cb, struct svfs_ops *svfs_ops )
 {
     int i_ret;
 
@@ -502,6 +502,7 @@ static dvdcss_t dvdcss_open_common ( const char *psz_target, void *p_stream,
     {
         return NULL;
     }
+    TRACE(TRACE_INFO, "dvdcss", "Opening %s ...", psz_target);
 
     if( psz_target == NULL &&
       ( p_stream == NULL || p_stream_cb == NULL ) )
@@ -532,40 +533,46 @@ static dvdcss_t dvdcss_open_common ( const char *psz_target, void *p_stream,
 
     /* Open device. */
     dvdcss_check_device( dvdcss );
-    i_ret = dvdcss_open_device( dvdcss );
+    TRACE(TRACE_INFO, "dvdcss", "Device OK.");
+    i_ret = dvdcss_open_device( dvdcss, svfs_ops );
     if( i_ret < 0 )
     {
+        TRACE(TRACE_ERROR, "dvdcss", "Device open failed.");
         goto error;
     }
+    
+    if(svfs_ops == NULL) {
+        dvdcss->b_scrambled = 1; /* Assume the worst */
+        dvdcss->b_ioctls = dvdcss_use_ioctls( dvdcss );
 
-    dvdcss->b_scrambled = 1; /* Assume the worst */
-    dvdcss->b_ioctls = dvdcss_use_ioctls( dvdcss );
+        if( dvdcss->b_ioctls )
+        {
+            i_ret = dvdcss_test( dvdcss );
 
-    if( dvdcss->b_ioctls )
-    {
-        i_ret = dvdcss_test( dvdcss );
-
-        if( i_ret == -3 )
-        {
-            print_debug( dvdcss, "scrambled disc on a region-free RPC-II "
-                                 "drive: possible failure, but continuing "
-                                 "anyway" );
+            if( i_ret == -3 )
+            {
+                print_debug( dvdcss, "scrambled disc on a region-free RPC-II "
+                                     "drive: possible failure, but continuing "
+                                     "anyway" );
+            }
+            else if( i_ret < 0 )
+            {
+                /* Disable the CSS ioctls and hope that it works? */
+                print_debug( dvdcss,
+                             "could not check whether the disc was scrambled" );
+                dvdcss->b_ioctls = 0;
+            }
+            else
+            {
+                print_debug( dvdcss, i_ret ? "disc is scrambled"
+                                           : "disc is unscrambled" );
+                dvdcss->b_scrambled = i_ret;
+            }
         }
-        else if( i_ret < 0 )
-        {
-            /* Disable the CSS ioctls and hope that it works? */
-            print_debug( dvdcss,
-                         "could not check whether the disc was scrambled" );
-            dvdcss->b_ioctls = 0;
-        }
-        else
-        {
-            print_debug( dvdcss, i_ret ? "disc is scrambled"
-                                       : "disc is unscrambled" );
-            dvdcss->b_scrambled = i_ret;
-        }
+    } else {
+      dvdcss->b_scrambled = 0;
+      dvdcss->b_ioctls = 0;
     }
-
     memset( dvdcss->css.p_disc_key, 0, DVD_KEY_SIZE );
     /* If disc is CSS protected and the ioctls work, authenticate the drive */
     if( dvdcss->b_scrambled && dvdcss->b_ioctls )

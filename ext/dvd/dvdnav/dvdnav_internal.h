@@ -185,7 +185,7 @@ struct dvdnav_s {
   /* General data */
   char       *path;               /* Path to DVD device/dir */
   dvd_file_t *file;               /* Currently opened file */
-
+  void       *svfs_ops;           /* Movian Virtual FS ops */
   /* Position data */
   vm_position_t position_next;
   vm_position_t position_current;

@@ -26,9 +26,11 @@
 
 #include <limits.h>
 
+#include "fileaccess/svfs.h"
 #include "dvdcss/dvdcss.h"
 #include "css.h"
 #include "device.h"
+#include "main.h"
 
 /*****************************************************************************
  * libdvdcss method: used like init flags
@@ -77,6 +79,10 @@ struct dvdcss_s
 
     void                *p_stream;
     dvdcss_stream_cb    *p_stream_cb;
+    
+    /* Movian vfs */
+    struct svfs_ops *svfs_ops;
+    void *svfs_handle;
 };
 
 /*****************************************************************************

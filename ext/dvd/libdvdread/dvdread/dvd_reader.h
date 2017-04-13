@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <inttypes.h>
+#include "fileaccess/svfs.h"
 
 /**
  * The DVD access interface.
@@ -100,7 +101,7 @@ typedef struct {
  *
  * dvd = DVDOpen(path);
  */
-dvd_reader_t *DVDOpen( const char * );
+dvd_reader_t *DVDOpen( const char *, struct svfs_ops *svfs_ops );
 
 /**
  * Closes and cleans up the DVD reader object.

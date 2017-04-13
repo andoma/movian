@@ -89,6 +89,50 @@ static char *make_nice_title(const char *t);
 const static AVRational mpeg_tc = {1, 90000};
 
 
+static void *
+dvd_fa_open(const char *url)
+{
+  return fa_open_ex(url, NULL, 0, FA_BUFFERED_BIG, NULL);
+}
+
+static int
+dvd_fa_stat(const char *url, struct stat *st)
+{
+  struct fa_stat fs;
+
+  if(fa_stat(url, &fs, NULL, 0))
+    return -1;
+
+  if(fs.fs_size == -1)
+    return -1; // Not a seekable file
+
+  st->st_size  = fs.fs_size;
+  st->st_mode  = fs.fs_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
+  st->st_mtime = fs.fs_mtime;
+  return 0;
+}
+
+
+static int64_t
+dvd_fa_seek(void *fh, int64_t pos, int whence)
+{
+  return fa_seek(fh, pos, whence);
+}
+
+
+
+/**
+ *
+ */
+static struct svfs_ops faops = {
+  .open = dvd_fa_open,
+  .close = fa_close,
+  .read = fa_read,
+  .seek = dvd_fa_seek,
+  .stat = dvd_fa_stat,
+  .findfile = fa_findfile,
+};
+
 /**
  *
  */
@@ -747,7 +791,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 0;
 
-  if(dvdnav_open(&dp->dp_dvdnav, url) != DVDNAV_STATUS_OK) {
+  if(dvdnav_open(&dp->dp_dvdnav, url, 
+		 vfs ? &faops : NULL) != DVDNAV_STATUS_OK) {
     snprintf(errstr, errlen, "dvdnav: Unable to open DVD");
     free(dp);
     return NULL;
