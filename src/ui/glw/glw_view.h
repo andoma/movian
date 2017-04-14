@@ -65,6 +65,7 @@ typedef enum {
   TOKEN_NULL_COALESCE,         // ??
   TOKEN_LT,                    // <
   TOKEN_GT,                    // >
+  TOKEN_QUESTIONMARK,          // ?
   TOKEN_COLON,                 // :
   TOKEN_RSTRING,               // A ref allocated string
   TOKEN_CSTRING,               // A compile time constant string
@@ -95,6 +96,7 @@ typedef enum {
   TOKEN_URI,                   // A link with title and url
   TOKEN_VECTOR,                // List of tokens
   TOKEN_MOD_FLAGS,
+  TOKEN_TENARY,
   TOKEN_num,
 
 } token_type_t;

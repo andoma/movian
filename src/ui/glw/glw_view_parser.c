@@ -90,21 +90,28 @@ static const int tokenprecedence[TOKEN_num] = {
   [TOKEN_REF_ASSIGNMENT]    = 1,
   [TOKEN_DEBUG_ASSIGNMENT]    = 1,
   [TOKEN_LINK_ASSIGNMENT]    = 1,
-  [TOKEN_NULL_COALESCE] = 2,
-  [TOKEN_BOOLEAN_OR]    = 3,
-  [TOKEN_BOOLEAN_AND]= 4,
-  [TOKEN_BOOLEAN_XOR]= 5,
-  [TOKEN_EQ]         = 6,
-  [TOKEN_NEQ]        = 6,
-  [TOKEN_LT]         = 6,
-  [TOKEN_GT]         = 6,
-  [TOKEN_ADD]        = 7,
-  [TOKEN_SUB]        = 7,
-  [TOKEN_MULTIPLY]   = 8,
-  [TOKEN_DIVIDE]     = 8,
-  [TOKEN_MODULO]     = 9,
-  [TOKEN_BLOCK]      = 10,
-  [TOKEN_BOOLEAN_NOT]= 11,
+
+  [TOKEN_COLON] = 2,
+
+  [TOKEN_QUESTIONMARK] = 3,
+  [TOKEN_TENARY] = 3,
+
+  [TOKEN_NULL_COALESCE] = 4,
+
+  [TOKEN_BOOLEAN_OR] = 5,
+  [TOKEN_BOOLEAN_AND]= 6,
+  [TOKEN_BOOLEAN_XOR]= 7,
+  [TOKEN_EQ]         = 8,
+  [TOKEN_NEQ]        = 8,
+  [TOKEN_LT]         = 8,
+  [TOKEN_GT]         = 8,
+  [TOKEN_ADD]        = 9,
+  [TOKEN_SUB]        = 9,
+  [TOKEN_MULTIPLY]   = 10,
+  [TOKEN_DIVIDE]     = 10,
+  [TOKEN_MODULO]     = 11,
+  [TOKEN_BLOCK]      = 12,
+  [TOKEN_BOOLEAN_NOT]= 13,
 };
 
 
@@ -192,6 +199,27 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), NULL);
       /* FALLTHRU */
     case TOKEN_LEFT_PARENTHESIS:
+      t = tokenstack_push(&stack, t);
+      continue;
+
+    case TOKEN_QUESTIONMARK:
+      while(stack && tokenprecedence[t->type] < tokenprecedence[stack->type])
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), NULL);
+
+      t = tokenstack_push(&stack, t);
+      continue;
+
+    case TOKEN_COLON:
+      while(stack && stack->type != TOKEN_QUESTIONMARK)
+	tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
+
+      if(stack == NULL) {
+	glw_view_seterr(ei, t, "Unbalanced ?: operator");
+	goto err;
+      }
+
+      glw_view_token_free(gr, tokenstack_pop(&stack));
+      t->type = TOKEN_TENARY;
       t = tokenstack_push(&stack, t);
       continue;
 
