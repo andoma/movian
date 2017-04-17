@@ -529,7 +529,7 @@ dvd_reader_t *DVDOpen( const char *ppath, struct svfs_ops *svfs_ops )
                         " mounted on %s for CSS authentication\n",
                         dev_name,
                         s[i].f_mntonname);
-                auth_drive = DVDOpenImageFile( dev_name, have_css );
+                auth_drive = DVDOpenImageFile( dev_name, have_css, svfs_ops );
                 break;
             }
         }
