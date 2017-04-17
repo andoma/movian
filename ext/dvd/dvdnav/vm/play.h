@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2000, 2001 Martin Norbäck, Håkan Hjort
+ * Copyright (C) 2000, 2001 Håkan Hjort
+ * Copyright (C) 2001 Rich Wareham <richwareham@users.sourceforge.net>
+ *               2002-2004 the dvdnav project
  *
  * This file is part of libdvdnav, a DVD navigation library. It is modified
  * from a file originally part of the Ogle DVD player.
@@ -19,10 +21,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef LIBDVDNAV_VMCMD_H
-#define LIBDVDNAV_VMCMD_H
+/* Play */
+link_t play_PGC(vm_t *vm);
+link_t play_PGC_PG(vm_t *vm, int pgN);
+link_t play_PGC_post(vm_t *vm);
+link_t play_PG(vm_t *vm);
+link_t play_Cell(vm_t *vm);
+link_t play_Cell_post(vm_t *vm);
 
-void vm_print_mnemonic(vm_cmd_t *command);
-void vm_print_cmd(int row, vm_cmd_t *command);
-
-#endif /* LIBDVDNAV_VMCMD_H */

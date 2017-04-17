@@ -33,7 +33,7 @@
 #include <libavutil/mathematics.h>
 
 #include "fileaccess/svfs.h"
-#include "dvdnav/dvdnav.h"
+#include <dvdnav/dvdnav/dvdnav.h>
 #include "usage.h"
 
 static char *make_nice_title(const char *t);
@@ -667,11 +667,11 @@ dvd_update_streams(dvd_player_t *dp)
 
       const char *format;
       switch(dvdnav_audio_stream_format(dp->dp_dvdnav, i)) {
-      case DVDNAV_FORMAT_AC3:       format = "AC3";  break;
-      case DVDNAV_FORMAT_MPEGAUDIO: format = "MPEG"; break;
-      case DVDNAV_FORMAT_LPCM:      format = "PCM";  break;
-      case DVDNAV_FORMAT_DTS:       format = "DTS";  break;
-      case DVDNAV_FORMAT_SDDS:      format = "SDDS"; break;
+      case DVD_AUDIO_FORMAT_AC3:       format = "AC3";  break;
+      case DVD_AUDIO_FORMAT_MPEG: format = "MPEG"; break;
+      case DVD_AUDIO_FORMAT_LPCM:      format = "PCM";  break;
+      case DVD_AUDIO_FORMAT_DTS:       format = "DTS";  break;
+      case DVD_AUDIO_FORMAT_SDDS:      format = "SDDS"; break;
       default:                      format = "???";  break;
       }
 
@@ -873,7 +873,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dvd_set_audio_stream(dp, "auto", 0);
       dvd_set_spu_stream(dp, "auto", 0);
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
-      dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
+      dvdnav_get_video_resolution(dp->dp_dvdnav, (uint32_t*)&dp->dp_vwidth, (uint32_t*)&dp->dp_vheight);
       mp_bump_epoch(mp);
       dvd_update_streams(dp);
       update_duration(dp, mp);

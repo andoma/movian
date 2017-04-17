@@ -2,9 +2,8 @@
  * csstables.h: CSS Tables for DVD unscrambling
  *****************************************************************************
  * Copyright (C) 1999-2001 VideoLAN
- * $Id: csstables.h 20629 2006-11-03 12:25:56Z diego $
  *
- * Author: Stéphane Borel <stef@via.ecp.fr>
+ * Author: StÃ©phane Borel <stef@via.ecp.fr>
  *
  * based on:
  *  - css-auth by Derek Fawcus <derek@spider.com>
@@ -14,23 +13,27 @@
  *  - DecVOB
  *  see http://www.lemuria.org/DeCSS/ by Tom Vogt for more information.
  *
- * This program is free software; you can redistribute it and/or modify
+ * libdvdcss is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * libdvdcss is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
+ * You should have received a copy of the GNU General Public License along
+ * with libdvdcss; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *****************************************************************************/
 
+#ifndef DVDCSS_CSSTABLES_H
+#define DVDCSS_CSSTABLES_H
 
-static uint8_t p_css_tab1[ 256 ] =
+#include <stdint.h>
+
+static const uint8_t p_css_tab1[ 256 ] =
 {
     0x33, 0x73, 0x3b, 0x26, 0x63, 0x23, 0x6b, 0x76,
     0x3e, 0x7e, 0x36, 0x2b, 0x6e, 0x2e, 0x66, 0x7b,
@@ -66,7 +69,7 @@ static uint8_t p_css_tab1[ 256 ] =
     0xba, 0xfa, 0xb2, 0xaf, 0xea, 0xaa, 0xe2, 0xff
 };
 
-static uint8_t p_css_tab2[ 256 ] =
+static const uint8_t p_css_tab2[ 256 ] =
 {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x09, 0x08, 0x0b, 0x0a, 0x0d, 0x0c, 0x0f, 0x0e,
@@ -102,7 +105,7 @@ static uint8_t p_css_tab2[ 256 ] =
     0xe4, 0xe5, 0xe6, 0xe7, 0xe0, 0xe1, 0xe2, 0xe3
 };
 
-static uint8_t p_css_tab3[ 512 ] =
+static const uint8_t p_css_tab3[ 512 ] =
 {
     0x00, 0x24, 0x49, 0x6d, 0x92, 0xb6, 0xdb, 0xff,
     0x00, 0x24, 0x49, 0x6d, 0x92, 0xb6, 0xdb, 0xff,
@@ -170,7 +173,7 @@ static uint8_t p_css_tab3[ 512 ] =
     0x00, 0x24, 0x49, 0x6d, 0x92, 0xb6, 0xdb, 0xff
 };
 
-static uint8_t p_css_tab4[ 256 ] =
+static const uint8_t p_css_tab4[ 256 ] =
 {
     0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
     0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
@@ -206,7 +209,7 @@ static uint8_t p_css_tab4[ 256 ] =
     0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff
 };
 
-static uint8_t p_css_tab5[ 256 ] =
+static const uint8_t p_css_tab5[ 256 ] =
 {
     0xff, 0x7f, 0xbf, 0x3f, 0xdf, 0x5f, 0x9f, 0x1f,
     0xef, 0x6f, 0xaf, 0x2f, 0xcf, 0x4f, 0x8f, 0x0f,
@@ -242,7 +245,7 @@ static uint8_t p_css_tab5[ 256 ] =
     0xe0, 0x60, 0xa0, 0x20, 0xc0, 0x40, 0x80, 0x00
 };
 
-static uint8_t p_crypt_tab0[ 256 ] =
+static const uint8_t p_crypt_tab0[ 256 ] =
 {
     0xB7, 0xF4, 0x82, 0x57, 0xDA, 0x4D, 0xDB, 0xE2,
     0x2F, 0x52, 0x1A, 0xA8, 0x68, 0x5A, 0x8A, 0xFF,
@@ -278,7 +281,7 @@ static uint8_t p_crypt_tab0[ 256 ] =
     0xAD, 0x94, 0x77, 0x04, 0x9A, 0x39, 0xCF, 0x7C
 };
 
-static uint8_t p_crypt_tab1[ 256 ] =
+static const uint8_t p_crypt_tab1[ 256 ] =
 {
     0x8C, 0x47, 0xB0, 0xE1, 0xEB, 0xFC, 0xEB, 0x56,
     0x10, 0xE5, 0x2C, 0x1A, 0x5D, 0xEF, 0xBE, 0x4F,
@@ -314,7 +317,7 @@ static uint8_t p_crypt_tab1[ 256 ] =
     0xAA, 0x1B, 0x79, 0x8E, 0x97, 0xB4, 0xC3, 0xF4
 };
 
-static uint8_t p_crypt_tab2[ 256 ] =
+static const uint8_t p_crypt_tab2[ 256 ] =
 {
     0xB7, 0x75, 0x81, 0xD5, 0xDC, 0xCA, 0xDE, 0x66,
     0x23, 0xDF, 0x15, 0x26, 0x62, 0xD1, 0x83, 0x77,
@@ -350,7 +353,7 @@ static uint8_t p_crypt_tab2[ 256 ] =
     0x29, 0x91, 0xF0, 0x02, 0x18, 0x3A, 0x4E, 0x7C
 };
 
-static uint8_t p_crypt_tab3[ 288 ] =
+static const uint8_t p_crypt_tab3[ 288 ] =
 {
     0x73, 0x51, 0x95, 0xE1, 0x12, 0xE4, 0xC0, 0x58,
     0xEE, 0xF2, 0x08, 0x1B, 0xA9, 0xFA, 0x98, 0x4C,
@@ -390,3 +393,4 @@ static uint8_t p_crypt_tab3[ 288 ] =
     0xC3, 0x82, 0xC9, 0x15, 0x57, 0x16, 0x5D, 0x81
 };
 
+#endif /* DVDCSS_CSSTABLES_H */
