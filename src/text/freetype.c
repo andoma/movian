@@ -1193,7 +1193,8 @@ text_render0(const uint32_t *uc, const int len,
                     w2 -= items[li->start + k].adv_x +
                             (k > 0 ? items[li->start + k].kerning : 0);
                 }
-                
+                if (k == 0)
+                    k = j;
                 if (k > 0) {
                     lix = alloca(sizeof (line_t));
                     lix->default_height = li->default_height;
@@ -1206,7 +1207,7 @@ text_render0(const uint32_t *uc, const int len,
                     TAILQ_INSERT_AFTER(&lq, li, lix, link);
                     next = lix;
                     ti_flags |= IMAGE_TEXT_WRAPPED;
-                    k--;
+                    //k--;
                     w2 -= items[li->start + k].adv_x +
                             (k > 0 ? items[li->start + k].kerning : 0);
 
