@@ -290,6 +290,11 @@ es_http_req(duk_context *ctx)
 {
   const char *url = duk_to_string(ctx, 0);
 
+  if(mystrbegins(url, "https://") == NULL &&
+     mystrbegins(url, "http://") == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "Invalid URL for HTTP request, "
+              "begins with: %.10s", url);
+
   es_context_t *ec = es_get(ctx);
   es_http_request_t *ehr = es_resource_alloc(&es_resource_http_request);
 
