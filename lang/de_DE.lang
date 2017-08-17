@@ -5,12 +5,10 @@ maintainer: Viktor Wirt
 # ./glwskins/flat/ctxmenu/default_details.view
 #
 id: Bookmark
-# Missing translation
-msg: 
+msg: Lesezeichen hinzufügen
 
 id: Bookmarked
-# Missing translation
-msg: 
+msg: Als Lesezeichen hinzugefügt
 
 id: Copy to clipboard
 # Missing translation
@@ -30,8 +28,7 @@ msg: Liste
 # ./glwskins/flat/ctxmenu/plugin_details.view
 #
 id: Author:
-# Missing translation
-msg: 
+msg: Autor:
 
 id: Available version:
 msg: Verfügbare Version:
@@ -44,12 +41,10 @@ id: Install
 msg: Installieren
 
 id: Installed version:
-# Missing translation
-msg: 
+msg: Installierte Version:
 
 id: Status:
-# Missing translation
-msg: 
+msg: Status:
 
 id: Uninstall
 msg: Deinstallieren
@@ -144,74 +139,59 @@ msg: Systemlog
 # ./glwskins/flat/mediainfo.view
 #
 id: A/V diff
-# Missing translation
-msg: 
+msg: A/V unterschied
 
 id: Audio bitrate
-# Missing translation
-msg: 
+msg: Audiobitrate
 
 id: Audio codec
-# Missing translation
-msg: 
+msg: Audiocodec
 
 id: Audio packets
-# Missing translation
-msg: 
+msg: Audiopakete
 
 id: Buffer usage
-# Missing translation
-msg: 
+msg: Puffernutzung
 
 id: No media loaded
 msg: Keine Medien geladen
 
 id: Remaining buffer
-# Missing translation
-msg: 
+msg: Übriger Puffer
 
 id: Source
-# Missing translation
-msg: 
+msg: Quelle
 
 id: Video bitrate
-# Missing translation
-msg: 
+msg: Videobitrate
 
 id: Video codec
-# Missing translation
-msg: 
+msg: Videocodec
 
 id: Video framerate
-# Missing translation
-msg: 
+msg: Videobildrate
 
 id: Video packets
-# Missing translation
-msg: 
+msg: Videopakete
 
 #
 # ./glwskins/flat/menu/sidebar.view
 #
 id: Bookmark page
-# Missing translation
-msg: 
+msg: Seite als Lesezeichen hinzufügen
 
 id: Page settings
-# Missing translation
-msg: 
+msg: Seitenkonfiguration
 
 id: Paste
 # Missing translation
 msg: 
 
 id: Reload page
-# Missing translation
-msg: 
+msg: Seite aktualisieren
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Lesezeichen entfernen
 
 id: Settings
 msg: Einstellungen
@@ -229,8 +209,7 @@ id: Exit %s
 msg: %s beenden
 
 id: Hide media info
-# Missing translation
-msg: 
+msg: Medieninfo verbergen
 
 id: Hide system info
 msg: Systeminfo verbergen
@@ -239,8 +218,7 @@ id: Master volume
 msg: Hauptlautstärke
 
 id: Show media info
-# Missing translation
-msg: 
+msg: Medieninfo anzeigen
 
 id: Show system info
 msg: Systeminfo anzeigen
@@ -252,8 +230,7 @@ id: Time until sleep
 msg: Zeit bis Ausschalten
 
 id: View log
-# Missing translation
-msg: 
+msg: Log anzeigen
 
 id: dB
 msg: dB
@@ -301,19 +278,16 @@ id: Custom
 msg: Eigene
 
 id: Grid
-# Missing translation
-msg: 
+msg: Raster
 
 id: List
 msg: Liste 
 
 id: Page layout
-# Missing translation
-msg: 
+msg: Seitenlayout
 
 id: Search results
-# Missing translation
-msg: 
+msg: Suchergebnisse
 
 id: TV Season
 # Missing translation
@@ -340,8 +314,7 @@ msg:
 # ./glwskins/flat/pages/openerror.view
 #
 id: Unable to open resource
-# Missing translation
-msg: 
+msg: Kann Ressource nicht öffnen
 
 #
 # ./glwskins/flat/pages/playqueue.view
@@ -353,13 +326,12 @@ msg: Wiedergabeliste
 # ./glwskins/flat/pages/searchresults.view
 #
 id: Show more
-# Missing translation
-msg: 
+msg: Zeige mehr
 
 id: %d hits
 # Missing plural translation for '%d hits' and '%d hit'
-msg[0]: 
-msg[1]: 
+msg[0]: %d Treffer
+msg[1]: %d Treffer
 
 #
 # ./glwskins/flat/pages/slideshow.view
@@ -441,15 +413,13 @@ id: Check for updates now
 msg: Jetzt auf Updates prüfen
 
 id: Checking for updates
-# Missing translation
-msg: 
+msg: Prüfe auf neue Version
 
 id: Current version:
 msg: Aktuelle Version:
 
 id: Download and install
-# Missing translation
-msg: 
+msg: Herunterladen und installieren
 
 id: Downloading %s
 msg: Lade %s herunter
@@ -495,8 +465,7 @@ id: Cancel
 msg: Abbrechen
 
 id: Ok
-# Missing translation
-msg: 
+msg: Ok
 
 #
 # ./glwskins/flat/popups/filepicker.view
@@ -520,8 +489,7 @@ id: No, Start over
 msg: Nein, zum Anfang
 
 id: Resume from %s
-# Missing translation
-msg: 
+msg: Fortsetzen bei %s
 
 id: Yes
 msg: Ja 
@@ -539,15 +507,13 @@ id: CPU Temp
 msg: CPU Temperatur
 
 id: Connected
-# Missing translation
-msg: 
+msg: Verbunden
 
 id: Fragmentation
 msg: Fragmentierung
 
 id: Framerate
-# Missing translation
-msg: 
+msg: Bildrate
 
 id: GPU Temp
 msg: GPU Temperatur
@@ -556,23 +522,19 @@ id: HDD Avail
 msg: HDD Nutzung
 
 id: IP Address
-# Missing translation
-msg: 
+msg: IP Adresse
 
 id: Inactive memory
-# Missing translation
-msg: 
+msg: Inaktiver Speicher
 
 id: Memory usage
 msg: Speicher-Nutzung
 
 id: Network
-# Missing translation
-msg: 
+msg: Netzwerk
 
 id: Not available
-# Missing translation
-msg: 
+msg: Nicht verfügbar
 
 id: System Free
 msg: System frei
@@ -585,8 +547,7 @@ id: VM Page In/Out
 msg: 
 
 id: Version
-# Missing translation
-msg: 
+msg: Version
 
 #
 # ./glwskins/flat/universe.view
@@ -624,7 +585,7 @@ msg:
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-msg: Sprache (ISO 639-1 code)
+msg: Sprache (ISO 639-1 Code)
 
 id: Use original title
 msg: Originaltitel benutzen
@@ -645,7 +606,7 @@ msg: Kann Audiosystem %s -- %s nicht initialisieren
 # ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
-msg: Speicher ist knapp (%d kb RAM verfügbar)
+msg: Speicher ist knapp (%d kB RAM verfügbar)
 
 #
 # ./src/arch/ps3/ps3_vdec.c
@@ -943,12 +904,10 @@ id: Include in library
 msg: 
 
 id: Newest first
-# Missing translation
-msg: 
+msg: Neuste zuerst
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Älteste zuerst
 
 id: Show only supported files
 msg: Nur unterstützte Dateitypen anzeigen
@@ -1769,7 +1728,7 @@ id: Seek using L2 and R2 button
 msg: Suche per L2 und R2
 
 id: Yes with Select button
-msg: JA mit Selct-Knopf
+msg: JA mit Select-Taste
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1799,8 +1758,7 @@ id: Screensaver delay
 msg: Bildschirmschonerverzögerung
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Sekunden pro Bild
 
 id: Use Bing images of the day
 msg: Benutze Bing Bilder des Tages
