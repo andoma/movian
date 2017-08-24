@@ -5768,6 +5768,7 @@ prop_want_more_childs(prop_sub_t *s)
 void
 prop_have_more_childs0(prop_t *p, int yes)
 {
+  p->hp_flags &= ~(PROP_HAVE_MORE | PROP_HAVE_MORE_YES);
   p->hp_flags |= PROP_HAVE_MORE | (yes ? PROP_HAVE_MORE_YES : 0);
   prop_send_event(p,
                   yes ? PROP_HAVE_MORE_CHILDS_YES : PROP_HAVE_MORE_CHILDS_NO);
