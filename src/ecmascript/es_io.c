@@ -340,7 +340,15 @@ es_http_req(duk_context *ctx)
 
   duk_get_prop_string(ctx, 1, "postdata");
 
-  if(duk_is_object(ctx, -1)) {
+  if(duk_is_buffer(ctx, -1)) {
+    duk_size_t len;
+    unsigned char *buf;
+    buf = (unsigned char *) duk_get_buffer(ctx, -1, &len);
+    ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
+    htsbuf_queue_init(ehr->ehr_postdata, 0);
+    htsbuf_append(ehr->ehr_postdata, buf, len);
+    ehr->ehr_postcontenttype =  strdup("text/plain");
+  } else if(duk_is_object(ctx, -1)) {
     const char *prefix = "";
 
     ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
