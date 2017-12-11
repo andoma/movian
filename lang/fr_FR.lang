@@ -30,26 +30,22 @@ msg: File d'attente
 # ./glwskins/flat/ctxmenu/plugin_details.view
 #
 id: Author:
-# Missing translation
-msg: 
+msg: Auteur
 
 id: Available version:
 msg: Version disponible:
 
 id: Changelog
-# Missing translation
-msg: 
+msg: Changelog
 
 id: Install
 msg: Installer
 
 id: Installed version:
-# Missing translation
-msg: 
+msg: Version installée
 
 id: Status:
-# Missing translation
-msg: 
+msg: Etat
 
 id: Uninstall
 msg: Désinstaller
@@ -83,13 +79,11 @@ msg:
 # ./glwskins/flat/items/details/video.view
 #
 id: Season %d - Episode %d
-# Missing translation
-msg: 
-
+msg: Saison %d - Episode %d
 id: Seen %d times, %s
 # Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
-msg[0]: 
-msg[1]: 
+msg[0]: Vu %d fois, %s
+msg[1]: Vus %d fois, %s
 
 #
 # ./glwskins/flat/items/list/add.view
@@ -104,14 +98,13 @@ id: Off
 msg: Arrêt
 
 id: On
-# Missing translation
-msg: 
+msg: Marche
 
 #
 # ./glwskins/flat/items/list/font.view
 #
 id: Condensed
-msg: Condensée
+msg: Condensé
 
 id: Subtitles
 msg: Sous-titres
@@ -123,8 +116,7 @@ msg: Interface utilisateur
 # ./glwskins/flat/items/list/tvepisode.view
 #
 id: Episode %d - %s
-# Missing translation
-msg: 
+msg: Episode %d - %s
 
 #
 # ./glwskins/flat/loading.view
@@ -145,51 +137,40 @@ msg: Fichier d'évènements systèmes
 # ./glwskins/flat/mediainfo.view
 #
 id: A/V diff
-# Missing translation
-msg: 
+msg: Diff A/V
 
 id: Audio bitrate
-# Missing translation
-msg: 
+msg: Bitrate audio
 
 id: Audio codec
-# Missing translation
-msg: 
+msg: Codec audio
 
 id: Audio packets
-# Missing translation
-msg: 
+msg: Packets audio
 
 id: Buffer usage
-# Missing translation
-msg: 
+msg: Utilisation de la mémoire tampon
 
 id: No media loaded
 msg: Aucun media chargé
 
 id: Remaining buffer
-# Missing translation
-msg: 
+msg: Mémoire tampon restante
 
 id: Source
-# Missing translation
-msg: 
+msg: Source
 
 id: Video bitrate
-# Missing translation
-msg: 
+msg: Bitrate video
 
 id: Video codec
-# Missing translation
-msg: 
+msg: Codec video
 
 id: Video framerate
-# Missing translation
-msg: 
+msg: Framerate video
 
 id: Video packets
-# Missing translation
-msg: 
+msg: Packets video
 
 #
 # ./glwskins/flat/menu/sidebar.view
@@ -199,16 +180,13 @@ id: Bookmark page
 msg: 
 
 id: Page settings
-# Missing translation
-msg: 
+msg: Configuration de la page 
 
 id: Paste
-# Missing translation
-msg: 
+msg: Coller
 
 id: Reload page
-# Missing translation
-msg: 
+msg: Recharger la page
 
 id: Remove bookmark
 # Missing translation
@@ -230,8 +208,7 @@ id: Exit %s
 msg: Quitter
 
 id: Hide media info
-# Missing translation
-msg: 
+msg: Cacher les informations du média
 
 id: Hide system info
 msg: Cacher les informations système
@@ -240,8 +217,7 @@ id: Master volume
 msg: Contrôler le volume
 
 id: Show media info
-# Missing translation
-msg: 
+msg: Afficher les informations du média
 
 id: Show system info
 msg: Afficher les informations système
@@ -299,11 +275,10 @@ id: Artist
 msg: Artiste
 
 id: Custom
-msg: Personnalisé
+msg: Personnaliser
 
 id: Grid
-# Missing translation
-msg: 
+msg: Grille
 
 id: List
 msg: Liste
@@ -313,12 +288,10 @@ id: Page layout
 msg: 
 
 id: Search results
-# Missing translation
-msg: 
+msg: Résultats de la recherche
 
 id: TV Season
-# Missing translation
-msg: 
+msg: Saison TV
 
 #
 # ./glwskins/flat/pages/empty.view
@@ -334,8 +307,7 @@ id: Dismiss
 msg: Rejeter
 
 id: Home
-# Missing translation
-msg: 
+msg: Accueil
 
 #
 # ./glwskins/flat/pages/openerror.view
@@ -354,50 +326,42 @@ msg: File de lecture
 # ./glwskins/flat/pages/searchresults.view
 #
 id: Show more
-# Missing translation
-msg: 
+msg: Afficher plus
 
 id: %d hits
 # Missing plural translation for '%d hits' and '%d hit'
-msg[0]: 
-msg[1]: 
+msg[0]: %d hit
+msg[1]: %d hits
 
 #
 # ./glwskins/flat/pages/slideshow.view
 #
 id: Interval: %ds
-# Missing translation
-msg: 
+msg: Intervalle: %ds
 
 id: Play/Pause
-# Missing translation
-msg: 
+msg: Lecture/Pause
 
 id: Stop
-# Missing translation
-msg: 
+msg: Arrêter
 
 #
 # ./glwskins/flat/pages/stpp.view
 #
 id: Remote control - %s
-# Missing translation
-msg: 
+msg: Contrôler à distance - %s
 
 id: Remote controlling %s
-# Missing translation
-msg: 
+msg: Contrôle à distance - %s
 
 #
 # ./glwskins/flat/pages/stppstpp.view
 #
 id: Nested remote controll is not supported
-# Missing translation
-msg: 
+msg: Le contrôle à distance imbriqué n'est pas supporté
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Contrôle à distance
 
 #
 # ./glwskins/flat/pages/stppvideo.view
@@ -412,19 +376,16 @@ id: CPU is too slow to decode this video
 msg: Le CPU est trop faible pour décoder cette vidéo
 
 id: Next
-# Missing translation
-msg: 
+msg: Suivant
 
 id: Previous
-# Missing translation
-msg: 
+msg: Précédent
 
 #
 # ./glwskins/flat/pages/tvseason.view
 #
 id: Season %d
-# Missing translation
-msg: 
+msg: Saison %d
 
 #
 # ./glwskins/flat/pages/upgrade.view
@@ -442,15 +403,13 @@ id: Check for updates now
 msg: Rechercher les mises à jour
 
 id: Checking for updates
-# Missing translation
-msg: 
+msg: Rechercher des mises à jour
 
 id: Current version:
 msg: Version actuelle:
 
 id: Download and install
-# Missing translation
-msg: 
+msg: Télécharger et installer
 
 id: Downloading %s
 msg: Téléchargement %s
@@ -462,8 +421,7 @@ id: No upgrade available
 msg: Pas de mise à jour disponible
 
 id: Retry
-# Missing translation
-msg: 
+msg: Réessayer
 
 id: Stable
 msg: Stable
@@ -496,23 +454,20 @@ id: Cancel
 msg: Annuler
 
 id: Ok
-# Missing translation
-msg: 
+msg: Ok
 
 #
 # ./glwskins/flat/popups/filepicker.view
 #
 id: Back
-# Missing translation
-msg: 
+msg: Retour
 
 id: Close
-# Missing translation
-msg: 
+msg: Fermer
 
 id: Folder select mode, press right to open subfolder
 # Missing translation
-msg: 
+msg: Mode de selection du fichier, appuyer sur droite pour ouvrir le sous-fichier
 
 #
 # ./glwskins/flat/popups/resume.view
@@ -521,8 +476,7 @@ id: No, Start over
 msg: Non, Recommencer
 
 id: Resume from %s
-# Missing translation
-msg: 
+msg: Reprendre depuis %s
 
 id: Yes
 msg: Oui
@@ -540,15 +494,13 @@ id: CPU Temp
 msg: Température du CPU
 
 id: Connected
-# Missing translation
-msg: 
+msg: Connecté
 
 id: Fragmentation
 msg: Fragmentation
 
 id: Framerate
-# Missing translation
-msg: 
+msg: Framerate
 
 id: GPU Temp
 msg: Température du GPU
@@ -557,23 +509,19 @@ id: HDD Avail
 msg: HDD disponible
 
 id: IP Address
-# Missing translation
-msg: 
+msg: Adresse IP
 
 id: Inactive memory
-# Missing translation
-msg: 
+msg: Mémoire inactive
 
 id: Memory usage
 msg: Mémoire utilisée
 
 id: Network
-# Missing translation
-msg: 
+msg: Réseau
 
 id: Not available
-# Missing translation
-msg: 
+msg: Non disponible
 
 id: System Free
 msg: Espace libre
@@ -586,8 +534,7 @@ id: VM Page In/Out
 msg: 
 
 id: Version
-# Missing translation
-msg: 
+msg: Version
 
 #
 # ./glwskins/flat/universe.view
@@ -596,26 +543,23 @@ id: Audio muted
 msg: Son coupé
 
 id: Copying %d files
-# Missing translation
-msg: 
+msg: Copier %d fichiers
 
 id: Master volume: %d dB
 msg: Volume principal : %d dB
 
 id: Overscan adjustment\nPosition border at screen edges
 # Missing translation
-msg: 
+msg:  Ajuster le débordement\nPosition au bord de l'écran
 
 #
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Autoriser le contrôle à distance
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Appareil non disponible
 
 id: Movians for remote control
 # Missing translation
@@ -634,8 +578,7 @@ msg: Utiliser le titre d'origine
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Stockage Android
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -714,8 +657,7 @@ id: Audio delay
 msg: Délai audio
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Gain audio
 
 id: Setup audio output
 msg: Paramétrage de la sortie audio
@@ -888,16 +830,13 @@ msg: Résultat de la recherche pour : %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 secondes
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 secondes
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 secondes
 
 id: Slideshow speed
 # Missing translation
@@ -932,8 +871,7 @@ msg: Impossible d'ouvrir le fichier : %s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Sélectionner un fichier
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -955,12 +893,10 @@ id: Include in library
 msg: 
 
 id: Newest first
-# Missing translation
-msg: 
+msg: le plus récent en premier
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: le plus ancien en premier
 
 id: Show only supported files
 msg: N'afficher que les fichiers supportés
@@ -1032,12 +968,10 @@ msg: Nom de l'objet introuvable
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 heure
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 heure
 
 id: Default character set
 msg: Jeu de caractères par défaut
@@ -1070,8 +1004,7 @@ id: Secondary subtitle language code
 msg: Code secondaire de la langue pour les sous-titres
 
 id: System default
-# Missing translation
-msg: 
+msg: Système par défaut
 
 id: Tertiary audio language code
 msg: Code tertiaire de la langue pour la piste audio
@@ -1080,23 +1013,20 @@ id: Tertiary subtitle language code
 msg: Code tertiaire de la langue pour les sous-titres
 
 id: Time format
-# Missing translation
-msg: 
+msg: Format date
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Fuseau horaire
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: Appuyer longtemps sur SELECT pour afficher le menu d'éléments
 
 id: Switch TV input source
 # Missing translation
-msg: 
+msg: Changer la source TV
 
 id: Use STOP key for combo input
 # Missing translation
@@ -1132,12 +1062,10 @@ id: Horizontal pan
 msg: Panoramique horizontal
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: Position horizontale
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Ehelle horizontalle
 
 id: Reset defaults for folder '%s'
 msg: Réinitialiser les paramètres par défaut du répertoire '%s'
@@ -1149,8 +1077,7 @@ id: Save as global default
 msg: Sauvegarder comme paramètres par défaut
 
 id: Scaling
-# Missing translation
-msg: 
+msg:  Mise à l'échelle
 
 id: Stretch video to fullscreen
 msg: Étirer la vidéo en plein écran
@@ -1162,12 +1089,10 @@ id: Vertical pan
 msg: Panoramique vertical
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: Position verticale
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Echelle verticale
 
 id: Video frame interpolation
 msg: Interpolation de trames vidéo
@@ -1254,8 +1179,7 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: Métadonnées chargées depuis <b>%s</b> basées sur %s
 
 id: Metadata source
 msg: Fournisseur de métadonnées
@@ -1300,8 +1224,7 @@ id: Add and remove items on homepage
 msg: Ajouter et supprimer des éléments de la page principale
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: Ajouté %s à la page d'accueil
 
 id: Added new bookmark: %s
 msg: Ajouter un favori: %s
@@ -1310,8 +1233,7 @@ id: Bookmarks
 msg: Favoris
 
 id: Icon
-# Missing translation
-msg: 
+msg: Icone
 
 id: Music
 msg: Musique
@@ -1326,8 +1248,7 @@ id: Photos
 msg: Photos
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: Supprimé %s de la page d'accueil
 
 id: Removed bookmark: %s
 msg: Favori supprimé: %s
@@ -1372,16 +1293,13 @@ msg: Port TCP du serveur
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Eteindre
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Redémarrage
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Redémarrage
 
 id: Standby
 msg: Eteindre
@@ -1400,8 +1318,7 @@ id: Alternate plugin Repository URL
 msg: Adresse URL de Repository alternative
 
 id: Audio decoders
-# Missing translation
-msg: 
+msg: Décodeurs audio
 
 id: Auto install plugins on demand
 # Missing translation
@@ -1808,8 +1725,7 @@ id: Emulate Up/Down buttons with mouse wheel
 msg: 
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Dossier pour les images de l'économiseur d'écran
 
 id: Font and icon size
 msg: Taille de police et d'icône
@@ -1823,15 +1739,13 @@ id: Interface vertical shrink
 msg: 
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Economiseur d'écran
 
 id: Screensaver delay
 msg: Délai avant l'économiseur d'écran
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Secondes par image
 
 id: Use Bing images of the day
 # Missing translation
@@ -1844,48 +1758,37 @@ msg: Bouclez quand le début/fin de la liste est atteint
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: Il y a %d jours
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: Il y a %d heures
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: Il y a %d minutes
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: Il y a %d mois
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: Il y a %d semaines
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: Il y a %d années
 
 id: Just now
-# Missing translation
-msg: 
+msg: Juste maintenant
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Il y a un jour
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Il y a une heure
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Il y a une minute
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Il y a un mois
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1982,8 +1885,7 @@ id: Resume video playback
 msg: Reprendre la lecture vidéo
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Afficher l'horloge pendant la lecture
 
 id: Step when seeking backward
 msg: Étape lorsqu'on cherche à revenir en arrière
@@ -2004,6 +1906,5 @@ id: Video acceleration and display behaviour
 msg: Accélération vidéo et comportement de l'affichage
 
 id: Video buffer size
-# Missing translation
-msg: 
+msg: Taille de la mémoire tampon de la video
 
