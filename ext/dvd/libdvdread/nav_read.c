@@ -261,5 +261,5 @@ void navRead_DSI(dsi_t *dsi, unsigned char *buffer) {
   /* Asserts */
 
   /* dsi dsi gi */
-  CHECK_VALUE(dsi->dsi_gi.zero1 == 0);
+  //CHECK_VALUE(dsi->dsi_gi.zero1 == 0);
 }

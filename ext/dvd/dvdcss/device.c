@@ -480,11 +480,10 @@ int dvdcss_close_device ( dvdcss_t dvdcss )
 #if !defined(WII) && !defined(PS3)
 static int libc_open ( dvdcss_t dvdcss, const char *psz_device )
 {
-    char* pfile=psz_device+7;
 #if !defined( WIN32 )
-    dvdcss->i_fd = open( pfile, 0 );
+    dvdcss->i_fd = open( psz_device, 0 );
 #else
-    dvdcss->i_fd = open( pfile, O_LARGEFILE | O_BINARY );
+    dvdcss->i_fd = open( psz_device, O_LARGEFILE | O_BINARY );
 #endif
 
     if( dvdcss->i_fd == -1 )
