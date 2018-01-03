@@ -480,18 +480,22 @@ int dvdcss_close_device ( dvdcss_t dvdcss )
 #if !defined(WII) && !defined(PS3)
 static int libc_open ( dvdcss_t dvdcss, const char *psz_device )
 {
+    char* pfile=psz_device;
+    if( pfile[0] != '/' ) //Normally the device path is like '/dev/dvd', but it may start with "file://"
+        pfile+=7;
+    TRACE(TRACE_DEBUG, "dvdcss", "Opening device %s as %s ...", psz_device, pfile );
 #if !defined( WIN32 )
-    dvdcss->i_fd = open( psz_device, 0 );
+    dvdcss->i_fd = open( pfile, 0 );
 #else
-    dvdcss->i_fd = open( psz_device, O_LARGEFILE | O_BINARY );
+    dvdcss->i_fd = open( pfile, O_LARGEFILE | O_BINARY );
 #endif
 
     if( dvdcss->i_fd == -1 )
     {
-        print_error( dvdcss, "failed to open device %s (%s)",
-                     psz_device, strerror(errno) );
-        printf("libdvdcss: failed to open device %s (%s)",
-                     psz_device, strerror(errno) );
+        print_error( dvdcss, "failed to open device %s as %s (%s)",
+                     psz_device, pfile, strerror(errno) );
+        printf("libdvdcss: failed to open device %s as %s (%s)",
+                     psz_device, pfile, strerror(errno) );
         return -1;
     }
 
