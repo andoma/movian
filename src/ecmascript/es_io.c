@@ -591,7 +591,7 @@ es_http_inspector_create(duk_context *ctx)
   ehi->ehi_prio = strlen(str);
   ehi->ehi_async = async;
 
-  es_debug(ec, "Adding HTTP insepction for pattern %s", str);
+  es_debug(ec, "Adding HTTP inspection for pattern %s", str);
 
   LIST_INSERT_SORTED(&http_inspectors, ehi, ehi_link, ehi_cmp,
                      es_http_inspector_t);
