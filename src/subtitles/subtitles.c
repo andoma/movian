@@ -279,7 +279,7 @@ check_subtitle_file(sub_scanner_t *ss,
       return;
   }
 
-  if(!strcasecmp(postfix, ".srt") || !strcasecmp(postfix, ".vtt")) {
+  if(!strcasecmp(postfix, ".srt") || !strcasecmp(postfix, ".vtt") || !strcasecmp(postfix, ".webvtt")) {
     if(postfix - sub_filename > 4 && postfix[-4] == '.') {
       char b[4];
       memcpy(b, postfix - 3, 3);
