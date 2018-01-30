@@ -297,6 +297,7 @@ widget(container_z, {
             clickable: true;
             bind($self.media.currenttime);
             max: $self.media.metadata.duration;
+            secondBarValue: $core.media.current.buffer.delay;
             widget(icon, {
               source: "skin://icons/dot.png";
             });
@@ -305,6 +306,15 @@ widget(container_z, {
               widget(quad, {
                 height: 3;
                 alpha: 0.9;
+                additive: true;
+              });
+              space(1);
+            });
+            widget(container_y, {
+              space(1);
+              widget(quad, {
+                height: 3;
+                alpha: 0.5;
                 additive: true;
               });
               space(1);

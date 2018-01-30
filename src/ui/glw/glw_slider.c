@@ -35,6 +35,7 @@ typedef struct {
   float knob_pos_px;
   float knob_size_fixed;
   float value;
+  float second_bar_value;
 
   float min, max, step, step_i;
   float grab_delta;
@@ -175,6 +176,18 @@ glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
                  s->knob_pos_px,
                  0);
   glw_layout0(c, &rc0);
+
+
+  c = TAILQ_NEXT(c, glw_parent_link);
+  if(c == NULL)
+    return;
+
+  rc0 = *rc;
+  glw_reposition(&rc0, 0,
+                 rc->rc_height,
+                 s->knob_pos_px + ((s->slider_size_px / (s->max - s->min)) * s->second_bar_value),
+                 0);
+  glw_layout0(c, &rc0);
 }
 
 
@@ -213,6 +226,17 @@ glw_slider_render_x(glw_t *w, const glw_rctx_t *rc)
   glw_reposition(&rc0, 0,
                  rc->rc_height,
                  s->knob_pos_px,
+                 0);
+  glw_render0(c, &rc0);
+
+  c = TAILQ_NEXT(c, glw_parent_link);
+  if(c == NULL)
+    return;
+
+  rc0 = *rc;
+  glw_reposition(&rc0, 0,
+                 rc->rc_height,
+                 s->knob_pos_px + ((s->slider_size_px / (s->max - s->min)) * s->second_bar_value),
                  0);
   glw_render0(c, &rc0);
 }
@@ -537,6 +561,7 @@ glw_slider_ctor(glw_t *w)
   s->step_i = 0.1;
   s->step = 0.1;
   s->keystep = 1;
+  s->second_bar_value = 0.0;
 }
 
 
@@ -658,6 +683,24 @@ glw_slider_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
   return 1;
 }
 
+/**
+ *
+ */
+static int
+glw_slider_set_float_unresolved(glw_t *w, const char *a, float value,
+                                glw_style_t *gs)
+{
+  glw_slider_t *s = (glw_slider_t *)w;
+
+  if(!strcmp(a, "secondBarValue")) {
+    if(s->second_bar_value == value)
+      return GLW_SET_NO_CHANGE;
+    s->second_bar_value = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+  return GLW_SET_NOT_RESPONDING;
+}
+
 
 static glw_class_t glw_slider_x = {
   .gc_name = "slider_x",
@@ -673,6 +716,7 @@ static glw_class_t glw_slider_x = {
   .gc_pointer_event = pointer_event,
   .gc_set_int_unresolved = glw_slider_set_int_unresolved,
   .gc_set_prop = glw_slider_set_prop,
+  .gc_set_float_unresolved = glw_slider_set_float_unresolved,
 };
 
 static glw_class_t glw_slider_y = {
