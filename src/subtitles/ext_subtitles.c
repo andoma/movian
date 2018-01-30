@@ -205,12 +205,14 @@ is_srt(const char *buf, size_t len)
 
   if(linereader_next(&lr) < 0)
     return 0;
-  if(get_int(&lr, &n))
-    return 0;
-  if(linereader_next(&lr) < 0)
-    return 0;
-  if(get_srt_timestamp(&lr, &start, &stop))
-    return 0;
+  if(get_srt_timestamp(&lr, &start, &stop)) {
+    if(get_int(&lr, &n))
+      return 0;
+    if(linereader_next(&lr) < 0)
+      return 0;
+    if(get_srt_timestamp(&lr, &start, &stop))
+      return 0;
+  }
 
   if(stop < start)
     return 0;
