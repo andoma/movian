@@ -1,7 +1,7 @@
 Movian mediaplayer
 ==================
 
-(c) 2006 - 2016 Lonelycoder AB
+(c) 2006 - 2018 Lonelycoder AB
 
 [![Build status](https://doozer.io/badge/andoma/movian/buildstatus/master)](https://doozer.io/user/andoma/movian)
 
