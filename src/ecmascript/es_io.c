@@ -347,7 +347,7 @@ es_http_req(duk_context *ctx)
     ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
     htsbuf_queue_init(ehr->ehr_postdata, 0);
     htsbuf_append(ehr->ehr_postdata, buf, len);
-    ehr->ehr_postcontenttype =  strdup("text/plain");
+    ehr->ehr_postcontenttype = strdup("application/octet-stream");
   } else if(duk_is_object(ctx, -1)) {
     const char *prefix = "";
 
@@ -380,7 +380,7 @@ es_http_req(duk_context *ctx)
     ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
     htsbuf_queue_init(ehr->ehr_postdata, 0);
     htsbuf_append(ehr->ehr_postdata, str, len);
-    ehr->ehr_postcontenttype =  strdup("text/plain");
+    ehr->ehr_postcontenttype = strdup("text/plain");
   } else {
 
   }
