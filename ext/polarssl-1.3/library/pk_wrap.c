@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,11 +27,12 @@
 #endif
 
 #if defined(POLARSSL_PK_C)
-
 #include "polarssl/pk_wrap.h"
 
 /* Even if RSA not activated, for the sake of RSA-alt */
 #include "polarssl/rsa.h"
+
+#include <string.h>
 
 #if defined(POLARSSL_ECP_C)
 #include "polarssl/ecp.h"
@@ -48,6 +49,9 @@
 #define polarssl_malloc     malloc
 #define polarssl_free       free
 #endif
+
+#include <limits.h>
+#include <stdint.h>
 
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
@@ -72,6 +76,11 @@ static int rsa_verify_wrap( void *ctx, md_type_t md_alg,
 {
     int ret;
 
+#if SIZE_MAX > UINT_MAX
+    if( md_alg == POLARSSL_MD_NONE && UINT_MAX < hash_len )
+        return( POLARSSL_ERR_PK_BAD_INPUT_DATA );
+#endif /* SIZE_MAX > UINT_MAX */
+
     if( sig_len < ((rsa_context *) ctx)->len )
         return( POLARSSL_ERR_RSA_VERIFY_FAILED );
 
@@ -91,6 +100,11 @@ static int rsa_sign_wrap( void *ctx, md_type_t md_alg,
                    unsigned char *sig, size_t *sig_len,
                    int (*f_rng)(void *, unsigned char *, size_t), void *p_rng )
 {
+#if SIZE_MAX > UINT_MAX
+    if( md_alg == POLARSSL_MD_NONE && UINT_MAX < hash_len )
+        return( POLARSSL_ERR_PK_BAD_INPUT_DATA );
+#endif /* SIZE_MAX > UINT_MAX */
+
     *sig_len = ((rsa_context *) ctx)->len;
 
     return( rsa_pkcs1_sign( (rsa_context *) ctx, f_rng, p_rng, RSA_PRIVATE,
@@ -409,6 +423,11 @@ static int rsa_alt_sign_wrap( void *ctx, md_type_t md_alg,
                    int (*f_rng)(void *, unsigned char *, size_t), void *p_rng )
 {
     rsa_alt_context *rsa_alt = (rsa_alt_context *) ctx;
+
+#if SIZE_MAX > UINT_MAX
+    if( UINT_MAX < hash_len )
+        return( POLARSSL_ERR_PK_BAD_INPUT_DATA );
+#endif /* SIZE_MAX > UINT_MAX */
 
     *sig_len = rsa_alt->key_len_func( rsa_alt->key );
 

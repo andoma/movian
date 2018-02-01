@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@
 #endif
 
 #if defined(POLARSSL_PK_C)
-
 #include "polarssl/pk.h"
 #include "polarssl/pk_wrap.h"
 
@@ -40,6 +39,9 @@
 #if defined(POLARSSL_ECDSA_C)
 #include "polarssl/ecdsa.h"
 #endif
+
+#include <limits.h>
+#include <stdint.h>
 
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
@@ -209,6 +211,11 @@ int pk_verify_ext( pk_type_t type, const void *options,
         int ret;
         const pk_rsassa_pss_options *pss_opts;
 
+#if SIZE_MAX > UINT_MAX
+        if( md_alg == POLARSSL_MD_NONE && UINT_MAX < hash_len )
+            return( POLARSSL_ERR_PK_BAD_INPUT_DATA );
+#endif /* SIZE_MAX > UINT_MAX */
+
         if( options == NULL )
             return( POLARSSL_ERR_PK_BAD_INPUT_DATA );
 
@@ -232,7 +239,7 @@ int pk_verify_ext( pk_type_t type, const void *options,
         return( 0 );
 #else
         return( POLARSSL_ERR_PK_FEATURE_UNAVAILABLE );
-#endif
+#endif /* POLARSSL_RSA_C && POLARSSL_PKCS1_V21 */
     }
 
     /* General case: no options */

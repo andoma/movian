@@ -5,7 +5,7 @@
  *
  *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -252,7 +252,6 @@ typedef enum {
     defined(POLARSSL_KEY_EXCHANGE_ECDHE_RSA_ENABLED)    || \
     defined(POLARSSL_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED)  || \
     defined(POLARSSL_KEY_EXCHANGE_RSA_PSK_ENABLED)      || \
-    defined(POLARSSL_KEY_EXCHANGE_ECDHE_PSK_ENABLED)    || \
     defined(POLARSSL_KEY_EXCHANGE_ECDH_RSA_ENABLED)     || \
     defined(POLARSSL_KEY_EXCHANGE_ECDH_ECDSA_ENABLED)
 #define POLARSSL_KEY_EXCHANGE__WITH_CERT__ENABLED
@@ -291,6 +290,7 @@ const ssl_ciphersuite_t *ssl_ciphersuite_from_id( int ciphersuite_id );
 
 #if defined(POLARSSL_PK_C)
 pk_type_t ssl_get_ciphersuite_sig_pk_alg( const ssl_ciphersuite_t *info );
+pk_type_t ssl_get_ciphersuite_sig_alg( const ssl_ciphersuite_t *info );
 #endif
 
 int ssl_ciphersuite_uses_ec( const ssl_ciphersuite_t *info );

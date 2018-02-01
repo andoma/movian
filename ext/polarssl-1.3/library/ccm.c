@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,6 +39,17 @@
 
 #include "polarssl/ccm.h"
 
+#include <string.h>
+
+#if defined(POLARSSL_SELF_TEST) && defined(POLARSSL_AES_C)
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
+#include <stdio.h>
+#define polarssl_printf printf
+#endif /* POLARSSL_PLATFORM_C */
+#endif /* POLARSSL_SELF_TEST && POLARSSL_AES_C */
+
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
     volatile unsigned char *p = v; while( n-- ) *p++ = 0;
@@ -66,6 +77,8 @@ int ccm_init( ccm_context *ctx, cipher_id_t cipher,
 
     if( cipher_info->block_size != 16 )
         return( POLARSSL_ERR_CCM_BAD_INPUT );
+
+    cipher_free( &ctx->cipher_ctx );
 
     if( ( ret = cipher_init_ctx( &ctx->cipher_ctx, cipher_info ) ) != 0 )
         return( ret );
@@ -127,7 +140,7 @@ static int ccm_auth_crypt( ccm_context *ctx, int mode, size_t length,
 {
     int ret;
     unsigned char i;
-    unsigned char q = 16 - 1 - iv_len;
+    unsigned char q;
     size_t len_left, olen;
     unsigned char b[16];
     unsigned char y[16];
@@ -149,6 +162,8 @@ static int ccm_auth_crypt( ccm_context *ctx, int mode, size_t length,
 
     if( add_len > 0xFF00 )
         return( POLARSSL_ERR_CCM_BAD_INPUT );
+
+    q = 16 - 1 - (unsigned char) iv_len;
 
     /*
      * First block B_0:
@@ -241,7 +256,7 @@ static int ccm_auth_crypt( ccm_context *ctx, int mode, size_t length,
 
     while( len_left > 0 )
     {
-        unsigned char use_len = len_left > 16 ? 16 : len_left;
+        size_t use_len = len_left > 16 ? 16 : len_left;
 
         if( mode == CCM_ENCRYPT )
         {
@@ -333,14 +348,6 @@ int ccm_auth_decrypt( ccm_context *ctx, size_t length,
 
 
 #if defined(POLARSSL_SELF_TEST) && defined(POLARSSL_AES_C)
-
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
-#else
-#include <stdio.h>
-#define polarssl_printf printf
-#endif
-
 /*
  * Examples 1 to 3 from SP800-38C Appendix C
  */
