@@ -11,17 +11,15 @@ For more information and latest versions, please visit:
 
 ## How to build for Linux
 
-First you need to satisfy some dependencies:
-For Ubuntu 12.04)
+First you need to satisfy some dependencies (for Ubuntu 16.04.3 LTS)
 
-	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libvdpau-dev yasm libpulse-dev libssl-dev curl libwebkitgtk-dev libsqlite3-dev
+	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libvdpau-dev yasm libpulse-dev libssl-dev curl libwebkitgtk-dev libsqlite3-dev libavahi-client-dev
 
 Then you need to configure:
 
 	./configure
 
-If your system lacks libwebkitgtk (Ubuntu 12.04 before 12.04.1) 
-you can configure with
+If your system lacks libwebkitgtk or some other lib you can configure like this:
 
 	./configure --disable-webkit
 
@@ -77,15 +75,15 @@ This will generate a DMG
 
 ## How to build for PS3 with PSL1GHT
 
-$ ./Autobuild.sh -t ps3
+$ ./Autobuild.sh -t ps3 -v 5.0.500
 
 ## How to build for Raspberry Pi
 
-First you need to satisfy some dependencies (For Ubuntu 12.04LTS 64bit):
+First you need to satisfy some dependencies (for Ubuntu 16.04.3 LTS 64bit):
 
 	sudo apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip squashfs-tools
 
-$ ./Autobuild.sh -t rpi
+$ ./Autobuild.sh -t rpi -v 5.0.500
 
 To update Movian on rpi with compiled one, enable Binreplace in settings:dev and issue:
 
