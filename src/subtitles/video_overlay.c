@@ -53,16 +53,24 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
   avpkt.data = mb->mb_data;
   avpkt.size = mb->mb_size;
 
+  vo = calloc(1, sizeof(video_overlay_t));
+  vo->vo_type = VO_TIMED_FLUSH;
+  vo->vo_start = mb->mb_pts;
+  video_overlay_enqueue(mp, vo);
+
   if(avcodec_decode_subtitle2(ctx, &sub, &got_sub, &avpkt) < 1 || !got_sub)
     return;
 
-  if(sub.num_rects == 0) {
+  if(sub.num_rects == 0)
+  {
     // Flush screen
     vo = calloc(1, sizeof(video_overlay_t));
     vo->vo_type = VO_TIMED_FLUSH;
     vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
     video_overlay_enqueue(mp, vo);
-  } else {
+  }
+  else
+  {
 
     for(i = 0; i < sub.num_rects; i++) {
       AVSubtitleRect *r = sub.rects[i];
@@ -74,8 +82,9 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 
 	vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
 	vo->vo_stop  = mb->mb_pts + sub.end_display_time * 1000;
-        vo->vo_canvas_width  = ctx->width;
-        vo->vo_canvas_height = ctx->height;
+
+    vo->vo_canvas_width  = 720;//ctx->width;
+    vo->vo_canvas_height = 576;//ctx->height;
 
 	vo->vo_x = r->x;
 	vo->vo_y = r->y;
@@ -189,23 +198,19 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
 {
   media_codec_t *mc = mb->mb_cw;
 
-  if(mc == NULL) {
-
-    int offset = 0;
-    char *str;
-
+  if(mc == NULL && mb->mb_codecid) {
     if(mb->mb_codecid == AV_CODEC_ID_MOV_TEXT) {
       if(mb->mb_size < 2)
 	return;
-      offset = 2;
-    }
 
-    str = malloc(mb->mb_size + 1 - offset);
-    memcpy(str, mb->mb_data + offset, mb->mb_size - offset);
-    str[mb->mb_size - offset] = 0;
+      int offset = 2;
 
-    video_overlay_t *vo;
-    vo = video_overlay_render_cleartext(str, mb->mb_pts,
+      char *str = malloc(mb->mb_size + 1 - offset);
+      memcpy(str, mb->mb_data + offset, mb->mb_size - offset);
+      str[mb->mb_size - offset] = 0;
+
+      video_overlay_t *vo;
+      vo = video_overlay_render_cleartext(str, mb->mb_pts,
 					mb->mb_duration ?
 					mb->mb_pts + mb->mb_duration :
 					PTS_UNSET,
@@ -214,11 +219,11 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
                                         TEXT_PARSE_SLOPPY_TAGS,
 					mb->mb_font_context);
 
-    if(vo != NULL)
-      video_overlay_enqueue(mp, vo);
+      if(vo != NULL)
+        video_overlay_enqueue(mp, vo);
 
-    free(str);
-
+      free(str);
+    }
   } else {
 
     if(mc->decode)
