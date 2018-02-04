@@ -805,6 +805,7 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
               FA_LOAD_ERRBUF(errbuf, errlen),
               FA_LOAD_QUERY_ARGVEC(qargs),
               FA_LOAD_FLAGS(FA_COMPRESSION | FA_DISABLE_AUTH),
+              FA_LOAD_CACHE_CONTROL(DISABLE_CACHE),
               NULL);
 
   hts_mutex_lock(&plugin_mutex);
