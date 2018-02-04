@@ -199,7 +199,7 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
   media_codec_t *mc = mb->mb_cw;
 
   if(mc == NULL && mb->mb_codecid) {
-    if(mb->mb_codecid == AV_CODEC_ID_MOV_TEXT) {
+    if(mb->mb_codecid == (AV_CODEC_ID_MOV_TEXT || AV_CODEC_ID_TEXT)) {
       if(mb->mb_size < 2)
 	return;
 
