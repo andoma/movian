@@ -134,6 +134,7 @@ static const isolang_t langtable[] = {
   {"din", "", "Dinka"},
   {"div", "dv", "Divehi"},
   {"doi", "", "Dogri"},
+  {"dos", "", "Original"},
   {"dra", "", "Dravidian (Other)"},
   {"dua", "", "Duala"},
   {"dum", "", "Dutch, Middle (ca.1050-1350)"},
@@ -152,6 +153,7 @@ static const isolang_t langtable[] = {
   {"ewo", "", "Ewondo"},
   {"fan", "", "Fang"},
   {"fao", "fo", "Faroese"},
+  {"far", "", "Farsi"},
   {"fat", "", "Fanti"},
   {"fij", "fj", "Fijian"},
   {"fil", "", "Filipino"},
@@ -220,6 +222,7 @@ static const isolang_t langtable[] = {
   {"ind", "id", "Indonesian"},
   {"ine", "", "Indo-European (Other)"},
   {"inh", "", "Ingush"},
+  {"int", "", "International"},
   {"ipk", "ik", "Inupiaq"},
   {"ira", "", "Iranian (Other)"},
   {"iro", "", "Iroquoian languages"},
@@ -322,6 +325,7 @@ static const isolang_t langtable[] = {
   {"nah", "", "Nahuatl"},
   {"nai", "", "North American Indian"},
   {"nap", "", "Neapolitan"},
+  {"nat", "", "Native"},
   {"nau", "na", "Nauru"},
   {"nav", "nv", "Navajo"},
   {"nbl", "nr", "Ndebele, South"},
@@ -333,6 +337,7 @@ static const isolang_t langtable[] = {
   {"nia", "", "Nias"},
   {"nic", "", "Niger-Kordofanian (Other)"},
   {"niu", "", "Niuean"},
+  {"nld", "", "Dutch"},
   {"nno", "nn", "Norwegian Nynorsk"},
   {"nob", "nb", "Norwegian Bokmal"},
   {"nog", "", "Nogai"},
@@ -371,6 +376,7 @@ static const isolang_t langtable[] = {
   {"por", "pt", "Portuguese"},
   {"pra", "", "Prakrit languages"},
   {"pro", "", "Provençal, Old (to 1500)"},
+  {"prt", "", "Portuguese"},
   {"pus", "ps", "Pushto"},
   {"que", "qu", "Quechua"},
   {"raj", "", "Rajasthani"},
@@ -395,6 +401,7 @@ static const isolang_t langtable[] = {
   {"scc", "sr", "Serbian"},
   {"scn", "", "Sicilian"},
   {"sco", "", "Scots"},
+  {"sdn", "", "Sudanese Arabic"},
   {"sel", "", "Selkup"},
   {"sem", "", "Semitic (Other)"},
   {"sga", "", "Irish, Old (to 900)"},
@@ -436,9 +443,11 @@ static const isolang_t langtable[] = {
   {"swa", "sw", "Swahili"},
   {"swe", "sv", "Swedish"},
   {"syr", "", "Syriac"},
+  {"tac", "", "Tamazight"},
   {"tah", "ty", "Tahitian"},
   {"tai", "", "Tai (Other)"},
   {"tam", "ta", "Tamil"},
+  {"tar", "", "Arwi"},
   {"tat", "tt", "Tatar"},
   {"tel", "te", "Telugu"},
   {"tem", "", "Timne"},
@@ -514,7 +523,7 @@ isolang_find(const char *code)
 {
   int i;
   char buf[3];
-  if(strlen(code) == 3) {
+  if(strlen(code) >= 3) { // language code sometimes can be like cze,hun
 
     // lowercase input code
     buf[0] = code[0] | 0x20;
