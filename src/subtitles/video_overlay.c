@@ -28,6 +28,7 @@
 #include "subtitles/subtitles.h"
 #include "ext/telxcc/hamming.h"
 #include "ext/telxcc/teletext.h"
+#include "time.h"
 
 void
 video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo)
@@ -448,7 +449,7 @@ static void process_page(teletext_page_t *page, media_pipe_t *mp, media_buf_t *m
     }
 
     // no tag will left opened!
-    if ((font_tag_opened == YES)) {
+    if (font_tag_opened == YES) {
       strappend(&str, "</font>");
       font_tag_opened = NO;
     }
