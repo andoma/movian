@@ -258,6 +258,7 @@ typedef struct gconf {
   int enable_input_event_debug;
   int enable_touch_debug;
   int enable_MediaCodec_debug;
+  int enable_dvb_teletext_debug;
 
 #if ENABLE_BITTORRENT
   int enable_torrent_debug;

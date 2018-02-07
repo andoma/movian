@@ -1,0 +1,164 @@
+.TH telxcc 1 "January 2014" "version 2.5.3"
+
+.SH NAME
+.B telxcc
+.RI "- " TEL ete X "t " C "losed " C "aptions decoder"
+
+.SH SYNOPSIS
+.B telxcc
+.RI "[options] < " "input_file" " > " "output_file" " [ 2> " "log_file" " ]"
+
+.SH DESCRIPTION
+.B telxcc
+is utility extracting teletext Closed Captions from Transport Stream binary files (TS) into SubRip text files (SRT).
+.P
+.B telxcc
+conforms to ETSI 300 706 Presentation Level 1.5: Presentation Level 1 defines the basic Teletext page,
+characterised by the use of spacing attributes only and a limited alphanumeric and mosaics repertoire.
+Presentation Level 1.5 decoder responds as Level 1 but the character repertoire is extended via packets X/26.
+Selection of national option sub-sets related features from Presentation Level 2.5 feature set have been implemented, too.
+(X/28/0 Format 1, X/28/4, M/29/0 and M/29/4 packets)
+
+.SH OPTIONS
+
+.IP "\-V"
+Prints out version and quit.
+.IP "\-h"
+Show a summary of command line options and exit.
+.IP "\-i file"
+Read source data from the transport stream file
+.IR file .
+If
+.I file
+is a single dash (\-) or whole option is absent,
+.B telxcc
+reads from the standard input.
+.IP "\-o file"
+Write subtitles in SubRip SRT file format (UTF-8 encoded, NFC) to file
+.IR file .
+If
+.I file
+is a single dash (\-) or whole option is absent,
+.B telxcc
+writes to the standard output. Note: in early versions \-o option used to be used for offset settings (now \-f).
+.IP "\-v"
+Verbose mode -- show a diagnostic during data processing.
+.IP "\-p page"
+Extract closed captions from specified teletext page
+.IR page .
+Page must be in the range 100 -- 899. If this option is absent,
+.B telxcc
+uses the first suitable page carrying closed captions. CCs are usually transmitted via pages 888, 777, 555 etc.
+.IP "\-t ID"
+Analyze transport stream
+.IR ID .
+If this option is absent,
+.B telxcc
+chooses first suitable stream specified in the transport stream's PMT table. If the value of 8192 is specified,
+the first detected stream will be used.
+.IP "\-f offset"
+Set subtitles' offset to the value of
+.I offset
+(specified in seconds, decimal number).
+.IP "\-n"
+Do not print UTF-8 BOM characters to the output. This option is implicit, if output is a terminal.
+.IP "\-1"
+Produce at least one (dummy) frame.
+.IP "\-c"
+Output colour information in font HTML tags. If this option is active, <>& characters are also translated into HTML entities.
+.IP "\-s [reference]"
+Activate search engine mode, i. e. produce absolute timestamps (in UTC) and output all captions from the screen in one line.
+If
+.I reference
+value (unix timestamp, integer) is omitted, use current system time.
+.B telxcc
+will automatically switch to transport stream UTC timestamps when available.
+.IP "\-m"
+input file format is BDAV MPEG-2 Transport Stream (BluRay and some IP-TV recorders)
+
+.SH "EXIT STATUS"
+.B telxcc
+uses a common convention of zero (0) for success and non-zero (> 0) for error.
+
+.SH EXAMPLES
+Command
+.P
+.RS
+.nf
+ telxcc < SWR_PID-804_PAGE-150.ts > SWR.srt
+.fi
+.RE
+.P
+will extract CCs from TS file SWR_PID-804_PAGE-150.ts. All options will be autodetected.
+.P
+.RS
+.nf
+telxcc - TELeteXt Closed Captions decoder
+(c) Forers, s. r. o., <info@forers.com>, 2011-2013; Licensed under the GPL.
+Version 2.4.0 (Built on Feb  5 2013)
+
+- Found VBI/teletext stream ID 804 (0x324) for SID 28113 (0x6dd1)
+- Using G0 Latin National Subset ID 0x0.2 (Swedish, Finnish, Hungarian)
+- No teletext page specified, first received suitable page is 150, not guaranteed
+- Programme Identification Data = SWR
+- Programme Timestamp (UTC) = Thu Jan 19 21:42:43 2012
+- Done (29896 teletext packets processed, 42 frames produced)
+.fi
+.RE
+
+.SH BUGS
+No known bugs.
+
+.SH REPORTING BUGS
+Bug reports can be seen and new bugs could be reported at https://github.com/forers/telxcc/issues
+
+.SH AUTHOR
+.B telxcc
+has been written by Petr Kutalek from
+.B Forers, s. r. o.,
+company <info@forers.com>.
+
+.SH COPYRIGHT
+Licensed under the GPL.
+.P
+(c) 2011-2014 Petr Kutalek, Forers, s. r. o.: telxcc
+.P
+Some portions/inspirations:
+.br
+(c) 2007 Vincent Penne, telx.c: Minimalistic Teletext subtitles decoder
+.br
+(c) 2001-2005 by dvb.matt, ProjectX java dvb decoder
+.br
+(c) Dave Chapman <dave@dchapman.com> 2003-2004, dvbtextsubs
+.br
+(c) Ralph Metzler, DVB driver, vbidecode
+.br
+(c) Jan Pantelje, submux-dvd
+.br
+(c) Ragnar Sundblad, dvbtextsubs, VDR teletext subtitles plugin
+.br
+(c) Scott T. Smith, dvdauthor
+.br
+(c) 2007 Vladimir Voroshilov <voroshil@gmail.com>, mplayer
+.br
+(c) 2001, 2002, 2003, 2004, 2007 Michael H. Schimek, libzvbi -- Error correction functions
+
+.SH NOTES
+I would like to thank:
+.br
+David Liontooth <lionteeth@cogweb.net> for providing me with Swedish and Norwegian TS samples and patient testing
+.br
+Professor Francis F Steen and his team from UCLA for contribution
+.br
+Philip Klenk <philip.klenk@web.de> for providing me with German TS sample and contribution
+.br
+traveller fantasy <fantasytraveller@gmail.com> for providing me with Slovenian TS samples
+.br
+Karstein Eriksen <eriksenkarstein@gmail.com> for providing me with multilingual TS samples
+.br
+Piotr Oleszczyk <piotr.oleszczyk@gmail.com> for providing me with Polish TS sample and assistance with Polish language
+.br
+Igor Abakumov <igor.abakumov@gmail.com> for bug reporting and patient testing
+
+.SH WWW
+https://github.com/forers/telxcc

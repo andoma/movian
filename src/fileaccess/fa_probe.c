@@ -68,6 +68,7 @@ codecname(enum AVCodecID id)
     return "DTS";
   case AV_CODEC_ID_TEXT:
   case AV_CODEC_ID_MOV_TEXT:
+  case AV_CODEC_ID_DVB_TELETEXT:
     return "Text";
   case AV_CODEC_ID_SSA:
     return "SSA";

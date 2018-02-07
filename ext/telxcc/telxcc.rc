@@ -1,0 +1,32 @@
+1 24 "manifest.xml"
+1 ICON "app.ico"
+1 VERSIONINFO
+FILEVERSION 2,6,0,0
+PRODUCTVERSION 2,6,0,0
+FILEFLAGSMASK 0x3FL
+FILEFLAGS 0x0L
+FILEOS 0x4L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040904B0"
+		{
+			VALUE "ProductVersion", "2.6.0"
+			VALUE "FileVersion", "2.6.0"
+			VALUE "InternalName", "telxcc"
+			VALUE "ProductName", "telxcc"
+			VALUE "OriginalFilename", "telxcc.exe"
+			VALUE "FileDescription", "telxcc -- TELeteXt Closed Captions decoder"
+			VALUE "CompanyName", "Forers, s. r. o."
+			VALUE "LegalCopyright", "\251 Forers, s. r. o., 2011-2014"
+			VALUE "Comments", "Licensed under the GPL. https://github.com/forers/telxcc"
+		}
+	}
+
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation", 0x409, 1252
+	}
+}
