@@ -28,6 +28,7 @@
 #include "subtitles/subtitles.h"
 #include "ext/telxcc/hamming.h"
 #include "ext/telxcc/teletext.h"
+#include "time.h"
 
 void
 video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo)
