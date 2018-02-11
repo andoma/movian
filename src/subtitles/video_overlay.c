@@ -28,7 +28,6 @@
 #include "subtitles/subtitles.h"
 #include "ext/telxcc/hamming.h"
 #include "ext/telxcc/teletext.h"
-#include "time.h"
 
 void
 video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo)
@@ -223,6 +222,15 @@ typedef enum {
 
 int page = 0;
 
+// application states -- flags for notices that should be printed only once
+struct {
+  uint8_t programme_info_processed;
+  uint8_t pts_initialized;
+} states = {
+  .programme_info_processed = NO,
+  .pts_initialized = NO
+};
+
 // extracts magazine number from teletext page
 #define MAGAZINE(p) ((p >> 8) & 0xf)
 
@@ -234,7 +242,7 @@ static uint8_t unham_8_4(uint8_t a) {
   uint8_t r = UNHAM_8_4[a];
   if (r == 0xff) {
     r = 0;
-    if(gconf.enable_dvb_teletext_debug)
+    if(gconf.enable_dvb_teletext_debug && states.programme_info_processed == YES)
       TRACE(TRACE_DEBUG, "DVB_Teletext", "! Unrecoverable data error; UNHAM8/4(%02x)", a);
   }
   return (r & 0x0f);
@@ -344,6 +352,19 @@ static uint16_t telx_to_ucs2(uint8_t c) {
   return r;
 }
 
+static void remap_g0_charset(uint8_t c) {
+  if (c != primary_charset.current) {
+    uint8_t m = G0_LATIN_NATIONAL_SUBSETS_MAP[c];
+    if (m == 0xff) 
+      TRACE(TRACE_INFO, "DVB_Teletext", "G0 Latin National Subset ID 0x%1x.%1x is not implemented\n", (c >> 3), (c & 0x7));
+    else {
+      for (uint8_t j = 0; j < 13; j++) G0[LATIN][G0_LATIN_NATIONAL_SUBSETS_POSITIONS[j]] = G0_LATIN_NATIONAL_SUBSETS[m].characters[j];
+      TRACE(TRACE_INFO, "DVB_Teletext", "Using G0 Latin National Subset ID 0x%1x.%1x (%s)", (c >> 3), (c & 0x7), G0_LATIN_NATIONAL_SUBSETS[m].language);
+      primary_charset.current = c;
+    }
+  }
+}
+
 static void process_page(teletext_page_t *page, media_pipe_t *mp, media_buf_t *mb) {
   // optimization: slicing column by column -- higher probability we could find boxed area start mark sooner
   uint8_t page_is_empty = YES;
@@ -449,7 +470,7 @@ static void process_page(teletext_page_t *page, media_pipe_t *mp, media_buf_t *m
     }
 
     // no tag will left opened!
-    if (font_tag_opened == YES) {
+    if ((font_tag_opened == YES)) {
       strappend(&str, "</font>");
       font_tag_opened = NO;
     }
@@ -471,29 +492,8 @@ static void process_page(teletext_page_t *page, media_pipe_t *mp, media_buf_t *m
   video_overlay_enqueue(mp, vo);
   if(gconf.enable_dvb_teletext_debug)
     TRACE(TRACE_DEBUG, "DVB_Teletext", "%s", str);
+
   free(str);
-}
-
-// application states -- flags for notices that should be printed only once
-struct {
-  uint8_t programme_info_processed;
-  uint8_t pts_initialized;
-} states = {
-  .programme_info_processed = NO,
-  .pts_initialized = NO
-};
-
-static void remap_g0_charset(uint8_t c) {
-  if (c != primary_charset.current) {
-    uint8_t m = G0_LATIN_NATIONAL_SUBSETS_MAP[c];
-    if (m == 0xff) 
-      TRACE(TRACE_INFO, "DVB_Teletext", "G0 Latin National Subset ID 0x%1x.%1x is not implemented\n", (c >> 3), (c & 0x7));
-    else {
-      for (uint8_t j = 0; j < 13; j++) G0[LATIN][G0_LATIN_NATIONAL_SUBSETS_POSITIONS[j]] = G0_LATIN_NATIONAL_SUBSETS[m].characters[j];
-      TRACE(TRACE_INFO, "DVB_Teletext", "Using G0 Latin National Subset ID 0x%1x.%1x (%s)", (c >> 3), (c & 0x7), G0_LATIN_NATIONAL_SUBSETS[m].language);
-      primary_charset.current = c;
-    }
-  }
 }
 
 static void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, media_pipe_t *mp, media_buf_t *mb) {
@@ -512,6 +512,7 @@ static void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payloa
 
     if ((page == 0) && (flag_subtitle == YES) && (i < 0xff)) {
       page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
+      if(page == 0x100) page = 0x888; //hack for 36E
       TRACE(TRACE_INFO, "DVB_Teletext", "Detected teletext page is %03x, not guaranteed", page);
     }
 
@@ -585,7 +586,7 @@ static void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payloa
     for (uint8_t j = 0; j < 13; j++) {
       if (triplets[j] == 0xffffffff) {
         // invalid data (HAM24/18 uncorrectable error detected), skip group
-        if(gconf.enable_dvb_teletext_debug)
+        if(gconf.enable_dvb_teletext_debug && states.programme_info_processed == YES)
           TRACE(TRACE_DEBUG, "DVB_Teletext", "! Unrecoverable data error; UNHAM24/18()=%04x", triplets[j]);
         continue;
       }
@@ -633,7 +634,7 @@ static void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payloa
       uint32_t triplet0 = unham_24_18((packet->data[3] << 16) | (packet->data[2] << 8) | packet->data[1]);
       if (triplet0 == 0xffffffff) {
         // invalid data (HAM24/18 uncorrectable error detected), skip group
-        if(gconf.enable_dvb_teletext_debug)
+        if(gconf.enable_dvb_teletext_debug && states.programme_info_processed == YES)
           TRACE(TRACE_DEBUG, "DVB_Teletext", "! Unrecoverable data error; UNHAM24/18()=%04x", triplet0);
       } else {
         // ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1 only
@@ -654,7 +655,7 @@ static void process_telx_packet(data_unit_t data_unit_id, teletext_packet_payloa
 
       if (triplet0 == 0xffffffff) {
         // invalid data (HAM24/18 uncorrectable error detected), skip group
-        if(gconf.enable_dvb_teletext_debug)
+        if(gconf.enable_dvb_teletext_debug && states.programme_info_processed == YES)
           TRACE(TRACE_DEBUG, "DVB_Teletext", "! Unrecoverable data error; UNHAM24/18()=%04x", triplet0);
       } else {
         // ETS 300 706, table 11: Coding of Packet M/29/0
@@ -824,7 +825,10 @@ video_overlay_dequeue_destroy(media_pipe_t *mp, video_overlay_t *vo)
 void
 video_overlay_flush_locked(media_pipe_t *mp, int send)
 {
-  states.programme_info_processed = NO;
+  states.programme_info_processed = page_buffer.tainted = receiving_data = NO;
+  memset(page_buffer.text, 0x00, sizeof(page_buffer.text));
+  page = 0;
+
   video_overlay_t *vo;
 
   while((vo = TAILQ_FIRST(&mp->mp_overlay_queue)) != NULL)
