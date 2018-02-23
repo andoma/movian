@@ -101,7 +101,7 @@ torrent_settings_init(void)
                  SETTING_STORE("bittorrent", "freepercentage"),
                  NULL);
 
-  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_DIR,
                  SETTING_TITLE(_p("Torrent cache path")),
                  SETTING_MUTEX(&bittorrent_mutex),
                  SETTING_CALLBACK(set_torrent_cache_path, NULL),

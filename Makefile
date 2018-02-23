@@ -544,18 +544,22 @@ SRCS-$(CONFIG_DVD) += 	ext/dvd/dvdcss/css.c \
 			ext/dvd/libdvdread/dvd_reader.c \
 			ext/dvd/libdvdread/dvd_udf.c \
 			ext/dvd/libdvdread/ifo_read.c \
+			ext/dvd/libdvdread/ifo_print.c \
 			ext/dvd/libdvdread/md5.c \
 			ext/dvd/libdvdread/nav_read.c \
+			ext/dvd/libdvdread/nav_print.c \
 			ext/dvd/libdvdread/bitreader.c \
 			ext/dvd/dvdnav/dvdnav.c \
 			ext/dvd/dvdnav/highlight.c \
 			ext/dvd/dvdnav/navigation.c \
 			ext/dvd/dvdnav/read_cache.c \
-			ext/dvd/dvdnav/remap.c \
 			ext/dvd/dvdnav/settings.c \
 			ext/dvd/dvdnav/vm/vm.c \
 			ext/dvd/dvdnav/vm/decoder.c \
 			ext/dvd/dvdnav/vm/vmcmd.c \
+			ext/dvd/dvdnav/vm/getset.c \
+			ext/dvd/dvdnav/vm/play.c \
+			ext/dvd/dvdnav/vm/vmget.c \
 			ext/dvd/dvdnav/searching.c
 
 ${BUILDDIR}/ext/dvd/dvdcss/%.o : CFLAGS = ${OPTFLAGS} \

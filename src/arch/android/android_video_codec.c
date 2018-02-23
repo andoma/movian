@@ -563,10 +563,12 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
                              idx, wt * 1000LL);
       check_exception(env, "releaseOutputBuffer");
 
-      if(fi.fi_drive_clock)
-        video_decoder_set_current_time(vd, fi.fi_user_time, fi.fi_epoch,
-                                       fi.fi_pts, fi.fi_drive_clock);
-
+      fi.fi_update_pts_only = 1;
+      fi.fi_type = 'SURF';
+      fi.fi_dar_num = avc->avc_width;
+      fi.fi_dar_den = avc->avc_height;
+      fi.fi_height = avc->avc_height;
+      video_deliver_frame(vd, &fi);
     } else {
       AVC_TRACE("   Skip buffer %5d @ %10lld (+%lld) in %16lld rtd=%lld",
                 idx, fi.fi_pts, fi.fi_pts - ptsdelta, wt - now, rtd);

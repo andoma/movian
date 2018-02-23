@@ -209,7 +209,7 @@
         zbox({
           filterConstraintX: true;
           label({
-            hidden: select($view.searchQuery, true, false);
+            hidden: $view.searchQuery ? true : false;
             caption: TEXT;
             size: 1.2em;
             font: "skin://fonts/RobotoCondensed-Regular.ttf";

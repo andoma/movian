@@ -2,26 +2,30 @@
  * device.h: DVD device access
  *****************************************************************************
  * Copyright (C) 1998-2002 VideoLAN
- * $Id: device.h 20629 2006-11-03 12:25:56Z diego $
  *
- * Authors: Stéphane Borel <stef@via.ecp.fr>
- *          Samuel Hocevar <sam@zoy.org>
- *          Håkan Hjort <d95hjort@dtek.chalmers.se>
+ * Authors: StÃ©phane Borel <stef@via.ecp.fr>
+ *          Sam Hocevar <sam@zoy.org>
+ *          HÃ¥kan Hjort <d95hjort@dtek.chalmers.se>
  *
- * This program is free software; you can redistribute it and/or modify
+ * libdvdcss is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * libdvdcss is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
+ * You should have received a copy of the GNU General Public License along
+ * with libdvdcss; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *****************************************************************************/
+
+#ifndef DVDCSS_DEVICE_H
+#define DVDCSS_DEVICE_H
+
+#include "config.h"
 
 /*****************************************************************************
  * iovec structure: vectored data entry
@@ -45,18 +49,15 @@ struct iovec
 };
 #endif
 
+#include "dvdcss/dvdcss.h"
+
+
 /*****************************************************************************
  * Device reading prototypes
  *****************************************************************************/
-int  _dvdcss_use_ioctls ( dvdcss_t );
-void _dvdcss_check      ( dvdcss_t );
-int  _dvdcss_open       ( dvdcss_t,  struct svfs_ops *svfs_ops );
-int  _dvdcss_close      ( dvdcss_t );
+int  dvdcss_use_ioctls   ( dvdcss_t );
+void dvdcss_check_device ( dvdcss_t );
+int  dvdcss_open_device  ( dvdcss_t,  struct svfs_ops *svfs_ops );
+int  dvdcss_close_device ( dvdcss_t );
 
-/*****************************************************************************
- * Device reading prototypes, raw-device specific
- *****************************************************************************/
-#ifndef WIN32
-int _dvdcss_raw_open     ( dvdcss_t, char const * );
-#endif
-
+#endif /* DVDCSS_DEVICE_H */

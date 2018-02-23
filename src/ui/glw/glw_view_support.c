@@ -110,6 +110,8 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
   case TOKEN_BLOCK:
   case TOKEN_NOP:
   case TOKEN_COLON:
+  case TOKEN_QUESTIONMARK:
+  case TOKEN_TENARY:
   case TOKEN_VECTOR:
   case TOKEN_MOD_FLAGS:
     break;
@@ -259,6 +261,8 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   case TOKEN_NOP:
   case TOKEN_VOID:
   case TOKEN_COLON:
+  case TOKEN_QUESTIONMARK:
+  case TOKEN_TENARY:
     break;
 
   case TOKEN_URI:
@@ -348,6 +352,10 @@ token2name(token_t *t)
   case TOKEN_BLOCK_CLOSE:   return "}";
   case TOKEN_SEPARATOR:     return ",";
 
+  case TOKEN_QUESTIONMARK:     return "?";
+  case TOKEN_COLON:            return ":";
+  case TOKEN_TENARY:           return "tenary";
+
   case TOKEN_LEFT_PARENTHESIS:  return "(";
   case TOKEN_RIGHT_PARENTHESIS:  return ")";
 
@@ -372,6 +380,9 @@ token2name(token_t *t)
   case TOKEN_RPN:           return "<rpn>";
   case TOKEN_PURE_RPN:      return "<pure-rpn>";
   case TOKEN_NOP:           return "<nop>";
+
+  case TOKEN_GT:            return ">";
+  case TOKEN_LT:            return "<";
 
   case TOKEN_FUNCTION:
     snprintf(buf, sizeof(buf), "%s()", t->t_func->name);

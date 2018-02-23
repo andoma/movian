@@ -24,7 +24,7 @@
 #include "misc/avgtime.h"
 
 #if ENABLE_DVD
-#include <dvdnav/dvdnav.h>
+#include <dvdnav/dvdnav/dvdnav.h>
 #endif
 
 #define VIDEO_DECODER_REORDER_SIZE 256

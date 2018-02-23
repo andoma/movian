@@ -1081,6 +1081,24 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   return r;
 }
 
+/**
+ *
+ */
+static int
+eval_tenary(glw_view_eval_context_t *ec, struct token *self)
+{
+  token_t *c = eval_pop(ec);
+  token_t *b = eval_pop(ec);
+  token_t *a = eval_pop(ec);
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  token_t *o = token2bool(a) ? b : c;
+  eval_push(ec, o);
+  return 0;
+}
+
 
 /**
  *
@@ -2745,6 +2763,11 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_LINK_ASSIGNMENT:
       if(eval_link_assign(ec, t))
 	return -1;
+      break;
+
+    case TOKEN_TENARY:
+      if(eval_tenary(ec, t))
+        return -1;
       break;
 
     default:

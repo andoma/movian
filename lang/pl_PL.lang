@@ -1,24 +1,20 @@
 language: Polish
 native: Polski
-maintainer: Cichy <ml.cichy@gmail.com>
+maintainer: Cichoń Marcin <ml.cichy@gmail.com>
 #
 # ./glwskins/flat/ctxmenu/default_details.view
 #
 id: Bookmark
-# Missing translation
-msg: 
+msg: Zakładka
 
 id: Bookmarked
-# Missing translation
-msg: 
+msg: Dodano do zakładek
 
 id: Copy to clipboard
-# Missing translation
-msg: 
+msg: Kopiuj do schowka
 
 id: Copy to location...
-# Missing translation
-msg: 
+msg: Kopiuj do lokalizacji...
 
 id: Delete
 msg: Usuń
@@ -30,26 +26,22 @@ msg: Kolejka
 # ./glwskins/flat/ctxmenu/plugin_details.view
 #
 id: Author:
-# Missing translation
-msg: 
+msg: Autor:
 
 id: Available version:
 msg: Dostępna wersja:
 
 id: Changelog
-# Missing translation
-msg: 
+msg: Lista zmian
 
 id: Install
 msg: Zainstaluj
 
 id: Installed version:
-# Missing translation
-msg: 
+msg: Zainstalowana wersja:
 
 id: Status:
-# Missing translation
-msg: 
+msg: Status:
 
 id: Uninstall
 msg: Odinstaluj
@@ -76,20 +68,17 @@ id: Play until end of list
 msg: Odtwarzaj do końca listy
 
 id: Video Cast
-# Missing translation
-msg: 
+msg: Przesyłanie Video
 
 #
 # ./glwskins/flat/items/details/video.view
 #
 id: Season %d - Episode %d
-# Missing translation
-msg: 
+msg: Sezon %d - Odcinek %d
 
 id: Seen %d times, %s
-# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
-msg[0]: 
-msg[1]: 
+msg[0]: Widziany %d razy, %s
+msg[1]: Widziany %d raz, %s
 
 #
 # ./glwskins/flat/items/list/add.view
@@ -122,8 +111,7 @@ msg: Interfejs Użytkownika
 # ./glwskins/flat/items/list/tvepisode.view
 #
 id: Episode %d - %s
-# Missing translation
-msg: 
+msg: Odcinek %d - %s
 
 #
 # ./glwskins/flat/loading.view
@@ -144,74 +132,58 @@ msg: Log systemowy
 # ./glwskins/flat/mediainfo.view
 #
 id: A/V diff
-# Missing translation
-msg: 
+msg: Różnica A/V
 
 id: Audio bitrate
-# Missing translation
-msg: 
+msg: Bitrate Audio
 
 id: Audio codec
-# Missing translation
-msg: 
+msg: Kodek Audio
 
 id: Audio packets
-# Missing translation
-msg: 
+msg: Pakiety Audio
 
 id: Buffer usage
-# Missing translation
-msg: 
+msg: Użycie bufora
 
 id: No media loaded
 msg: Brak danych
 
 id: Remaining buffer
-# Missing translation
-msg: 
+msg: Pozostały bufor
 
 id: Source
-# Missing translation
-msg: 
+msg: Źródło
 
 id: Video bitrate
-# Missing translation
-msg: 
+msg: Bitrate Video
 
 id: Video codec
-# Missing translation
-msg: 
+msg: Kodek Video
 
 id: Video framerate
-# Missing translation
-msg: 
+msg: Ilość klatek Video
 
 id: Video packets
-# Missing translation
-msg: 
+msg: Pakiety Video
 
 #
 # ./glwskins/flat/menu/sidebar.view
 #
 id: Bookmark page
-# Missing translation
-msg: 
+msg: Dodaj stronę do zakładek
 
 id: Page settings
-# Missing translation
-msg: 
+msg: Ustawienia strony
 
 id: Paste
-# Missing translation
-msg: 
+msg: Wklej
 
 id: Reload page
-# Missing translation
-msg: 
+msg: Odśwież stronę
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Usuń zakładkę
 
 id: Settings
 msg: Ustawienia
@@ -229,8 +201,7 @@ id: Exit %s
 msg: Zamknij %s
 
 id: Hide media info
-# Missing translation
-msg: 
+msg: Ukryj informacje o mediach
 
 id: Hide system info
 msg: Ukryj informacje o systemie
@@ -239,8 +210,7 @@ id: Master volume
 msg: Głośność ogólna
 
 id: Show media info
-# Missing translation
-msg: 
+msg: Pokaż informacje o mediach
 
 id: Show system info
 msg: Pokaż informacje o systemie
@@ -252,8 +222,7 @@ id: Time until sleep
 msg: Czas do uśpienia
 
 id: View log
-# Missing translation
-msg: 
+msg: Pokaż log
 
 id: dB
 msg: dB 
@@ -301,30 +270,25 @@ id: Custom
 msg: Własny
 
 id: Grid
-# Missing translation
-msg: 
+msg: Siatka
 
 id: List
 msg: Lista
 
 id: Page layout
-# Missing translation
-msg: 
+msg: Układ strony
 
 id: Search results
-# Missing translation
-msg: 
+msg: Wyniki wyszukiwania
 
 id: TV Season
-# Missing translation
-msg: 
+msg: Sezon TV
 
 #
 # ./glwskins/flat/pages/empty.view
 #
 id: No contents
-# Missing translation
-msg: 
+msg: Brak zawartości
 
 #
 # ./glwskins/flat/pages/home.view
@@ -333,15 +297,13 @@ id: Dismiss
 msg: Odrzuć
 
 id: Home
-# Missing translation
-msg: 
+msg: Strona główna
 
 #
 # ./glwskins/flat/pages/openerror.view
 #
 id: Unable to open resource
-# Missing translation
-msg: 
+msg: Nie można otworzyć zasobu
 
 #
 # ./glwskins/flat/pages/playqueue.view
@@ -353,50 +315,41 @@ msg: Lista odtwarzania
 # ./glwskins/flat/pages/searchresults.view
 #
 id: Show more
-# Missing translation
-msg: 
+msg: Pokaż więcej
 
 id: %d hits
-# Missing plural translation for '%d hits' and '%d hit'
-msg[0]: 
-msg[1]: 
+msg[0]: %d trafień
+msg[1]: %d trafienie
 
 #
 # ./glwskins/flat/pages/slideshow.view
 #
 id: Interval: %ds
-# Missing translation
-msg: 
+msg: Interwał: %ds
 
 id: Play/Pause
-# Missing translation
-msg: 
+msg: Odtwarzaj/Pauza
 
 id: Stop
-# Missing translation
-msg: 
+msg: Zatrzymaj
 
 #
 # ./glwskins/flat/pages/stpp.view
 #
 id: Remote control - %s
-# Missing translation
-msg: 
+msg: Zdalna kontrola - %s
 
 id: Remote controlling %s
-# Missing translation
-msg: 
+msg: Zdalne sterowanie %s
 
 #
 # ./glwskins/flat/pages/stppstpp.view
 #
 id: Nested remote controll is not supported
-# Missing translation
-msg: 
+msg: Zagnieżdżone zdalne sterowanie nie jest wspierane
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Zdalne sterowanie
 
 #
 # ./glwskins/flat/pages/stppvideo.view
@@ -407,23 +360,20 @@ msg: Ścieżki dźwiękowe
 id: Audio volume adjustment: %d dB
 msg: Zwiększenie głośności o: %d dB
 
-id: CPU is too slow to decode this video
+id: CPU is too slow to decode this Video
 msg: Procesor jest zbyt wolny by dekodować te Video
 
 id: Next
-# Missing translation
-msg: 
+msg: Następny
 
 id: Previous
-# Missing translation
-msg: 
+msg: Poprzedni
 
 #
 # ./glwskins/flat/pages/tvseason.view
 #
 id: Season %d
-# Missing translation
-msg: 
+msg: Sezon %d
 
 #
 # ./glwskins/flat/pages/upgrade.view
@@ -441,15 +391,13 @@ id: Check for updates now
 msg: Sprawdź dostępność aktualizacji
 
 id: Checking for updates
-# Missing translation
-msg: 
+msg: Sprawdzanie aktualizacji
 
 id: Current version:
 msg: Obecna wersja:
 
 id: Download and install
-# Missing translation
-msg: 
+msg: Pobierz i zainstaluj
 
 id: Downloading %s
 msg: Pobieranie %s
@@ -461,8 +409,7 @@ id: No upgrade available
 msg: Brak aktualizacji
 
 id: Retry
-# Missing translation
-msg: 
+msg: Ponów
 
 id: Stable
 msg: Stabilne
@@ -495,23 +442,19 @@ id: Cancel
 msg: Anuluj
 
 id: Ok
-# Missing translation
-msg: 
+msg: OK
 
 #
 # ./glwskins/flat/popups/filepicker.view
 #
 id: Back
-# Missing translation
-msg: 
+msg: Wstecz
 
 id: Close
-# Missing translation
-msg: 
+msg: Zamknij
 
 id: Folder select mode, press right to open subfolder
-# Missing translation
-msg: 
+msg: Tryb wybierania folderu, prawym by otworzyć podfolder
 
 #
 # ./glwskins/flat/popups/resume.view
@@ -520,8 +463,7 @@ id: No, Start over
 msg: Nie, Zacznij od początku
 
 id: Resume from %s
-# Missing translation
-msg: 
+msg: Wznów od %s
 
 id: Yes
 msg: Tak
@@ -539,15 +481,13 @@ id: CPU Temp
 msg: Temp. CPU
 
 id: Connected
-# Missing translation
-msg: 
+msg: Połączony
 
 id: Fragmentation
 msg: Fragmentacja
 
 id: Framerate
-# Missing translation
-msg: 
+msg: Ilość klatek
 
 id: GPU Temp
 msg: Temp. GPU
@@ -556,23 +496,19 @@ id: HDD Avail
 msg: Dost. HDD
 
 id: IP Address
-# Missing translation
-msg: 
+msg: Adres IP
 
 id: Inactive memory
-# Missing translation
-msg: 
+msg: Nieaktywna pamięć
 
 id: Memory usage
 msg: Użycie pamięci
 
 id: Network
-# Missing translation
-msg: 
+msg: Sieć
 
 id: Not available
-# Missing translation
-msg: 
+msg: Niedostępne
 
 id: System Free
 msg: Wolne
@@ -581,12 +517,10 @@ id: System Total
 msg: Ogółem
 
 id: VM Page In/Out
-# Missing translation
-msg: 
+msg: VM Page In/Out
 
 id: Version
-# Missing translation
-msg: 
+msg: Wersja
 
 #
 # ./glwskins/flat/universe.view
@@ -595,30 +529,25 @@ id: Audio muted
 msg: Wyciszono
 
 id: Copying %d files
-# Missing translation
-msg: 
+msg: Kopiowanie %d plików
 
 id: Master volume: %d dB
 msg: Głośność: %d dB
 
 id: Overscan adjustment\nPosition border at screen edges
-# Missing translation
-msg: 
+msg: Zmiana powiększenia\nPołożenie krawędzi ekranu
 
 #
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Zezwól na zdalne sterowanie
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Urządzenie niedostępne
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Sesje Moviana dostępne do zdalnego sterowania
 
 #
 # ./src/api/tmdb.c
@@ -708,8 +637,7 @@ id: Audio delay
 msg: Opóźnienie audio
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Wzmocnienie dźwięku
 
 id: Setup audio output
 msg: Ustawienia wyjścia audio
@@ -808,8 +736,7 @@ id: Enable bittorrent
 msg: Włącz BitTorrent
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Maks. prędkość wysyłania
 
 id: Max usage of free space for caching torrents
 msg: Maks. użycie miejsca dla buforowanych torrentów
@@ -860,8 +787,7 @@ msg: Nagrywarka
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: Nie można otworzyć listy odtwarzania
 
 #
 # ./src/backend/search.c
@@ -906,8 +832,7 @@ id: Checking file contents
 msg: Sprawdzanie zawartości pliku
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: Błędny adres URL przekierowania
 
 id: Unable to open file: %s
 msg: Nie można otworzyć pliku: %s
@@ -934,8 +859,7 @@ id: Filename
 msg: Nazwa pliku
 
 id: Include in library
-# Missing translation
-msg: 
+msg: Dołącz do biblioteki
 
 id: Newest first
 msg: Najnowsze na początku
@@ -1081,13 +1005,13 @@ msg: STOP włącza kombinacje klawiszy
 id: Forget remembered passwords
 msg: Usuń zapamiętane hasła
 
-id: Rembered passwords erased
+id: Remembered passwords erased
 msg: Usunięto zapamiętane hasła
 
 #
 # ./src/media/media_settings.c
 #
-id: Align on video frame
+id: Align on Video frame
 msg: Zgraj z klatką obrazu
 
 id: Audio volume
@@ -1096,8 +1020,8 @@ msg: Głośność
 id: Delay
 msg: Opóźnienie
 
-id: Go to standby after video ends
-msg: Przejdź w stan czuwania po zakończonym video
+id: Go to standby after Video ends
+msg: Przejdź w stan czuwania po zakończonym Video
 
 id: Horizontal pan
 msg: Przesunięcie poziome
@@ -1120,10 +1044,10 @@ msg: Zapisz jako domyślne ustawienia globalne
 id: Scaling
 msg: Skalowanie
 
-id: Stretch video to fullscreen
+id: Stretch Video to fullscreen
 msg: Rozciągnij obraz do pełnego ekranu
 
-id: Stretch video to widescreen
+id: Stretch Video to widescreen
 msg: Rozciągnij do panoramicznego
 
 id: Vertical pan
@@ -1334,16 +1258,13 @@ msg: Port TCP serwera
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Wyłącz
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Ponowne uruchomienie
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Restartowanie
 
 id: Standby
 msg: Tryb oczekiwania
@@ -1352,8 +1273,7 @@ msg: Tryb oczekiwania
 # ./src/notifications.c
 #
 id: Show news on home screen
-# Missing translation
-msg: 
+msg: Pokazuj wiadomości na ekranie głównym
 
 #
 # ./src/plugins.c
@@ -1362,16 +1282,13 @@ id: Alternate plugin Repository URL
 msg: Alternatywne repozytorium wtyczek - adres
 
 id: Audio decoders
-# Missing translation
-msg: 
+msg: Dekodery Audio
 
 id: Auto install plugins on demand
-# Missing translation
-msg: 
+msg: Automatycznie instaluj potrzebne wtyczki
 
 id: Auto installed plugin %s (Version %s)
-# Missing translation
-msg: 
+msg: Automatycznie zainstalowano wtyczkę %s (Wersja %s)
 
 id: Automatically upgrade plugins
 msg: Automatycznie aktualizuj wtyczki
@@ -1416,8 +1333,7 @@ id: Images
 msg: Obrazy
 
 id: Installed
-# Missing translation
-msg: 
+msg: Zainstalowane
 
 id: Installed plugins
 msg: Zainstalowane wtyczki
@@ -1507,8 +1423,7 @@ msg: Strumieniowanie Video
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: Zakończono połączenie
 
 #
 # ./src/runcontrol.c
@@ -1550,8 +1465,7 @@ id: Local network
 msg: Sieć lokalna
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Usuń ze strony głównej
 
 #
 # ./src/settings.c
@@ -1593,8 +1507,7 @@ id: Network settings
 msg: Ustawienia Sieciowe
 
 id: Reset
-# Missing translation
-msg: 
+msg: Resetuj
 
 id: Settings useful for developers
 msg: Ustawienia pomocne dla deweloperów
@@ -1620,8 +1533,8 @@ msg: Kontrola TV
 id: Any subtitle in central folder
 msg: Dowolne napisy w głównym folderze
 
-id: Any subtitle in same folder as video
-msg: Dowolne napisy w folderze z plikiem video
+id: Any subtitle in same folder as Video
+msg: Dowolne napisy w folderze z plikiem Video
 
 id: Auto
 msg: Automatycznie
@@ -1638,10 +1551,10 @@ msg: Kolor
 id: External file
 msg: Zewnętrzny plik
 
-id: Force subtitles to reside on video frame
+id: Force subtitles to reside on Video frame
 msg: Wymuś wyświetlanie napisów
 
-id: Generic settings for video subtitles
+id: Generic settings for Video subtitles
 msg: Ustawienia domyślne dla napisów
 
 id: Ignore embedded styling
@@ -1686,14 +1599,14 @@ msg: Rozmiar i pozycja napisów
 id: Subtitle vertical displacement
 msg: Przesunięcie napisów w pionie
 
-id: Subtitles embedded in video file
-msg: Napisy wklejone w plik video
+id: Subtitles embedded in Video file
+msg: Napisy wklejone w plik Video
 
 id: Subtitles with matching filename in central folder
 msg: Napisy z pasującą nazwą z głównego folderu
 
-id: Subtitles with matching filename in same folder as video
-msg: Napisy z pasującą nazwą z folderu z plikiem video
+id: Subtitles with matching filename in same folder as Video
+msg: Napisy z pasującą nazwą z folderu z plikiem Video
 
 #
 # ./src/text/fontstash.c
@@ -1729,19 +1642,16 @@ msg: Użyj czcionki %s dla
 # ./src/ui/clipboard.c
 #
 id: Copy failed: %s
-# Missing translation
-msg: 
+msg: Niepowodzenie kopiowania: %s
 
 id: Target folder
-# Missing translation
-msg: 
+msg: Folder docelowy
 
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Dual-Shock Remote
 
 id: No
 msg: Nie
@@ -1780,8 +1690,7 @@ id: Screensaver delay
 msg: Opóźnienie wygaszacza ekranu
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Sekund na obraz
 
 id: Use Bing images of the day
 msg: Używaj kategorii 'obraz dnia' z Bing
@@ -1888,10 +1797,10 @@ msg: Zawsze
 id: Ask
 msg: Zapytaj
 
-id: Automatically play next video in list
+id: Automatically play next Video in list
 msg: Automatycznie odtwarzaj kolejny plik z listy
 
-id: Count video as played when reaching
+id: Count Video as played when reaching
 msg: Traktuj Video jako obejrzane po osiągnięciu
 
 id: Enable VDPAU
@@ -1915,12 +1824,11 @@ msg: Ustawienia głośności na plik
 id: Preferred VDPAU deinterlacer method
 msg: Preferowana metoda usuwania przeplotu dla VDPAU
 
-id: Resume video playback
+id: Resume Video playback
 msg: Wznów odtwarzanie Video
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Pokazuj zegar w trakcie odtwarzania
 
 id: Step when seeking backward
 msg: Krok przy przewijaniu do tyłu
@@ -1934,13 +1842,11 @@ msg: Czasowy
 id: Temporal/Spatial
 msg: Czasowy/przestrzenny
 
-id: Up / Down during video playback controls
+id: Up / Down during Video playback controls
 msg: Góra/Dół w trakcie odtwarzania by kontrolować
 
 id: Video acceleration and display behaviour
 msg: Akceleracja Video i zachowanie wyświetlacza
 
 id: Video buffer size
-# Missing translation
-msg: 
-
+msg: Rozmiar bufora Video

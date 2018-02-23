@@ -1,9 +1,5 @@
-/* -*- c-basic-offset: 2; indent-tabs-mode: nil -*- */
-#ifndef NAV_TYPES_H_INCLUDED
-#define NAV_TYPES_H_INCLUDED
-
 /*
- * Copyright (C) 2000, 2001, 2002 Håkan Hjort <d95hjort@dtek.chalmers.se>
+ * Copyright (C) 2000, 2001, 2002 HÃ¥kan Hjort <d95hjort@dtek.chalmers.se>
  *
  * The data structures in this file should represent the layout of the
  * pci and dsi packets as they are stored in the stream.  Information
@@ -25,30 +21,15 @@
  * the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- * USA
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef LIBDVDREAD_NAV_TYPES_H
+#define LIBDVDREAD_NAV_TYPES_H
+
+#include <inttypes.h>
 #include "ifo_types.h" /* only dvd_time_t, vm_cmd_t and user_ops_t */
-/* If it's ever removed add a uintX_t test. */
-
-#undef ATTRIBUTE_PACKED
-#undef PRAGMA_PACK_BEGIN 
-#undef PRAGMA_PACK_END
-
-#if defined(__GNUC__)
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-#define ATTRIBUTE_PACKED __attribute__ ((packed))
-#define PRAGMA_PACK 0
-#endif
-#endif
-
-#if !defined(ATTRIBUTE_PACKED)
-#define ATTRIBUTE_PACKED
-#define PRAGMA_PACK 1
-#endif
-
 
 /* The length including the substream id byte. */
 #define PCI_BYTES 0x3d4
@@ -60,14 +41,8 @@
 /* Remove this */
 #define DSI_START_BYTE 1031
 
-
-#if PRAGMA_PACK
-#pragma pack(1)
-#endif
-
-
 /**
- * PCI General Information 
+ * PCI General Information
  */
 typedef struct {
   uint32_t nv_pck_lbn;      /**< sector address of this nav pack */
@@ -88,8 +63,8 @@ typedef struct {
   uint32_t nsml_agl_dsta[9];  /**< address of destination vobu in AGL_C#n */
 } ATTRIBUTE_PACKED nsml_agli_t;
 
-/** 
- * Highlight General Information 
+/**
+ * Highlight General Information
  *
  * For btngrX_dsp_ty the bits have the following meaning:
  * 000b: normal 4/3 only buttons
@@ -102,7 +77,6 @@ typedef struct {
   uint32_t hli_s_ptm;              /**< start ptm of hli */
   uint32_t hli_e_ptm;              /**< end ptm of hli */
   uint32_t btn_se_e_ptm;           /**< end ptm of button select */
-#ifdef WORDS_BIGENDIAN
   unsigned int zero1 : 2;          /**< reserved */
   unsigned int btngr_ns : 2;       /**< number of button groups 1, 2 or 3 with 36/18/12 buttons */
   unsigned int zero2 : 1;          /**< reserved */
@@ -111,18 +85,8 @@ typedef struct {
   unsigned int btngr2_dsp_ty : 3;  /**< display type of subpic stream for button group 2 */
   unsigned int zero4 : 1;          /**< reserved */
   unsigned int btngr3_dsp_ty : 3;  /**< display type of subpic stream for button group 3 */
-#else
-  unsigned int btngr1_dsp_ty : 3;
-  unsigned int zero2 : 1;
-  unsigned int btngr_ns : 2;
-  unsigned int zero1 : 2;
-  unsigned int btngr3_dsp_ty : 3;
-  unsigned int zero4 : 1;
-  unsigned int btngr2_dsp_ty : 3;
-  unsigned int zero3 : 1;
-#endif
   uint8_t btn_ofn;     /**< button offset number range 0-255 */
-  uint8_t btn_ns;      /**< number of valid buttons  <= 36/18/12 (low 6 bits) */  
+  uint8_t btn_ns;      /**< number of valid buttons  <= 36/18/12 (low 6 bits) */
   uint8_t nsl_btn_ns;  /**< number of buttons selectable by U_BTNNi (low 6 bits)   nsl_btn_ns <= btn_ns */
   uint8_t zero5;       /**< reserved */
   uint8_t fosl_btnn;   /**< forcedly selected button  (low 6 bits) */
@@ -130,8 +94,8 @@ typedef struct {
 } ATTRIBUTE_PACKED hl_gi_t;
 
 
-/** 
- * Button Color Information Table 
+/**
+ * Button Color Information Table
  * Each entry beeing a 32bit word that contains the color indexs and alpha
  * values to use.  They are all represented by 4 bit number and stored
  * like this [Ci3, Ci2, Ci1, Ci0, A3, A2, A1, A0].   The actual palette
@@ -142,7 +106,7 @@ typedef struct {
   uint32_t btn_coli[3][2];  /**< [button color number-1][select:0/action:1] */
 } ATTRIBUTE_PACKED btn_colit_t;
 
-/** 
+/**
  * Button Information
  *
  * NOTE: I've had to change the structure from the disk layout to get
@@ -150,52 +114,29 @@ typedef struct {
  * The 4 and 7 bytes are 'rotated' was: ABC DEF GHIJ  is: ABCG DEFH IJ
  */
 typedef struct {
-#ifdef WORDS_BIGENDIAN
   unsigned int btn_coln         : 2;  /**< button color number */
   unsigned int x_start          : 10; /**< x start offset within the overlay */
   unsigned int zero1            : 2;  /**< reserved */
   unsigned int x_end            : 10; /**< x end offset within the overlay */
-
-  unsigned int zero3            : 2;  /**< reserved */
-  unsigned int up               : 6;  /**< button index when pressing up */
 
   unsigned int auto_action_mode : 2;  /**< 0: no, 1: activated if selected */
   unsigned int y_start          : 10; /**< y start offset within the overlay */
   unsigned int zero2            : 2;  /**< reserved */
   unsigned int y_end            : 10; /**< y end offset within the overlay */
 
+  unsigned int zero3            : 2;  /**< reserved */
+  unsigned int up               : 6;  /**< button index when pressing up */
   unsigned int zero4            : 2;  /**< reserved */
   unsigned int down             : 6;  /**< button index when pressing down */
   unsigned int zero5            : 2;  /**< reserved */
   unsigned int left             : 6;  /**< button index when pressing left */
   unsigned int zero6            : 2;  /**< reserved */
   unsigned int right            : 6;  /**< button index when pressing right */
-#else
-  unsigned int x_end            : 10;
-  unsigned int zero1            : 2;
-  unsigned int x_start          : 10;
-  unsigned int btn_coln         : 2;
-
-  unsigned int up               : 6;
-  unsigned int zero3            : 2;
-
-  unsigned int y_end            : 10;
-  unsigned int zero2            : 2;
-  unsigned int y_start          : 10;
-  unsigned int auto_action_mode : 2;
-
-  unsigned int down             : 6;
-  unsigned int zero4            : 2;
-  unsigned int left             : 6;
-  unsigned int zero5            : 2;
-  unsigned int right            : 6;
-  unsigned int zero6            : 2;
-#endif
   vm_cmd_t cmd;
 } ATTRIBUTE_PACKED btni_t;
 
 /**
- * Highlight Information 
+ * Highlight Information
  */
 typedef struct {
   hl_gi_t     hl_gi;
@@ -217,7 +158,7 @@ typedef struct {
 
 
 /**
- * DSI General Information 
+ * DSI General Information
  */
 typedef struct {
   uint32_t nv_pck_scr;
@@ -246,12 +187,12 @@ typedef struct {
     uint32_t stp_ptm1;
     uint32_t stp_ptm2;
     uint32_t gap_len1;
-    uint32_t gap_len2;      
+    uint32_t gap_len2;
   } vob_a[8];
 } ATTRIBUTE_PACKED sml_pbi_t;
 
 /**
- * Seamless Angle Infromation for one angle
+ * Seamless Angle Information for one angle
  */
 typedef struct {
   uint32_t address; /**< offset to next ILVU, high bit is before/after */
@@ -259,14 +200,14 @@ typedef struct {
 } ATTRIBUTE_PACKED sml_agl_data_t;
 
 /**
- * Seamless Angle Infromation
+ * Seamless Angle Information
  */
 typedef struct {
   sml_agl_data_t data[9];
 } ATTRIBUTE_PACKED sml_agli_t;
 
 /**
- * VOBU Search Information 
+ * VOBU Search Information
  */
 typedef struct {
   uint32_t next_video; /**< Next vobu that contains video */
@@ -281,7 +222,7 @@ typedef struct {
 
 /**
  * Synchronous Information
- */ 
+ */
 typedef struct {
   uint16_t a_synca[8];   /**< offset to first audio packet for this VOBU */
   uint32_t sp_synca[32]; /**< offset to first subpicture packet */
@@ -304,4 +245,4 @@ typedef struct {
 #pragma pack()
 #endif
 
-#endif /* NAV_TYPES_H_INCLUDED */
+#endif /* LIBDVDREAD_NAV_TYPES_H */

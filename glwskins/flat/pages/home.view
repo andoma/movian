@@ -97,7 +97,8 @@ widget(container_z, {
           alpha: iir(select($clone.showSidebar, 0.3, 1), 4);
 
           margin: [$ui.xmargin, 0em];
-          childTilesX: select($ui.aspect > 1, 5, 2);
+
+          childTilesX: $ui.aspect > 1 ? 5 : 2;
           childTilesY: 4;
 
           style(ListItem, {

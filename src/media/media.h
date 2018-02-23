@@ -133,6 +133,7 @@ typedef struct frame_info {
   char fi_tff;            // For interlaced frame, top-field-first
   char fi_prescaled;      // Output frame is prescaled to requested size
   char fi_drive_clock;
+  char fi_update_pts_only;
 
   enum {
     COLOR_SPACE_UNSET = 0,
