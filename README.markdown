@@ -5,10 +5,9 @@ Movian mediaplayer
 
 [![Build status](https://doozer.io/badge/andoma/movian/buildstatus/master)](https://doozer.io/user/andoma/movian)
 
-For more information and latest versions, please visit:
+For more information and latest versions, please visit: [https://movian.tv/](https://movian.tv/)
 
 with BiDi support for Farsi and Arabic languages 
-[https://movian.tv/](https://movian.tv/)
 
 ## How to build for Linux
 
