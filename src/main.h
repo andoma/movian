@@ -322,7 +322,7 @@ typedef struct gconf {
 
   char device_id[64];
 
-  char os_info[128];
+  char os_info[132];
 
   char lang[32];
 

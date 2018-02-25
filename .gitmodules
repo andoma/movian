@@ -19,3 +19,6 @@
 [submodule "ext/vmir"]
 	path = ext/vmir
 	url = https://github.com/andoma/vmir
+[submodule "fribidi"]
+	path = fribidi
+	url = https://github.com/fribidi/fribidi.git

@@ -470,7 +470,7 @@ glw_link_program(glw_backend_root_t *gbr, const char *title,
 #endif
 
   for(i = 0; i < 6; i++) {
-    char name[8];
+    char name[10];
 
     snprintf(name, sizeof(name), "u_t%d", i);
     gp->gp_uniform_t[i]  = glGetUniformLocation(p, name);

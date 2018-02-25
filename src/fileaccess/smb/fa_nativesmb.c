@@ -204,7 +204,7 @@ smberr_write(char *errbuf, size_t errlen, int code)
     return;
   }
 
-  snprintf(errbuf, errlen, "%s", rstr_get(r));
+  snprintf(errbuf, errlen, "%s", rstr_show(r));
   rstr_release(r);
 }
 
