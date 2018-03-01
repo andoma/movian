@@ -106,6 +106,7 @@ enable realpath
 enable webkit
 enable librtmp
 enable vmir
+enable fribidi
 
 #enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet
@@ -561,12 +562,6 @@ if enabled nvctrl; then
     check_lib    "XNVCtrl"         || fatal "nvctrl" "Unable to link with libXNVCtrl"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lXNVCtrl"
 fi
-
-# GNU FriBidi , https://fribidi.org/
-echo >>${CONFIG_MAK} "FRIBIDI_BUILD_DIR=${FRIBIDI_BUILD_DIR}"
-echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/local/include/fribidi `pkg-config --cflags glib-2.0`"
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/local/lib/ -lfribidi `pkg-config --libs glib-2.0`"
- 
 
 #
 # Check for valgrind include files

@@ -414,6 +414,27 @@ libav_setup() {
     add_stamp libav
 }
 
+fribidi_setup() {
+    update_ext_submodule fribidi
+    echo "Configuring fribidi..."
+    
+    FRIBIDI_BUILD_DIR=${BUILDDIR}/fribidi/build
+
+    mkdir -p "${FRIBIDI_BUILD_DIR}"
+
+
+    (cd ${FRIBIDI_BUILD_DIR} && ${TOPDIR}/ext/fribidi/autogen.sh --without-glib --disable-docs --prefix=${EXT_INSTALL_DIR} CC="${CC}") || die
+
+    echo >>${CONFIG_MAK} "FRIBIDI_BUILD_DIR=${FRIBIDI_BUILD_DIR}"
+    echo >>${CONFIG_MAK} "FRIBIDI_INSTALL_DIR=${FRIBIDI_INSTALL_DIR}"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${EXT_INSTALL_DIR}/include/fribidi"
+
+    #echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/local/include/fribidi"
+    #echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/local/lib/ -lfribidi"
+
+    add_stamp fribidi
+}
+
 
 #
 #
@@ -453,10 +474,11 @@ vmir_setup() {
 
 
 ext_setup() {
-    libav_setup
+   libav_setup
     rtmpdump_setup
     gumbo_setup
     vmir_setup
+    fribidi_setup
 }
 
 
@@ -565,6 +587,10 @@ EOF
 
     if enabled libav; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lavresample -lswscale -lavformat -lavcodec -lavutil"
+    fi
+
+    if enabled fribidi; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lfribidi"
     fi
 
     if enabled libcec; then
