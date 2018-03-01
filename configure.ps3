@@ -63,7 +63,8 @@ done
 
 setup_env "$@"
 
-
+FRIBIDI_COMMON_FLAGS="--host=powerpc"
+mkdir -p ${BUILDDIR}/fribidi
 mkdir -p ${BUILDDIR}/libav
 ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/support/mallocstub.c
 LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o -B${PS3DEV}/host/ppu/lib"

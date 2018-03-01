@@ -21,4 +21,4 @@
 	url = https://github.com/andoma/vmir
 [submodule "ext/fribidi"]
 	path = ext/fribidi
-	url = https://github.com/fribidi/fribidi.git
+	url = https://github.com/Mashatan/fribidi.git
