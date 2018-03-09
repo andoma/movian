@@ -6,7 +6,7 @@
 #
 #
 
-set -eu
+set -e
 
 JARGS=""
 TARGET=""

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.lonelycoder.mediaplayer"
+          android:versionCode="@@VERCODE@@"
+          android:versionName="@@VERSION@@">
+
+  <uses-feature android:name="android.software.leanback"
+                android:required="false"/>
+  <uses-feature android:name="android.hardware.touchscreen"
+                android:required="false"/>
+
+  <uses-sdk android:minSdkVersion="15"
+            android:targetSdkVersion="21"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+  <application android:label="@@APPNAME@@"
+               android:icon="@drawable/ic_launcher"
+               android:banner="@drawable/banner">
+
+    <service android:name="CoreService"
+             android:label="@@APPNAME@@"/>
+
+    <activity android:name=".GLWActivity"
+              android:label="@@APPNAME@@"
+              android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+      </intent-filter>
+
+    </activity>
+  </application>
+</manifest>

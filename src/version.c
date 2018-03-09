@@ -17,13 +17,13 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#include "buildversion.h"
+#include "version_git.h"
 #include "config.h"
 
 #ifdef VERSIONOVERRIDE
-const char *appversion=VERSIONOVERRIDE;
+const char *appversion = VERSIONOVERRIDE;
 #else
-const char *appversion=BUILD_VERSION;
+const char *appversion = VERSION_GIT;
 #endif
 
 #include "main.h"

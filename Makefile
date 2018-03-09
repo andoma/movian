@@ -789,6 +789,8 @@ ${BUILDDIR}/support/dataroot/%.o : CFLAGS = -O2
 ##############################################################
 ##############################################################
 
+include support/gitver.mk
+
 include src/arch/${PLATFORM}/${PLATFORM}.mk
 
 
@@ -884,11 +886,7 @@ reconfigure:
 showconfig:
 	@echo $(CONFIGURE_ARGS)
 
-# Create buildversion.h
-src/version.c: $(BUILDDIR)/buildversion.h
-$(BUILDDIR)/buildversion.h: FORCE
-	@$(C)/support/version.sh $(C) $@
-FORCE:
+src/version.c: ${BUILDDIR}/version_git.h
 
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)
