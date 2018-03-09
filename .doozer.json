@@ -101,7 +101,7 @@
     },
 
     "ps3": {
-      "buildenv": "precise-amd64",
+      "buildenv": "xenial-amd64",
       "builddeps": [
         "git-core",
         "build-essential",
