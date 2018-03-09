@@ -1,5 +1,5 @@
 setDefaultFont($core.fonts.main);
-$ui.monofont = "dataroot://res/fonts/UbuntuMono-Regular.ttf";
+$ui.monofont = "dataroot://res/fonts/Vazir.ttf";
 $ui.condensedfont = $core.fonts.condensed ?? 
   "skin://fonts/OpenSans-CondBold.ttf";
 $ui.background = "skin://graphics/background.jpg";

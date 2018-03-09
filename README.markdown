@@ -7,7 +7,9 @@ Movian mediaplayer
 
 For more information and latest versions, please visit: [https://movian.tv/](https://movian.tv/)
 
-with BiDi support for Farsi and Arabic languages 
+with BiDi support for Farsi and Arabic languages
+Vazir-Font for Farsi and Arabic support,  https://github.com/rastikerdar/vazir-font
+
 
 ## How to build for Linux
 

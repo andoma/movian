@@ -25,12 +25,16 @@
 #include "misc/minmax.h"
 
 #include "text.h"
-#include<fribidi.h>
+
+#ifdef USE_FRIBIDI
+#include <fribidi.h>
+#endif
 
 typedef int Bool;
 #define True 1
 #define False 0
 
+#ifdef USE_FRIBIDI
 static char *bidi_convert( const char *logical_str, const char *charset, int *out_len )
 {
   char *visual_str=NULL;
@@ -68,6 +72,7 @@ static char *bidi_convert( const char *logical_str, const char *charset, int *ou
   free(visual_unicode_str);
   return visual_str;
 }
+#endif //USE_FRIBIDI
 
 /**
  *
@@ -508,24 +513,26 @@ text_parse(const char *str, int *lenp, int flags,
     if((prefix[i] & 0xff000000) == TR_CODE_COLOR)
       default_color = prefix[i] & 0xffffff;
   }
+# ifdef USE_FRIBIDI
   int out_len =0;
   char *str_final = bidi_convert(str, "UTF-8", &out_len);
-
-  if (str_final == NULL)
-    *lenp = parse_str(NULL, str, flags, context, default_color);
-  else
+  if (str_final)
     *lenp = parse_str(NULL, str_final, flags, context, default_color);
+  else
+#endif //USE_FRIBIDI
+    *lenp = parse_str(NULL, str, flags, context, default_color);
   if (*lenp == 0)
     return NULL;
   *lenp += prefixlen;
   buf = malloc(*lenp * sizeof(int));
   memcpy(buf, prefix, prefixlen * sizeof(int));
-  if (str_final == NULL)
-    parse_str(buf + prefixlen, str, flags, context, default_color);
-  else
+# ifdef USE_FRIBIDI
+  if (str_final) {
     parse_str(buf + prefixlen, str_final, flags, context, default_color);
-  if (str_final != NULL)
     free(str_final);
+  } else
+# endif //USE_FRIBIDI
+    parse_str(buf + prefixlen, str, flags, context, default_color);
   return buf;
   
 }

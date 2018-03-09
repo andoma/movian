@@ -428,10 +428,7 @@ fribidi_setup() {
     echo >>${CONFIG_MAK} "FRIBIDI_BUILD_DIR=${FRIBIDI_BUILD_DIR}"
     echo >>${CONFIG_MAK} "FRIBIDI_INSTALL_DIR=${FRIBIDI_INSTALL_DIR}"
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${EXT_INSTALL_DIR}/include/fribidi"
-
-    #echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/local/include/fribidi"
-    #echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/local/lib/ -lfribidi"
-
+   
     add_stamp fribidi
 }
 
@@ -478,7 +475,9 @@ ext_setup() {
     rtmpdump_setup
     gumbo_setup
     vmir_setup
-    fribidi_setup
+    if enabled fribidi; then
+        fribidi_setup
+    fi
 }
 
 
@@ -591,6 +590,7 @@ EOF
 
     if enabled fribidi; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lfribidi"
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += -DUSE_FRIBIDI"
     fi
 
     if enabled libcec; then
