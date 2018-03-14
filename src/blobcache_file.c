@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "main.h"
 #include "blobcache.h"

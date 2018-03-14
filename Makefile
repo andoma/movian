@@ -37,7 +37,8 @@ LIB=${BUILDDIR}/libmovian
 include ${BUILDDIR}/config.mak
 
 CFLAGS_std += -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
-		-Wmissing-prototypes -Wno-multichar  -Iext/dvd -std=gnu99
+		-Wmissing-prototypes -Wno-multichar  -Iext/dvd -std=gnu99 \
+	-Wno-error=format-truncation
 
 CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
 
