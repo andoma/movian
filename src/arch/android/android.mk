@@ -46,12 +46,12 @@ ${BUILDDIR}/apk/lib/armeabi/libcore.so: ${LIB}.so
 	@mkdir -p $(dir $@)
 	${STRIP} -o $@ $<
 
-${BUILDDIR}/inst/lib/libavcodec.so: build-libav
-${BUILDDIR}/inst/lib/libavdevice.so: build-libav
-${BUILDDIR}/inst/lib/libavformat.so: build-libav
-${BUILDDIR}/inst/lib/libavresample.so: build-libav
-${BUILDDIR}/inst/lib/libavutil.so: build-libav
-${BUILDDIR}/inst/lib/libswscale.so: build-libav
+${BUILDDIR}/inst/lib/libavcodec.so:    $(BUILDDIR)/stamps/libav.stamp
+${BUILDDIR}/inst/lib/libavdevice.so:   $(BUILDDIR)/stamps/libav.stamp
+${BUILDDIR}/inst/lib/libavformat.so:   $(BUILDDIR)/stamps/libav.stamp
+${BUILDDIR}/inst/lib/libavresample.so: $(BUILDDIR)/stamps/libav.stamp
+${BUILDDIR}/inst/lib/libavutil.so:     $(BUILDDIR)/stamps/libav.stamp
+${BUILDDIR}/inst/lib/libswscale.so:    $(BUILDDIR)/stamps/libav.stamp
 
 ${BUILDDIR}/apk/lib/armeabi/%.so: ${BUILDDIR}/inst/lib/%.so
 	@mkdir -p $(dir $@)

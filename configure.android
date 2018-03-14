@@ -30,6 +30,7 @@ enable libfreetype
 enable stdin
 enable polarssl
 enable vmir
+disable upgrade
 
 [ -f project.config ] && source project.config
 
@@ -63,8 +64,8 @@ if [ -z "${NDK}" ]; then
 fi
 
 TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
-CC=${TOOLCHAIN}gcc
-CXX=${TOOLCHAIN}g++
+CC=${TOOLCHAIN}clang
+CXX=${TOOLCHAIN}clang++
 
 setup_env "$@"
 
@@ -80,7 +81,7 @@ if [ ! -f "${CC}" ]; then
         echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
         die
     fi
-    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=${ANDROID_API} --install-dir=${TOPDIR}/build.android/toolchain --toolchain=${ANDROID_EABI}
+    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-15 --install-dir=${TOPDIR}/build.android/toolchain --toolchain=${ANDROID_EABI}
 fi
 
 
@@ -91,7 +92,7 @@ ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
 
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc"
 
 ext_setup
 libyuv_setup
