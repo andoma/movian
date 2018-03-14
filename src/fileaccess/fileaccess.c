@@ -958,7 +958,7 @@ verify_delete(const struct delscan_item_queue *diq)
   rstr_t *del  = _("Are you sure you want to delete:");
 
   char tmp[512];
-  int l = snprintf(tmp, sizeof(tmp), "%s\n", rstr_get(del));
+  int l = snprintf(tmp, sizeof(tmp), "%s\n", rstr_get_always(del));
 
   if(files) {
     l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), files);

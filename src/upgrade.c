@@ -60,7 +60,7 @@ static HTS_MUTEX_DECL(upgrade_mutex);
 
 static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/3";
 const char *artifact_type;
-static const char *archname;
+const char *archname;
 
 static prop_t *upgrade_root;
 static prop_t *upgrade_status;
