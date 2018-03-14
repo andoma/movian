@@ -61,6 +61,7 @@ CONFIG_LIST="
  libasound
  libav
  libav_attachment_pointer
+ fribidi
  libcec
  libfontconfig
  libfreetype
@@ -423,7 +424,7 @@ fribidi_setup() {
     mkdir -p "${FRIBIDI_BUILD_DIR}"
 
 
-    (cd ${FRIBIDI_BUILD_DIR} && ${TOPDIR}/ext/fribidi/autogen.sh ${FRIBIDI_COMMON_FLAGS} --disable-dependency-tracking --without-glib --disable-docs --prefix=${EXT_INSTALL_DIR} CC="${CC}") || die
+    (cd ${FRIBIDI_BUILD_DIR} && ${TOPDIR}/ext/fribidi/autogen.sh ${FRIBIDI_COMMON_FLAGS} --enable-static=yes --enable-shared=no --disable-dependency-tracking --without-glib --disable-docs --prefix=${EXT_INSTALL_DIR} CC="${CC}") || die
 
     echo >>${CONFIG_MAK} "FRIBIDI_BUILD_DIR=${FRIBIDI_BUILD_DIR}"
     echo >>${CONFIG_MAK} "FRIBIDI_INSTALL_DIR=${FRIBIDI_INSTALL_DIR}"
