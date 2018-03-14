@@ -78,7 +78,7 @@ if enabled libntfs; then
 fi
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
-CFLAGS_cfg += -DPATH_MAX=512 -DPS3
+CFLAGS_cfg += -DPATH_MAX=512 -DPS3 -D_FILE_OFFSET_BITS=64
 CFLAGS_cfg += -I${PSL1GHT}/target/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include/freetype2

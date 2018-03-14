@@ -106,7 +106,7 @@ ext_setup
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_std +=  -fgnu89-inline
 CFLAGS_std += -funwind-tables
-CFLAGS_cfg += -DOMX_SKIP64BIT
+CFLAGS_cfg += -DOMX_SKIP64BIT -D_FILE_OFFSET_BITS=64
 CFLAGS_cfg += -DSTOS
 CFLAGS_cfg  += -I${VCROOT}/include
 CFLAGS_cfg  += -I${VCROOT}/include/IL
