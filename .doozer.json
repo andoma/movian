@@ -2,42 +2,27 @@
   "submodules": ["ext/libav", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser"],
   "targets": {
     "android": {
-      "buildenv": "jessie-i386",
-      "submodules": ["android"],
-      "builddeps": {
-
-        "debs": [
-          "openjdk-7-jdk",
-          "git-core",
-          "build-essential",
-          "autoconf",
-          "bison",
-          "flex",
-          "libelf-dev",
-          "libtool",
-          "pkg-config",
-          "texinfo",
-          "libncurses5-dev",
-          "libz-dev",
-          "python-dev",
-          "libssl-dev",
-          "libgmp3-dev",
-          "ccache",
-          "zip",
-          "curl",
-          "wget",
-          "ant"
-        ],
-
-        "android-sdk": [
-          "platform-tools",
-          "android-21",
-          "build-tools-21.1.2"
-        ],
-
-        "android-ndk": "http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86.bin"
-
-      },
+      "buildenv": "docker:andoma/movian-android",
+      "builddeps": [
+        "git-core",
+        "build-essential",
+        "autoconf",
+        "bison",
+        "flex",
+        "libelf-dev",
+        "libtool",
+        "pkg-config",
+        "texinfo",
+        "libncurses5-dev",
+        "libz-dev",
+        "python-dev",
+        "libssl-dev",
+        "libgmp3-dev",
+        "ccache",
+        "zip",
+        "curl",
+        "wget"
+      ],
       "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     },
 

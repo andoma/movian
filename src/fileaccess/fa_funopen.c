@@ -20,6 +20,14 @@
 #include <stdio.h>
 #include "fileaccess.h"
 
+#if defined(__ANDROID__)
+FILE *
+funopen(const void *cookie, int (*readfn)(void *, char *, int),
+	int (*writefn)(void *, const char *, int),
+	fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
+#endif
+
+
 /**
  *
  */

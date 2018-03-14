@@ -12,12 +12,13 @@ fi
     ${VERSIONARGS} \
     --cleanbuild \
     ${USE_CCACHE} \
-    --downloadcache="${WORKINGDIR}/downloadcache" \
-    --sdk=/android/android-sdk-linux \
-    --ndk=/android/android-ndk-r10e
+    --downloadcache="${WORKINGDIR}/downloadcache"
 
 APPNAME=movian
 
-make ${JARGS} BUILD=${TARGET} release
-
-artifact android/bin/Movian-release.apk apk application/vnd.android.package-archive ${APPNAME}.apk
+if [ -z "${MOVIAN_KEYSTORE_PASS}" ]; then
+    make ${JARGS} BUILD=${TARGET}
+else
+    make ${JARGS} BUILD=${TARGET} signed-apk
+    artifact build.${TARGET}/${APPNAME}.apk apk application/vnd.android.package-archive ${APPNAME}.apk
+fi

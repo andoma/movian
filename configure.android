@@ -7,36 +7,28 @@ CONFIGURE_POSTFIX="android"
 source support/configure.inc
 
 SDK="${ANDROID_HOME}"
-NDK="${ANDROID_HOME}/../ndk"
 
-export ANDROID_API=android-17
+export BUILD_TOOLS=27.0.3
+export ANDROID_API=android-21
 export ANDROID_EABI=arm-linux-androideabi-4.9
 
-install_openssl()
-{
-    OPENSSL_VER="1.0.2"
-
-    download_file http://www.lonelycoder.com/download/openssl-${OPENSSL_VER}-${ANDROID_API}-${ANDROID_EABI}.tar.gz openssltarball
-
-    tar -C "${BUILDDIR}/inst" --strip-components=1 -xf "${openssltarball}"
-}
 
 
 show_help(){
   common_help
   echo "  --sdk=PREFIX          Use Android SDK from this path [$SDK]"
-  echo "  --ndk=DIR             Use Android NDK from this path [$NDK]"
+  echo "  --ndk=DIR             Use Android NDK from this path [$SDK/ndk-bundle]"
   exit 1
 }
 
 enable sqlite_internal
 enable glw_backend_opengl_es
 enable glw
-#enable librtmp
+enable librtmp
 enable httpserver
 enable libfreetype
 enable stdin
-enable openssl
+enable polarssl
 enable vmir
 
 [ -f project.config ] && source project.config
@@ -66,10 +58,8 @@ fi
 echo "Using Android SDK at : ${SDK}"
 echo
 
-if [ ! -x "${SDK}/tools/ant" ]; then
-    echo "''ant'' not found in ${SDK}/tools/"
-    echo "Check that your configured path to the SDK is correct"
-    die
+if [ -z "${NDK}" ]; then
+    NDK=${SDK}/ndk-bundle
 fi
 
 TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
@@ -96,7 +86,6 @@ fi
 
 bzip2_setup
 freetype_setup --host=arm-linux-gnueabihf
-install_openssl
 ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
 ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
 
@@ -111,10 +100,8 @@ cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_arch = ${ARCH_CFLAGS}
 CFLAGS_cfg += ${ARCH_CFLAGS}
 LDFLAGS_cfg += ${ARCH_LDFLAGS} -lOpenSLES -lGLESv2 -llog -landroid -ljnigraphics
-LDFLAGS_cfg += -lssl -lcrypto
-SDK = ${SDK}
-NDK = ${NDK}
-ADB = ${SDK}/platform-tools/adb
+ANDROID_BUILD_TOOLS = ${SDK}/build-tools/${BUILD_TOOLS}
+ANDROID_PLATFORM = ${SDK}/platforms/${ANDROID_API}
 EOF
 
 finalize

@@ -258,7 +258,7 @@ message_popup(const char *message, int flags, const char **extra)
     while(*extra) {
       prop_t *b = prop_create_root(NULL);
       prop_set_string(prop_create(b, "title"), *extra);
-      char action[17];
+      char action[16];
       snprintf(action, sizeof(action), "btn%d", cnt);
       prop_set_string(prop_create(b, "action"), action);
       if(prop_set_parent(b, btns))
