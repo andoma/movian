@@ -92,6 +92,7 @@ ${BUILDDIR}/${APPNAME}.apk: ${BUILDDIR}/${APPNAME}.aligned.apk
 
 
 signed-apk: ${BUILDDIR}/${APPNAME}.apk
+	@echo "doozer-artifact:${BUILDDIR}/${APPNAME}.apk:apk:application/vnd.android.package-archive:${APPNAME}.apk:versioncode=${NUMVER}"
 
 install: ${BUILDDIR}/${APPNAME}.apk
 	adb install -r $<

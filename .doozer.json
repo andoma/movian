@@ -23,7 +23,10 @@
         "curl",
         "wget"
       ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
+      "buildcmd": [
+        "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache",
+        "make -j${PARALLEL} signed-apk"
+      ]
     },
 
 
