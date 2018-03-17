@@ -31,6 +31,8 @@ ALLDEPS += ${STAMPS}
 
 OPTFLAGS ?= -O${OPTLEVEL}
 
+VERSION ?= $(shell echo ${GIT_DESCRIBE_OUTPUT} | awk -F. '{ print $$1 "." $$2 "." $$3 }')
+
 PROG=${BUILDDIR}/movian
 LIB=${BUILDDIR}/libmovian
 
@@ -814,7 +816,6 @@ BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
 
 # Common CFLAGS for all files
 CFLAGS_com += -g -funsigned-char ${OPTFLAGS} ${CFLAGS_dbg}
-#CFLAGS_com += -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -iquote${BUILDDIR} -iquote${C}/src -iquote${C}
 
 # Tools

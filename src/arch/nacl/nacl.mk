@@ -51,8 +51,6 @@ stage:	${STAGEFILES} ${BUILDDIR}/stage/app.pexe
 dbgstage:	${STAGEFILES} ${BUILDDIR}/stage/app.bundle
 	rm -f ${BUILDDIR}/stage/app.pexe
 
-VERSION := $(shell support/getver.sh)
-
 DISTARCHIVE := ${BUILDDIR}/${APPNAMEUSER}-${VERSION}.zip
 
 ${DISTARCHIVE}: ${STAGEFILES} ${BUILDDIR}/stage/app.pexe

@@ -31,8 +31,6 @@ DX        := ${ANDROID_BUILD_TOOLS}/dx
 ZIPALIGN  := ${ANDROID_BUILD_TOOLS}/zipalign
 APKSIGNER := ${ANDROID_BUILD_TOOLS}/apksigner
 
-VERSION ?= $(shell echo ${GIT_DESCRIBE_OUTPUT} | awk -F. '{ print $$1 "." $$2 "." $$3 }')
-
 NUMVER := $(shell echo ${VERSION} | awk -F. '{ print $$3 + $$2 * 100000 + $$1 * 10000000 }')
 
 R_JAVA := ${BUILDDIR}/java/com/lonelycoder/mediaplayer/R.java
