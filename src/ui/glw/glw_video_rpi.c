@@ -338,7 +338,8 @@ ovd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi,
       // add extra buffers for Advanced Deinterlace
       OMX_PARAM_U32TYPE extra_buffers;
       OMX_INIT_STRUCTURE(extra_buffers);
-      extra_buffers.nU32 = 3;
+      extra_buffers.nU32 = 6;
+      extra_buffers.nPortIndex = 130;
       omxchk(OMX_SetParameter(ovd->ovd_imgfx->oc_handle,
                               OMX_IndexParamBrcmExtraBuffers, &extra_buffers));
 
@@ -346,8 +347,11 @@ ovd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi,
       OMX_INIT_STRUCTURE(image_filter);
       image_filter.nPortIndex = 191;
 
-      image_filter.nNumParams = 1;
-      image_filter.nParams[0] = 3;
+      image_filter.nNumParams = 4;
+      image_filter.nParams[0] = 6;
+      image_filter.nParams[1] = 0; // default frame interval
+      image_filter.nParams[2] = 0; // half framerate
+      image_filter.nParams[3] = 1; // use qpus
 
       if(0) {
         image_filter.eImageFilter = OMX_ImageFilterDeInterlaceFast;
