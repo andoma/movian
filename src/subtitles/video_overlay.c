@@ -53,16 +53,24 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
   avpkt.data = mb->mb_data;
   avpkt.size = mb->mb_size;
 
+  vo = calloc(1, sizeof(video_overlay_t));
+  vo->vo_type = VO_TIMED_FLUSH;
+  vo->vo_start = mb->mb_pts;
+  video_overlay_enqueue(mp, vo);
+
   if(avcodec_decode_subtitle2(ctx, &sub, &got_sub, &avpkt) < 1 || !got_sub)
     return;
 
-  if(sub.num_rects == 0) {
+  if(sub.num_rects == 0)
+  {
     // Flush screen
     vo = calloc(1, sizeof(video_overlay_t));
     vo->vo_type = VO_TIMED_FLUSH;
     vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
     video_overlay_enqueue(mp, vo);
-  } else {
+  }
+  else
+  {
 
     for(i = 0; i < sub.num_rects; i++) {
       AVSubtitleRect *r = sub.rects[i];
@@ -70,45 +78,46 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
       switch(r->type) {
 
       case SUBTITLE_BITMAP:
-	vo = calloc(1, sizeof(video_overlay_t));
+		vo = calloc(1, sizeof(video_overlay_t));
 
-	vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
-	vo->vo_stop  = mb->mb_pts + sub.end_display_time * 1000;
-        vo->vo_canvas_width  = ctx->width;
-        vo->vo_canvas_height = ctx->height;
+		vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
+		vo->vo_stop  = mb->mb_pts + sub.end_display_time * 1000;
 
-	vo->vo_x = r->x;
-	vo->vo_y = r->y;
+		vo->vo_canvas_width  = 720; // ctx->width;
+		vo->vo_canvas_height = 576; // ctx->height;
 
-	vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 0);
+		vo->vo_x = r->x;
+		vo->vo_y = r->y;
 
-	if(vo->vo_pixmap == NULL) {
-	  free(vo);
-	  break;
-	}
+		vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 0);
 
-	const uint8_t *src = r->pict.data[0];
-	const uint32_t *clut = (uint32_t *)r->pict.data[1];
+		if(vo->vo_pixmap == NULL) {
+		  free(vo);
+		  break;
+		}
 
-	for(y = 0; y < r->h; y++) {
-	  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_data +
-				       y * vo->vo_pixmap->pm_linesize);
-	  for(x = 0; x < r->w; x++)
-	    *dst++ = clut[src[x]];
+		const uint8_t *src = r->pict.data[0];
+		const uint32_t *clut = (uint32_t *)r->pict.data[1];
 
-	  src += r->pict.linesize[0];
-	}
-	video_overlay_enqueue(mp, vo);
-	break;
+		for(y = 0; y < r->h; y++) {
+		  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_data +
+						   y * vo->vo_pixmap->pm_linesize);
+		  for(x = 0; x < r->w; x++)
+			*dst++ = clut[src[x]];
 
-      case SUBTITLE_ASS:
-	sub_ass_render(mp, r->ass,
-		       ctx->subtitle_header, ctx->subtitle_header_size,
-		       mb->mb_font_context);
-	break;
+		  src += r->pict.linesize[0];
+		}
+		video_overlay_enqueue(mp, vo);
+		break;
 
-      default:
-	break;
+		  case SUBTITLE_ASS:
+		sub_ass_render(mp, r->ass,
+				   ctx->subtitle_header, ctx->subtitle_header_size,
+				   mb->mb_font_context);
+		break;
+
+		  default:
+		break;
       }
     }
   }
