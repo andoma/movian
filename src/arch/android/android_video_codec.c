@@ -711,6 +711,24 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     type = "video/hevc";
     nicename = "h265";
     break;
+  case AV_CODEC_ID_MPEG4:
+    type = "video/mp4v-es";
+    nicename = "MPEG4";
+    break;
+  case AV_CODEC_ID_MPEG1VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
+    type = "video/mpeg2";
+    nicename = "MPEG2";
+    break;
+  case AV_CODEC_ID_VP8:
+    type = "video/x-vnd.on2.vp8";
+    nicename = "VP8";
+    break;
+
+  case AV_CODEC_ID_VP9:
+      type = "video/x-vnd.on2.vp9";
+    nicename = "VP9";
+    break;
 
   default:
     return 1;
