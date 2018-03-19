@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1413,7 +1413,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
     return;
 
   if(reusable && !gconf.disable_http_reuse &&
-     !cancellable_is_cancelled(hf->hf_cancellable)) {
+     !cancellable_is_cancelled(hf->hf_cancellable) && !strcmp(reason, "Location change")) {
     http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age, reason);
   } else {
     hts_mutex_lock(&http_connections_mutex);
