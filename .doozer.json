@@ -21,7 +21,8 @@
         "ccache",
         "zip",
         "curl",
-        "wget"
+        "wget",
+        "yasm"
       ],
       "buildcmd": [
         "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api15_armv7",
