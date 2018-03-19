@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -599,7 +599,7 @@ es_http_inspector_create(duk_context *ctx)
   ehi->ehi_prio = strlen(str);
   ehi->ehi_async = async;
 
-  es_debug(ec, "Adding HTTP insepction for pattern %s", str);
+  es_debug(ec, "Adding HTTP inspection for pattern %s", str);
 
   LIST_INSERT_SORTED(&http_inspectors, ehi, ehi_link, ehi_cmp,
                      es_http_inspector_t);
