@@ -17,7 +17,7 @@ widget(container_z, {
       cloner($core.logbuffer, label, {
 	caption: $self.prefix + $self.message;
 	ellipsize: true;
-	font: "dataroot://res/fonts/UbuntuMono-Regular.ttf";
+	font: "dataroot://res/fonts/Vazir.ttf";
 	size: 0.8em;
 
 	color: translate($self.severity, [1,1,1],

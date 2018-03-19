@@ -1,5 +1,5 @@
 {
-  "submodules": ["ext/libav", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser"],
+  "submodules": ["ext/libav", "ext/fribidi", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser"],
   "targets": {
     "android": {
       "buildenv": "docker:andoma/movian-android",
@@ -41,6 +41,11 @@
         "git",
         "build-essential",
         "pkg-config",
+        "autoconf",
+        "automake",
+        "bison",
+        "flex",
+        "libtool",        
         "libfreetype6-dev",
         "libfontconfig1-dev",
         "libx11-dev",
@@ -70,6 +75,11 @@
         "git",
         "build-essential",
         "pkg-config",
+        "autoconf",
+        "bison",
+        "flex",
+        "libtool",
+        "automake",
         "libfreetype6-dev",
         "libfontconfig1-dev",
         "libx11-dev",

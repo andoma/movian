@@ -33,7 +33,7 @@ enable sqlite_locking
 enable tlsf
 enable webpopup
 enable libntfs
-
+enable fribidi
 
 show_help(){
   common_help
@@ -69,7 +69,10 @@ LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-comp
 
 setup_env "$@"
 
-
+if enabled fribidi; then 
+  FRIBIDI_COMMON_FLAGS="--host=powerpc"
+  mkdir -p ${BUILDDIR}/fribidi
+fi
 mkdir -p ${BUILDDIR}/libav
 ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/support/mallocstub.c
 LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o -B${PS3DEV}/host/ppu/lib"

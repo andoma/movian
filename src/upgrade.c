@@ -670,7 +670,7 @@ check_upgrade(int set_news)
 	upgrade_track, archname);
 
   snprintf(url, sizeof(url), "%s/%s-%s.json", ctrlbase, upgrade_track,
-	   archname);
+	   archname?archname:"");
 
   b = fa_load(url,
                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
@@ -744,7 +744,7 @@ check_upgrade(int set_news)
 
       const char *type = htsmsg_get_str(a, "type");
 
-      if(type == NULL || strcmp(artifact_type, type))
+      if(type == NULL || artifact_type==NULL || strcmp(artifact_type, type) )
 	continue;
 
       dlurl = htsmsg_get_str(a, "url");

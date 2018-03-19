@@ -21,6 +21,7 @@ enable libcec
 enable avahi
 enable connman
 enable vmir
+enable fribidi
 
 show_help(){
   common_help
@@ -56,6 +57,11 @@ setup_env "$@"
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
 LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --target-os=linux"
+
+if enabled fribidi; then 
+  FRIBIDI_COMMON_FLAGS="--host=arm-linux"
+  mkdir -p ${BUILDDIR}/fribidi
+fi
 
 if [ -n "$SYSROOT" ]; then 
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += --sysroot=$SYSROOT"

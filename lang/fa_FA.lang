@@ -1,0 +1,1944 @@
+language: Farsi
+native: فارسی
+maintainer: Ali Mashatan
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+msg: نشانه
+
+id: Bookmarked
+msg:نشانه شده
+
+id: Copy to clipboard
+msg:کپی به حافظه موقت
+
+id: Copy to location...
+msg:...کپی به محل
+
+id: Delete
+msg:حذف
+
+id: Queue
+msg:صف
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+msg:نویسنده
+
+id: Available version:
+msg:نگارش
+
+id: Changelog
+msg:تغییرات
+
+id: Install
+msg:نصب
+
+id: Installed version:
+msg:
+
+id: Status:
+msg:وضعیت
+
+id: Uninstall
+msg:حذف برنامه 
+
+id: Upgrade
+msg:ارتقا
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg:%s ادامه از 
+
+id: Mark as seen
+msg:دیده شده
+
+id: Mark as unseen
+msg:دیده نشده
+
+id: Play from beginning
+msg:پخش از اول
+
+id: Play until end of list
+msg:پخش تا آخر لیست
+
+id: Video Cast
+msg: بازیگران
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+# Missing translation
+msg:
+
+id: Seen %d times, %s
+# Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: اضافه کردن
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg:خاموش
+
+id: On
+msg:روشن
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg:
+
+id: Subtitles
+msg:زیرنویس ها
+
+id: User interface
+msg:رابطه کاربری
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg:
+
+id: Bitrate:
+msg:
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg:سیستم لاگ
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+# Missing translation
+msg:
+
+id: Audio bitrate
+# Missing translation
+msg:
+
+id: Audio codec
+# Missing translation
+msg:
+
+id: Audio packets
+# Missing translation
+msg:
+
+id: Buffer usage
+# Missing translation
+msg:
+
+id: No media loaded
+msg:
+
+id: Remaining buffer
+# Missing translation
+msg:
+
+id: Source
+# Missing translation
+msg:
+
+id: Video bitrate
+# Missing translation
+msg:
+
+id: Video codec
+# Missing translation
+msg:
+
+id: Video framerate
+# Missing translation
+msg:
+
+id: Video packets
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+msg:
+
+id: Page settings
+msg:صفحه تنظیمات
+
+id: Paste
+# Missing translation
+msg:
+
+id: Reload page
+msg: بازخوانی صفحه
+
+id: Remove bookmark
+# Missing translation
+msg:
+
+id: Settings
+msg:تنظیمات
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg:
+
+id: Disable sleep timer
+msg:
+
+id: Exit %s
+msg: خروج %s
+
+id: Hide media info
+# Missing translation
+msg:
+
+id: Hide system info
+msg:
+
+id: Master volume
+msg: حجم صدا اصلی
+
+id: Show media info
+msg: نمایش اطلاعات مدیا
+
+id: Show system info
+msg: نمایش اطلاعات سیستم
+
+id: Suspend
+msg: تعلیق
+
+id: Time until sleep
+msg:
+
+id: View log
+msg:
+
+id: dB
+msg:
+
+id: min
+msg:
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg:
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg:
+
+id: Subtitle settings
+msg:
+
+id: Video settings
+msg:
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg:پیش فرض
+
+id: Keyboard layout:
+msg:
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg:آلبوم
+
+id: Artist
+msg:بازیگر
+
+id: Custom
+msg:
+
+id: Grid
+# Missing translation
+msg:
+
+id: List
+msg:لیست
+
+id: Page layout
+# Missing translation
+msg:
+
+id: Search results
+# Missing translation
+msg:
+
+id: TV Season
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg:
+
+id: Home
+msg:خانه
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg:
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+msg: بیشتر
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+# Missing translation
+msg:
+
+id: Play/Pause
+# Missing translation
+msg:
+
+id: Stop
+msg:
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+# Missing translation
+msg:
+
+id: Remote controlling %s
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+# Missing translation
+msg:
+
+id: Remote control
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg:
+
+id: Audio volume adjustment: %d dB
+msg:
+
+id: CPU is too slow to decode this video
+msg:
+
+id: Next
+# Missing translation
+msg:
+
+id: Previous
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg:
+
+id: An error occured during download
+msg:
+
+id: Changelog for %s releases
+msg:
+
+id: Check for updates now
+msg:
+
+id: Checking for updates
+# Missing translation
+msg:
+
+id: Current version:
+msg:
+
+id: Download and install
+# Missing translation
+msg:
+
+id: Downloading %s
+msg:
+
+id: New version %s is available for download
+msg:
+
+id: No upgrade available
+msg:
+
+id: Retry
+# Missing translation
+msg:
+
+id: Stable
+msg:
+
+id: Testing
+msg:
+
+id: Unable to query for new version
+msg:
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg:
+
+id: Password
+msg:
+
+id: Remember me
+msg:
+
+id: Username
+msg:
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg:
+
+id: Ok
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+# Missing translation
+msg:
+
+id: Close
+# Missing translation
+msg:
+
+id: Folder select mode, press right to open subfolder
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg:
+
+id: Resume from %s
+# Missing translation
+msg:
+
+id: Yes
+msg:
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg:
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg:
+
+id: Connected
+# Missing translation
+msg:
+
+id: Fragmentation
+msg:
+
+id: Framerate
+# Missing translation
+msg:
+
+id: GPU Temp
+msg:
+
+id: HDD Avail
+msg:
+
+id: IP Address
+# Missing translation
+msg:
+
+id: Inactive memory
+# Missing translation
+msg:
+
+id: Memory usage
+msg:
+
+id: Network
+# Missing translation
+msg:
+
+id: Not available
+# Missing translation
+msg:
+
+id: System Free
+msg:
+
+id: System Total
+msg:
+
+id: VM Page In/Out
+# Missing translation
+msg:
+
+id: Version
+# Missing translation
+msg:
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg:
+
+id: Copying %d files
+# Missing translation
+msg:
+
+id: Master volume: %d dB
+msg:
+
+id: Overscan adjustment\nPosition border at screen edges
+# Missing translation
+msg:
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg:
+
+id: Device not available
+# Missing translation
+msg:
+
+id: Movians for remote control
+# Missing translation
+msg:
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg:
+
+id: Use original title
+msg:
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+msg:
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg:
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg:
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg:
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg:
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg:
+
+id: Unable to accelerate %s, library not loaded.
+msg:
+
+id: Unable to open Cell codec. Error 0x%x
+msg:
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg:
+
+id: Unable to query Cell codec. Error 0x%x
+msg:
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg:
+
+id: AC3 Pass-Through
+msg:
+
+id: Analog
+msg:
+
+id: Audio output port
+msg:
+
+id: Autodetect
+msg:
+
+id: DTS Pass-Through
+msg:
+
+id: HDMI
+msg:
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+# Missing translation
+msg:
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg:
+
+id: Audio gain
+msg:
+
+id: Setup audio output
+msg:
+
+id: Video playback
+msg:
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg:
+
+id: Audio test
+msg:
+
+id: Center
+msg:
+
+id: Front Left
+msg:
+
+id: Front Right
+msg:
+
+id: LFE
+msg:
+
+id: Pink noise
+msg:
+
+id: Play test signal
+msg:
+
+id: Rear Left
+msg:
+
+id: Rear Right
+msg:
+
+id: Speaker position
+msg:
+
+id: Surround Left
+msg:
+
+id: Surround Right
+msg:
+
+id: Test signal type
+msg:
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg:
+
+id: Unable to open torrent: %s
+msg:
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg:
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg:
+
+id: Known peers
+msg:
+
+id: Receiving from
+msg:
+
+id: Torrent leechers
+msg:
+
+id: Torrent seeders
+msg:
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg:
+
+id: Clear cache
+msg:
+
+id: Enable bittorrent
+msg:
+
+id: Max upload speed
+# Missing translation
+msg:
+
+id: Max usage of free space for caching torrents
+msg:
+
+id: Status
+msg:
+
+id: Torrent cache path
+msg:
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg:
+
+id: DVD read error, restarting disc
+msg:
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg:
+
+id: Supplementary
+msg:
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+# Missing translation
+msg:
+
+id: Invalid HTSP URL
+msg:
+
+id: No such channel
+# Missing translation
+msg:
+
+id: Recorded shows
+# Missing translation
+msg:
+
+id: Recorder
+# Missing translation
+msg:
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg:
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg:
+
+id: Search result for: %s
+msg:
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+msg:
+
+id: 5 seconds
+msg:
+
+id: 7 seconds
+msg:
+
+id: Slideshow speed
+msg:
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg:
+
+id: Clear cached files
+msg:
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg:
+
+id: Checking file contents
+msg:
+
+id: Invalid URL from redirect
+# Missing translation
+msg:
+
+id: Unable to open file: %s
+msg:
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg:
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg:
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg:
+
+id: Filename
+msg:
+
+id: Include in library
+# Missing translation
+msg:
+
+id: Newest first
+# Missing translation
+msg:
+
+id: Oldest first
+# Missing translation
+msg:
+
+id: Show only supported files
+msg:
+
+id: Sort folders first
+msg:
+
+id: Sort on
+msg:
+
+id: Unable to delete %s\n%s
+msg:
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg:
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg:
+
+id: Browse archives as folders
+msg:
+
+id: Enable file deletion from item menu
+msg:
+
+id: Show filename extensions
+msg:
+
+id: Store per-file settings in filesystem
+msg:
+
+id: %d archive parts
+msg[0]: %d Archivteil 
+msg[1]: %d Archivteile
+
+id: %d directories
+msg[0]: %d Verzeichniss
+msg[1]: %d Verzeichnisse
+
+id: %d files
+msg[0]: %d Datei
+msg[1]: %d Dateien
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg:امکان دسترسی وجود ندارد
+
+id: Account restricted
+msg:دسترسی محدود شده
+
+id: Bad network share name
+msg:
+
+id: Logon failure
+msg:عدم موفیقت لاگین
+
+id: Object name not found
+msg:
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+msg: ساعت ۱۲
+
+id: 24 Hour
+msg: ۲۴ ساعت
+
+id: Default character set
+msg:
+
+id: Ignore 'The' at beginning of words when sorting
+msg:
+
+id: Language
+msg:
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg:
+
+id: Languages
+msg:
+
+id: Preferred languages
+msg:
+
+id: Primary audio language code
+msg:
+
+id: Primary subtitle language code
+msg:
+
+id: Secondary audio language code
+msg:
+
+id: Secondary subtitle language code
+msg:
+
+id: System default
+msg:
+
+id: Tertiary audio language code
+msg:
+
+id: Tertiary subtitle language code
+msg:
+
+id: Time format
+msg:فرم زمانی
+
+id: Timezone
+msg:منظقه زمانی
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg:
+
+id: Switch TV input source
+# Missing translation
+msg:
+
+id: Use STOP key for combo input
+# Missing translation
+msg:
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg:
+
+id: Rembered passwords erased
+msg:
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+# Missing translation
+msg:
+
+id: Audio volume
+msg:
+
+id: Delay
+# Missing translation
+msg:
+
+id: Go to standby after video ends
+msg:
+
+id: Horizontal pan
+msg:
+
+id: Horizontal position
+# Missing translation
+msg:
+
+id: Horizontal scale
+msg:
+
+id: Reset defaults for folder '%s'
+msg:
+
+id: Save as defaults for folder '%s'
+msg:
+
+id: Save as global default
+msg:
+
+id: Scaling
+# Missing translation
+msg:
+
+id: Stretch video to fullscreen
+msg:
+
+id: Stretch video to widescreen
+msg:
+
+id: Vertical pan
+msg:
+
+id: Vertical position
+# Missing translation
+msg:
+
+id: Vertical scale
+msg:
+
+id: Video frame interpolation
+msg:
+
+id: Video zoom
+msg:
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg:
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg:
+
+id: Erase all playback info
+msg:
+
+id: Manual
+msg:
+
+id: Mark all as seen
+msg:
+
+id: Mark all as unseen
+msg:
+
+id: Metadata mode
+msg:
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg:
+
+id: Track %d
+msg:
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg:
+
+id: Metadata
+msg:
+
+id: Metadata configuration and provider settings
+msg:
+
+id: Providers for Music
+msg:
+
+id: Providers for Video
+msg:
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg:
+
+id: Clear all metadata
+msg:
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg:
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg:
+
+id: Custom title
+msg:
+
+id: IMDb ID
+msg:
+
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg:
+
+id: Metadata source
+msg:
+
+id: Movie
+msg:
+
+id: Movie title
+msg:
+
+id: No data found
+msg:
+
+id: None
+msg:
+
+id: Refresh metadata
+msg:
+
+id: Title, Season, Episode
+msg:
+
+id: custom IMDb ID
+msg:
+
+id: custom query
+msg:
+
+id: filename
+msg:
+
+id: filename as TV episode
+msg:
+
+id: folder name
+msg:
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg:
+
+id: Added %s to home page
+msg:
+
+id: Added new bookmark: %s
+msg:
+
+id: Bookmarks
+msg:
+
+id: Icon
+msg:
+
+id: Music
+msg:
+
+id: No handler for URL
+msg:
+
+id: Other
+msg:
+
+id: Photos
+msg:
+
+id: Removed %s from homepage
+msg:
+
+id: Removed bookmark: %s
+msg:
+
+id: TV
+msg:
+
+id: Title
+msg:
+
+id: Type
+msg:
+
+id: URL
+msg:
+
+id: Video
+msg:
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg:
+
+id: Network connections
+msg:
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg:
+
+id: FTP server
+msg:
+
+id: Server TCP port
+msg:
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg:
+
+id: Rebooting
+# Missing translation
+msg:
+
+id: Restarting
+# Missing translation
+msg:
+
+id: Standby
+msg:
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+# Missing translation
+msg:
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg:
+
+id: Audio decoders
+# Missing translation
+msg:
+
+id: Auto install plugins on demand
+# Missing translation
+msg:
+
+id: Auto installed plugin %s (Version %s)
+# Missing translation
+msg:
+
+id: Automatically upgrade plugins
+msg:
+
+id: Available plugins
+msg:
+
+id: Background
+msg:
+
+id: Beta testing passwords
+msg:
+
+id: Browse available plugins
+msg:
+
+id: Browsing
+msg:
+
+id: Cloud services
+msg:
+
+id: Corrupt plugin bundle
+msg:
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg:
+
+id: Disk write error
+msg:
+
+id: Downloading
+msg:
+
+id: File open error
+msg:
+
+id: Home page
+msg:
+
+id: Images
+msg:
+
+id: Installed
+# Missing translation
+msg:
+
+id: Installed plugins
+msg:
+
+id: Installed version higher than available
+msg:
+
+id: Installing
+msg:
+
+id: List of albums
+msg:
+
+id: Loading screen
+msg:
+
+id: Movies
+msg:
+
+id: Music streaming
+msg:
+
+id: Not installable
+msg:
+
+id: Not installed
+msg:
+
+id: Not upgradable
+msg:
+
+id: On Screen Keyboards
+msg:
+
+id: Online TV
+msg:
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg:
+
+id: Plugin %s has been uninstalled - %s
+msg:
+
+id: Plugin categories
+msg:
+
+id: Plugins
+msg: پلاگین
+
+id: Preferred views from plugins
+msg:
+
+id: Screen saver
+msg: محافظ صفحه نمایش
+
+id: TV channels
+msg: کانالهای تی وی
+
+id: Unable to load plugin.json: %s
+msg:
+
+id: Unable to load plugin.json: Malformed JSON
+msg:
+
+id: Uncategorized
+msg:
+
+id: Up to date
+msg: بروزرسانی
+
+id: Upgradable
+msg: ارتقا
+
+id: Upgraded plugin %s to version %s
+msg:
+
+id: User interface extensions
+msg:
+
+id: Version %s is no longer compatible with Movian
+msg:
+
+id: Video streaming
+msg:
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg:
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg:
+
+id: Enable SSH server
+msg:
+
+id: Logout
+msg:
+
+id: Open shell
+msg:
+
+id: Power off system
+msg:
+
+id: Quit
+msg:
+
+id: SSH server
+msg:
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg:
+
+id: Name
+msg: نام
+
+#
+# ./src/service.c
+#
+id: Local network
+msg:شبکه محلی
+
+id: Remove from homepage
+msg:
+
+#
+# ./src/settings.c
+#
+id: About
+msg:درباره
+
+id: Applications and installed plugins
+msg:
+
+id: Configure communications with your TV
+msg:
+
+id: Developer settings
+msg:
+
+id: Discovered media sources
+msg:
+
+id: File browsing
+msg:
+
+id: Fonts and user interface styling
+msg:
+
+id: General
+msg:عمومی
+
+id: Global settings
+msg:تنظیمات عمومی
+
+id: Look and feel
+msg:ظاهر
+
+id: Network services, etc
+msg:سرویس شبکه و غیره
+
+id: Network settings
+msg:تنظیمات شبکه
+
+id: Reset
+msg:ریست
+
+id: Settings useful for developers
+msg:
+
+id: Software upgrade
+msg:ارتقا نرم افزار
+
+id: Starting and stopping
+msg:شروع کردن و متوقف کردن
+
+id: System name
+msg:نام سیستم
+
+id: System related settings
+msg:
+
+id: TV Control
+msg: کنترل تی وی
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg:
+
+id: Any subtitle in same folder as video
+msg:
+
+id: Auto
+msg:اتوماتیک
+
+id: Automatically select from this source
+msg:
+
+id: Central subtitle folder
+msg:
+
+id: Color
+msg: رنگ
+
+id: External file
+msg:
+
+id: Force subtitles to reside on video frame
+msg:
+
+id: Generic settings for video subtitles
+msg:
+
+id: Ignore embedded styling
+msg:
+
+id: Left
+msg: چپ
+
+id: Outline color
+msg:
+
+id: Outline size
+msg:
+
+id: Path to central folder
+msg:
+
+id: Providers for Subtitles
+msg:
+
+id: Right
+msg: راست
+
+id: Shadow color
+msg:
+
+id: Shadow offset
+msg:
+
+id: Subtitle horizontal displacement
+msg:
+
+id: Subtitle position
+msg:
+
+id: Subtitle size
+msg:
+
+id: Subtitle size and positioning
+msg:
+
+id: Subtitle vertical displacement
+msg:
+
+id: Subtitles embedded in video file
+msg:
+
+id: Subtitles with matching filename in central folder
+msg:
+
+id: Subtitles with matching filename in same folder as video
+msg:
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg:
+
+id: Fonts
+msg:
+
+id: Installed fonts
+msg:
+
+id: Narrow text
+msg:
+
+id: Reset main font to default
+msg:
+
+id: Reset narrow font to default
+msg:
+
+id: Reset subtitle font to default
+msg:
+
+id: Unable to install font: %s
+msg:
+
+id: Use font %s for
+msg:
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+# Missing translation
+msg:
+
+id: Target folder
+# Missing translation
+msg:
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+# Missing translation
+msg:
+
+id: No
+msg:
+
+id: Seek using L2 and R2 button
+msg:
+
+id: Yes with Select button
+msg:
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+msg:
+
+id: Emulate Up/Down buttons with mouse wheel
+msg:
+
+id: Folder for screensaver images
+msg:
+
+id: Font and icon size
+msg:
+
+id: Interface horizontal shrink
+msg:
+
+id: Interface vertical shrink
+msg:
+
+id: Screensaver
+msg:
+
+id: Screensaver delay
+msg:
+
+id: Seconds per image
+# Missing translation
+msg:
+
+id: Use Bing images of the day
+msg:
+
+id: Wrap when reaching beginning/end of lists
+msg:
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+msg:
+
+id: %d hours ago
+msg:
+
+id: %d minutes ago
+msg:
+
+id: %d months ago
+msg:
+
+id: %d weeks ago
+msg:
+
+id: %d years ago
+msg:
+
+id: Just now
+msg:
+
+id: One day ago
+msg:
+
+id: One hour ago
+msg:
+
+id: One minute ago
+msg:
+
+id: One month ago
+msg:
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg:
+
+id: DVI-Video color range
+msg:
+
+id: Switch to this mode now
+msg:
+
+id: Video modes
+msg:
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg:
+
+id: Notify about upgrades
+msg:
+
+id: Open download page
+msg:
+
+id: System
+msg:
+
+id: Upgrade to releases from
+msg:
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg:
+
+id: Date (oldest first)
+msg:
+
+id: Device not found
+msg:
+
+id: Malformed URI after device
+msg:
+
+id: Malformed URI after service
+msg:
+
+id: Service not found
+msg:
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg:
+
+id: Ask
+msg:
+
+id: Automatically play next video in list
+msg:
+
+id: Count video as played when reaching
+msg:
+
+id: Enable VDPAU
+msg:
+
+id: Hardware accelerated decoding
+msg:
+
+id: Maximum resolution for deinterlacer
+msg:
+
+id: Never
+msg:
+
+id: No limit
+msg:
+
+id: Per-file volume
+msg:
+
+id: Preferred VDPAU deinterlacer method
+msg:
+
+id: Resume video playback
+msg:
+
+id: Show clock during playback
+msg:
+
+id: Step when seeking backward
+msg:
+
+id: Step when seeking forward
+msg:
+
+id: Temporal
+msg:
+
+id: Temporal/Spatial
+msg:
+
+id: Up / Down during video playback controls
+msg:
+
+id: Video acceleration and display behaviour
+msg:
+
+id: Video buffer size
+# Missing translation
+msg:
+

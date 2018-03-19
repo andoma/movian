@@ -5,16 +5,19 @@ Movian mediaplayer
 
 [![Build status](https://doozer.io/badge/andoma/movian/buildstatus/master)](https://doozer.io/user/andoma/movian)
 
-For more information and latest versions, please visit:
+For more information and latest versions, please visit: [https://movian.tv/](https://movian.tv/)
 
-[https://movian.tv/](https://movian.tv/)
+with BiDi support for Farsi and Arabic languages
+Vazir-Font for Farsi and Arabic support,  https://github.com/rastikerdar/vazir-font
+
 
 ## How to build for Linux
 
 First you need to satisfy some dependencies:
 For Ubuntu 12.04)
 
-	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libvdpau-dev yasm libpulse-dev libssl-dev curl libwebkitgtk-dev libsqlite3-dev
+	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libvdpau-dev yasm libpulse-dev libssl-dev curl libwebkitgtk-dev libsqlite3-dev ccache
+
 
 Then you need to configure:
 

@@ -1515,7 +1515,7 @@ freetype_init(void)
   hts_mutex_init(&text_mutex);
 
   snprintf(url, sizeof(url),
-	   "%s/res/fonts/liberation/LiberationSans-Regular.ttf",
+	   "%s/res/fonts/Vazir.ttf",
 	   app_dataroot());
 
   freetype_load_default_font(url, 0);
