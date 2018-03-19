@@ -1,0 +1,14 @@
+language: c
+compiler:
+  - gcc
+sudo: false
+script: make
+notifications:
+  email:
+    recipients:
+      - petr@kutalek.cz
+    on_success: always
+    on_failure: always
+branches:
+  except:
+    - /^devel-.+$/

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006-2016 Lonelycoder AB
+ *  Copyright (C) 2006-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ init_global_info(void)
   prop_set(s, "name", PROP_SET_STRING, APPNAMEUSER);
   prop_set(s, "version", PROP_SET_STRING, appversion);
   prop_set(s, "fullversion", PROP_SET_STRING, appversion);
-  prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2016 Lonelycoder AB");
+  prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2018 Lonelycoder AB");
 }
 
 
@@ -500,38 +500,39 @@ parse_opts(int argc, char **argv)
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
       printf(APPNAMEUSER" %s\n"
-	     "Copyright (C) 2006-2016 Lonelycoder AB\n"
+	     "Copyright (C) 2006-2018 Lonelycoder AB\n"
 	     "\n"
 	     "Usage: %s [options] [<url>]\n"
 	     "\n"
 	     "  Options:\n"
-	     "   -h, --help        - This help text.\n"
-	     "   -d                - Enable debug output.\n"
-	     "   --no-ui           - Start without UI.\n"
-	     "   --fullscreen      - Start in fullscreen mode.\n"
-	     "   --libav-log       - Print libav log messages.\n"
-	     "   --with-standby    - Enable system standby.\n"
-	     "   --with-poweroff   - Enable system power-off.\n"
-	     "   -s <path>         - Non-default settings path.\n"
-	     "   --ui <ui>         - Use specified user interface.\n"
-	     "   -L <ip:host>      - Send log messages to remote <ip:host>.\n"
-	     "   --syslog          - Send log messages to syslog.\n"
+	     "   -h, --help          - This help text.\n"
+	     "   -d                  - Enable debug output.\n"
+	     "   --no-ui             - Start without UI.\n"
+	     "   --fullscreen        - Start in fullscreen mode.\n"
+	     "   --libav-log         - Print libav log messages.\n"
+	     "   --with-standby      - Enable system standby.\n"
+	     "   --with-poweroff     - Enable system power-off.\n"
+	     "   -s <path>           - Non-default settings path.\n"
+	     "   --ui <ui>           - Use specified user interface.\n"
+	     "   -L <ip:host>        - Send log messages to remote <ip:host>.\n"
+	     "   --syslog            - Send log messages to syslog.\n"
 #if ENABLE_STDIN
-	     "   --stdin           - Listen on stdin for events.\n"
+	     "   --stdin             - Listen on stdin for events.\n"
 #endif
-	     "   -v <view>         - Use specific view for <url>.\n"
-	     "   --cache <path>    - Set path for cache [%s].\n"
+	     "   -v <view>           - Use specific view for <url>.\n"
+	     "   --cache <path>      - Set path for cache [%s].\n"
 	     "   --persistent <path> - Set path for persistent stuff [%s].\n"
 #if ENABLE_HTTPSERVER
-	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
+	     "   --disable-upnp      - Disable UPNP/DLNA stack.\n"
 #endif
-	     "   --disable-sd      - Disable service discovery (mDNS, etc).\n"
-	     "   -p                - Path to plugin directory to load\n"
-	     "                       Intended for plugin development\n"
-	     "   --plugin-repo     - URL to plugin repository\n"
-	     "                       Intended for plugin development\n"
-	     "   -j <path>           Load javascript file\n"
-	     "   --skin <skin>     Select skin (for GLW ui)\n"
+	     "   --disable-sd        - Disable service discovery (mDNS, etc).\n"
+	     "   -p                  - Path to plugin directory to load\n"
+	     "                         Intended for plugin development\n"
+	     "   --plugin-repo       - URL to plugin repository\n"
+	     "                         Intended for plugin development\n"
+	     "   --proxy <host:port> - Use SOCKS 4/5 proxy for http requests.\n"
+	     "   -j <path>           - Load javascript file\n"
+	     "   --skin <skin>       - Select skin (for GLW ui)\n"
 	     "\n"
 	     "  URL is any URL-type supported, "
 	     "e.g., \"file:///...\"\n"

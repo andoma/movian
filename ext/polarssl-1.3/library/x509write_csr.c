@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,12 +37,12 @@
 #include "polarssl/oid.h"
 #include "polarssl/asn1write.h"
 
+#include <string.h>
+#include <stdlib.h>
+
 #if defined(POLARSSL_PEM_WRITE_C)
 #include "polarssl/pem.h"
 #endif
-
-#include <string.h>
-#include <stdlib.h>
 
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
@@ -51,7 +51,7 @@ static void polarssl_zeroize( void *v, size_t n ) {
 
 void x509write_csr_init( x509write_csr *ctx )
 {
-    memset( ctx, 0, sizeof(x509write_csr) );
+    memset( ctx, 0, sizeof( x509write_csr ) );
 }
 
 void x509write_csr_free( x509write_csr *ctx )
@@ -59,7 +59,7 @@ void x509write_csr_free( x509write_csr *ctx )
     asn1_free_named_data_list( &ctx->subject );
     asn1_free_named_data_list( &ctx->extensions );
 
-    polarssl_zeroize( ctx, sizeof(x509write_csr) );
+    polarssl_zeroize( ctx, sizeof( x509write_csr ) );
 }
 
 void x509write_csr_set_md_alg( x509write_csr *ctx, md_type_t md_alg )
@@ -195,13 +195,20 @@ int x509write_csr_der( x509write_csr *ctx, unsigned char *buf, size_t size,
      */
     md( md_info_from_type( ctx->md_alg ), c, len, hash );
 
-    pk_alg = pk_get_type( ctx->key );
-    if( pk_alg == POLARSSL_PK_ECKEY )
-        pk_alg = POLARSSL_PK_ECDSA;
-
     if( ( ret = pk_sign( ctx->key, ctx->md_alg, hash, 0, sig, &sig_len,
-                         f_rng, p_rng ) ) != 0 ||
-        ( ret = oid_get_oid_by_sig_alg( pk_alg, ctx->md_alg,
+                         f_rng, p_rng ) ) != 0 )
+    {
+        return( ret );
+    }
+
+    if( pk_can_do( ctx->key, POLARSSL_PK_RSA ) )
+        pk_alg = POLARSSL_PK_RSA;
+    else if( pk_can_do( ctx->key, POLARSSL_PK_ECDSA ) )
+        pk_alg = POLARSSL_PK_ECDSA;
+    else
+        return( POLARSSL_ERR_X509_INVALID_ALG );
+
+    if( ( ret = oid_get_oid_by_sig_alg( pk_alg, ctx->md_alg,
                                         &sig_oid, &sig_oid_len ) ) != 0 )
     {
         return( ret );
@@ -213,6 +220,9 @@ int x509write_csr_der( x509write_csr *ctx, unsigned char *buf, size_t size,
     c2 = buf + size;
     ASN1_CHK_ADD( sig_and_oid_len, x509_write_sig( &c2, buf,
                                         sig_oid, sig_oid_len, sig, sig_len ) );
+
+    if( len > (size_t)( c2 - buf ) )
+        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
 
     c2 -= len;
     memcpy( c2, c, len );

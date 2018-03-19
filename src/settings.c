@@ -1662,6 +1662,8 @@ init_dev_settings(void)
 #endif
   add_dev_bool("Debug input events",
 	       "inputevents", &gconf.enable_input_event_debug);
+  add_dev_bool("Debug DVB Teletext",
+	       "inputevents", &gconf.enable_dvb_teletext_debug);
 
 #ifdef __ANDROID__
   add_dev_bool("Debug touch events",

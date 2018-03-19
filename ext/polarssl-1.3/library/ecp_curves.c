@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,13 +30,12 @@
 
 #include "polarssl/ecp.h"
 
-#if defined(_MSC_VER) && !defined(inline)
-#define inline _inline
-#else
-#if defined(__ARMCC_VERSION) && !defined(inline)
+#include <string.h>
+
+#if ( defined(__ARMCC_VERSION) || defined(_MSC_VER) ) && \
+    !defined(inline) && !defined(__cplusplus)
 #define inline __inline
-#endif /* __ARMCC_VERSION */
-#endif /*_MSC_VER */
+#endif
 
 /*
  * Conversion macros for embedded constants:
@@ -1265,7 +1264,7 @@ static inline int ecp_mod_koblitz( mpi *N, t_uint *Rp, size_t p_limbs,
     int ret;
     size_t i;
     mpi M, R;
-    t_uint Mp[P_KOBLITZ_MAX + P_KOBLITZ_R];
+    t_uint Mp[P_KOBLITZ_MAX + P_KOBLITZ_R + 1];
 
     if( N->n < p_limbs )
         return( 0 );
@@ -1287,7 +1286,7 @@ static inline int ecp_mod_koblitz( mpi *N, t_uint *Rp, size_t p_limbs,
     memcpy( Mp, N->p + p_limbs - adjust, M.n * sizeof( t_uint ) );
     if( shift != 0 )
         MPI_CHK( mpi_shift_r( &M, shift ) );
-    M.n += R.n - adjust; /* Make room for multiplication by R */
+    M.n += R.n; /* Make room for multiplication by R */
 
     /* N = A0 */
     if( mask != 0 )
@@ -1309,7 +1308,7 @@ static inline int ecp_mod_koblitz( mpi *N, t_uint *Rp, size_t p_limbs,
     memcpy( Mp, N->p + p_limbs - adjust, M.n * sizeof( t_uint ) );
     if( shift != 0 )
         MPI_CHK( mpi_shift_r( &M, shift ) );
-    M.n += R.n - adjust; /* Make room for multiplication by R */
+    M.n += R.n; /* Make room for multiplication by R */
 
     /* N = A0 */
     if( mask != 0 )

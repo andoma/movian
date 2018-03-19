@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -241,7 +241,7 @@ net_ssl_init(void)
 {
   SSL_library_init();
   SSL_load_error_strings();
-  app_ssl_ctx = SSL_CTX_new(TLSv1_2_client_method()); /* added TLSv1.2 */
+  app_ssl_ctx = SSL_CTX_new(SSLv23_client_method()); // should be TLS_client_method() on openssl >=1.1.0
 
   SSL_CTX_load_verify_locations(app_ssl_ctx, NULL, "/etc/ssl/certs");
 

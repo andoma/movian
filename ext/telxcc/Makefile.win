@@ -1,0 +1,24 @@
+CC = gcc
+CCFLAGS = -std=gnu99 -O3 -Wall -pedantic -D_WIN32_WINNT=0x0501
+LDFLAGS = -lcomctl32
+
+OBJS = telxcc.o telxcc.res
+EXEC = telxcc.exe
+
+all : $(EXEC)
+
+strip : $(EXEC)
+	-strip $<
+
+.PHONY : clean
+clean :
+	-del $(OBJS) $(EXEC)
+
+$(EXEC) : $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+%.o : %.c
+	$(CC) -c $(CCFLAGS) -o $@ $<
+
+%.res : %.rc
+	windres -J rc -O coff -o $@ $<

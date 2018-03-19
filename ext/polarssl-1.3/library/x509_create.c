@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@
 #include "polarssl/x509.h"
 #include "polarssl/asn1write.h"
 #include "polarssl/oid.h"
+
+#include <string.h>
 
 #if defined(_MSC_VER) && !defined strncasecmp && !defined(EFIX64) && \
     !defined(EFI32)
@@ -263,12 +265,15 @@ int x509_write_sig( unsigned char **p, unsigned char *start,
     int ret;
     size_t len = 0;
 
-    if( *p - start < (int) size + 1 )
+    if( *p < start || (size_t)( *p - start ) < size )
         return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
 
     len = size;
     (*p) -= len;
     memcpy( *p, sig, len );
+
+    if( *p - start < 1 )
+        return( POLARSSL_ERR_ASN1_BUF_TOO_SMALL );
 
     *--(*p) = 0;
     len += 1;
