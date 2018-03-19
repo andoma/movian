@@ -21,11 +21,14 @@
         "ccache",
         "zip",
         "curl",
-        "wget"
+        "wget",
+        "yasm"
       ],
       "buildcmd": [
-        "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache",
-        "make -j${PARALLEL} signed-apk"
+        "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api15_armv7",
+        "make -j${PARALLEL} signed-apk",
+        "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api15_x86",
+        "make -j${PARALLEL} signed-apk",
       ]
     },
 
