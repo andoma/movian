@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@
 
 #include "polarssl/net.h"
 
+#include <string.h>
+
 #if (defined(_WIN32) || defined(_WIN32_WCE)) && !defined(EFIX64) && \
     !defined(EFI32)
 
@@ -53,8 +55,8 @@
 #endif
 #endif /* _MSC_VER */
 
-#define read(fd,buf,len)        recv(fd,(char*)buf,(int) len,0)
-#define write(fd,buf,len)       send(fd,(char*)buf,(int) len,0)
+#define read(fd,buf,len)        recv( fd, (char*)( buf ), (int)( len ), 0 )
+#define write(fd,buf,len)       send( fd, (char*)( buf ), (int)( len ), 0 )
 #define close(fd)               closesocket(fd)
 
 static int wsa_init_done = 0;
@@ -93,6 +95,14 @@ static int wsa_init_done = 0;
 
 #endif /* ( _WIN32 || _WIN32_WCE ) && !EFIX64 && !EFI32 */
 
+/* Some MS functions want int and MSVC warns if we pass size_t,
+ * but the standard functions use socklen_t, so cast only for MSVC */
+#if defined(_MSC_VER)
+#define MSVC_INT_CAST   (int)
+#else
+#define MSVC_INT_CAST
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -128,6 +138,12 @@ typedef UINT32 uint32_t;
                            (((unsigned long )(n) & 0xFF00    ) << 8 ) | \
                            (((unsigned long )(n) & 0xFF0000  ) >> 8 ) | \
                            (((unsigned long )(n) & 0xFF000000) >> 24))
+#endif
+
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
+#define polarssl_snprintf snprintf
 #endif
 
 unsigned short net_htons( unsigned short n );
@@ -174,7 +190,7 @@ int net_connect( int *fd, const char *host, int port )
 
     /* getaddrinfo expects port as a string */
     memset( port_str, 0, sizeof( port_str ) );
-    snprintf( port_str, sizeof( port_str ), "%d", port );
+    polarssl_snprintf( port_str, sizeof( port_str ), "%d", port );
 
     /* Do name resolution with both IPv6 and IPv4, but only TCP */
     memset( &hints, 0, sizeof( hints ) );
@@ -197,7 +213,7 @@ int net_connect( int *fd, const char *host, int port )
             continue;
         }
 
-        if( connect( *fd, cur->ai_addr, cur->ai_addrlen ) == 0 )
+        if( connect( *fd, cur->ai_addr, MSVC_INT_CAST cur->ai_addrlen ) == 0 )
         {
             ret = 0;
             break;
@@ -260,7 +276,7 @@ int net_bind( int *fd, const char *bind_ip, int port )
 
     /* getaddrinfo expects port as a string */
     memset( port_str, 0, sizeof( port_str ) );
-    snprintf( port_str, sizeof( port_str ), "%d", port );
+    polarssl_snprintf( port_str, sizeof( port_str ), "%d", port );
 
     /* Bind to IPv6 and/or IPv4, but only in TCP */
     memset( &hints, 0, sizeof( hints ) );
@@ -294,7 +310,7 @@ int net_bind( int *fd, const char *bind_ip, int port )
             continue;
         }
 
-        if( bind( *fd, cur->ai_addr, cur->ai_addrlen ) != 0 )
+        if( bind( *fd, cur->ai_addr, MSVC_INT_CAST cur->ai_addrlen ) != 0 )
         {
             close( *fd );
             ret = POLARSSL_ERR_NET_BIND_FAILED;
@@ -391,13 +407,18 @@ static int net_would_block( int fd )
  */
 static int net_would_block( int fd )
 {
+    int err = errno;
+
     /*
      * Never return 'WOULD BLOCK' on a non-blocking socket
      */
     if( ( fcntl( fd, F_GETFL ) & O_NONBLOCK ) != O_NONBLOCK )
+    {
+        errno = err;
         return( 0 );
+    }
 
-    switch( errno )
+    switch( errno = err )
     {
 #if defined EAGAIN
         case EAGAIN:
@@ -423,7 +444,7 @@ int net_accept( int bind_fd, int *client_fd, void *client_ip )
 #endif
 
 #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
-    defined(_SOCKLEN_T_DECLARED)
+    defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t)
     socklen_t n = (socklen_t) sizeof( client_addr );
 #else
     int n = (int) sizeof( client_addr );
@@ -495,15 +516,19 @@ int net_set_nonblock( int fd )
  */
 void net_usleep( unsigned long usec )
 {
+#if defined(_WIN32)
+    Sleep( ( usec + 999 ) / 1000 );
+#else
     struct timeval tv;
     tv.tv_sec  = usec / 1000000;
-#if !defined(_WIN32) && ( defined(__unix__) || defined(__unix) || \
-    ( defined(__APPLE__) && defined(__MACH__) ) )
+#if defined(__unix__) || defined(__unix) || \
+    ( defined(__APPLE__) && defined(__MACH__) )
     tv.tv_usec = (suseconds_t) usec % 1000000;
 #else
     tv.tv_usec = usec % 1000000;
 #endif
     select( 0, NULL, NULL, NULL, &tv );
+#endif
 }
 #endif /* POLARSSL_HAVE_TIME */
 

@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,22 +35,27 @@
 
 #include "polarssl/md5.h"
 
-#if defined(POLARSSL_FS_IO) || defined(POLARSSL_SELF_TEST)
+#include <string.h>
+
+#if defined(POLARSSL_FS_IO)
 #include <stdio.h>
 #endif
 
+#if defined(POLARSSL_SELF_TEST)
 #if defined(POLARSSL_PLATFORM_C)
 #include "polarssl/platform.h"
 #else
+#include <stdio.h>
 #define polarssl_printf printf
-#endif
+#endif /* POLARSSL_PLATFORM_C */
+#endif /* POLARSSL_SELF_TEST */
+
+#if !defined(POLARSSL_MD5_ALT)
 
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
     volatile unsigned char *p = v; while( n-- ) *p++ = 0;
 }
-
-#if !defined(POLARSSL_MD5_ALT)
 
 /*
  * 32-bit integer manipulation macros (little endian)
@@ -325,6 +330,7 @@ void md5( const unsigned char *input, size_t ilen, unsigned char output[16] )
  */
 int md5_file( const char *path, unsigned char output[16] )
 {
+    int ret = 0;
     FILE *f;
     size_t n;
     md5_context ctx;
@@ -339,17 +345,16 @@ int md5_file( const char *path, unsigned char output[16] )
     while( ( n = fread( buf, 1, sizeof( buf ), f ) ) > 0 )
         md5_update( &ctx, buf, n );
 
-    md5_finish( &ctx, output );
-    md5_free( &ctx );
-
     if( ferror( f ) != 0 )
-    {
-        fclose( f );
-        return( POLARSSL_ERR_MD5_FILE_IO_ERROR );
-    }
+        ret = POLARSSL_ERR_MD5_FILE_IO_ERROR;
+    else
+        md5_finish( &ctx, output );
 
+    md5_free( &ctx );
+    polarssl_zeroize( buf, sizeof( buf ) );
     fclose( f );
-    return( 0 );
+
+    return( ret );
 }
 #endif /* POLARSSL_FS_IO */
 
@@ -438,7 +443,7 @@ void md5_hmac( const unsigned char *key, size_t keylen,
 /*
  * RFC 1321 test vectors
  */
-static unsigned char md5_test_buf[7][81] =
+static const unsigned char md5_test_buf[7][81] =
 {
     { "" },
     { "a" },
@@ -476,7 +481,7 @@ static const unsigned char md5_test_sum[7][16] =
 /*
  * RFC 2202 test vectors
  */
-static unsigned char md5_hmac_test_key[7][26] =
+static const unsigned char md5_hmac_test_key[7][26] =
 {
     { "\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B" },
     { "Jefe" },
@@ -493,7 +498,7 @@ static const int md5_hmac_test_keylen[7] =
     16, 4, 16, 25, 16, 80, 80
 };
 
-static unsigned char md5_hmac_test_buf[7][74] =
+static const unsigned char md5_hmac_test_buf[7][74] =
 {
     { "Hi There" },
     { "what do ya want for nothing?" },
@@ -575,7 +580,7 @@ int md5_self_test( int verbose )
 
         if( i == 5 || i == 6 )
         {
-            memset( buf, '\xAA', buflen = 80 );
+            memset( buf, 0xAA, buflen = 80 );
             md5_hmac_starts( &ctx, buf, buflen );
         }
         else

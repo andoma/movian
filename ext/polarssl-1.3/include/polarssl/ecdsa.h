@@ -5,7 +5,7 @@
  *
  *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,10 +25,24 @@
 #define POLARSSL_ECDSA_H
 
 #include "ecp.h"
-
-#if defined(POLARSSL_ECDSA_DETERMINISTIC)
 #include "md.h"
-#endif
+/*
+ *  RFC 4492 page 20:
+ *
+ *      Ecdsa-Sig-Value ::= SEQUENCE {
+ *          r       INTEGER,
+ *          s       INTEGER
+ *      }
+ *
+ * Size is at most
+ *      1 (tag) + 1 (len) + 1 (initial 0) + ECP_MAX_BYTES for each of r and s,
+ *      twice that + 1 (tag) + 2 (len) for the sequence
+ * (assuming ECP_MAX_BYTES is less than 126 for r and s,
+ * and less than 124 (total len <= 255) for the sequence)
+ *
+ */
+/** Maximum size of an ECDSA signature in bytes */
+#define POLARSSL_ECDSA_MAX_LEN  ( 3 + 2 * ( 3 + POLARSSL_ECP_MAX_BYTES ) )
 
 /**
  * \brief           ECDSA context structure
@@ -61,6 +75,10 @@ extern "C" {
  * \param f_rng     RNG function
  * \param p_rng     RNG parameter
  *
+ * \note            If the bitlength of the message hash is larger than the
+ *                  bitlength of the group order, then the hash is truncated as
+ *                  prescribed by SEC1 4.1.3 step 5.
+ *
  * \return          0 if successful,
  *                  or a POLARSSL_ERR_ECP_XXX or POLARSSL_MPI_XXX error code
  */
@@ -81,6 +99,10 @@ int ecdsa_sign( ecp_group *grp, mpi *r, mpi *s,
  * \param blen      Length of buf
  * \param md_alg    MD algorithm used to hash the message
  *
+ * \note            If the bitlength of the message hash is larger than the
+ *                  bitlength of the group order, then the hash is truncated as
+ *                  prescribed by SEC1 4.1.3 step 5.
+ *
  * \return          0 if successful,
  *                  or a POLARSSL_ERR_ECP_XXX or POLARSSL_MPI_XXX error code
  */
@@ -98,6 +120,10 @@ int ecdsa_sign_det( ecp_group *grp, mpi *r, mpi *s,
  * \param Q         Public key to use for verification
  * \param r         First integer of the signature
  * \param s         Second integer of the signature
+ *
+ * \note            If the bitlength of the message hash is larger than the
+ *                  bitlength of the group order, then the hash is truncated as
+ *                  prescribed by SEC1 4.1.4 step 3.
  *
  * \return          0 if successful,
  *                  POLARSSL_ERR_ECP_BAD_INPUT_DATA if signature is invalid
@@ -123,6 +149,10 @@ int ecdsa_verify( ecp_group *grp,
  * \note            The "sig" buffer must be at least as large as twice the
  *                  size of the curve used, plus 7 (eg. 71 bytes if a 256-bit
  *                  curve is used).
+ *
+ * \note            If the bitlength of the message hash is larger than the
+ *                  bitlength of the group order, then the hash is truncated as
+ *                  prescribed by SEC1 4.1.3 step 5.
  *
  * \return          0 if successful,
  *                  or a POLARSSL_ERR_ECP, POLARSSL_ERR_MPI or
@@ -170,6 +200,10 @@ int ecdsa_write_signature_det( ecdsa_context *ctx,
  * \param hlen      Size of hash
  * \param sig       Signature to read and verify
  * \param slen      Size of sig
+ *
+ * \note            If the bitlength of the message hash is larger than the
+ *                  bitlength of the group order, then the hash is truncated as
+ *                  prescribed by SEC1 4.1.4 step 3.
  *
  * \return          0 if successful,
  *                  POLARSSL_ERR_ECP_BAD_INPUT_DATA if signature is invalid,

@@ -5,7 +5,7 @@
  *
  *  Copyright (C) 2006-2013, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,11 +30,11 @@
 #include POLARSSL_CONFIG_FILE
 #endif
 
+#include <stddef.h>
+
 #if defined(POLARSSL_BIGNUM_C)
 #include "bignum.h"
 #endif
-
-#include <string.h>
 
 /**
  * \addtogroup asn1_module
@@ -60,7 +60,7 @@
 
 /**
  * \name DER constants
- * These constants comply with DER encoded the ANS1 type tags.
+ * These constants comply with the DER encoded ASN.1 type tags.
  * DER encoding uses hexadecimal representation.
  * An example DER sequence is:\n
  * - 0x02 -- tag indicating INTEGER

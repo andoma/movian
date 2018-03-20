@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,9 +31,20 @@
 #include "polarssl/entropy.h"
 #include "polarssl/entropy_poll.h"
 
+#include <string.h>
+
 #if defined(POLARSSL_FS_IO)
 #include <stdio.h>
 #endif
+
+#if defined(POLARSSL_SELF_TEST)
+#if defined(POLARSSL_PLATFORM_C)
+#include "polarssl/platform.h"
+#else
+#include <stdio.h>
+#define polarssl_printf     printf
+#endif /* POLARSSL_PLATFORM_C */
+#endif /* POLARSSL_SELF_TEST */
 
 #if defined(POLARSSL_HAVEGE_C)
 #include "polarssl/havege.h"
@@ -49,6 +60,9 @@ static void polarssl_zeroize( void *v, size_t n ) {
 void entropy_init( entropy_context *ctx )
 {
     memset( ctx, 0, sizeof(entropy_context) );
+
+    /* Reminder: Update ENTROPY_HAVE_DEFAULT in the test files
+      * when adding more strong entropy sources here. */
 
 #if defined(POLARSSL_THREADING_C)
     polarssl_mutex_init( &ctx->mutex );
@@ -83,33 +97,33 @@ void entropy_free( entropy_context *ctx )
 #if defined(POLARSSL_HAVEGE_C)
     havege_free( &ctx->havege_data );
 #endif
-    polarssl_zeroize( ctx, sizeof( entropy_context ) );
 #if defined(POLARSSL_THREADING_C)
     polarssl_mutex_free( &ctx->mutex );
 #endif
+    polarssl_zeroize( ctx, sizeof( entropy_context ) );
 }
 
 int entropy_add_source( entropy_context *ctx,
                         f_source_ptr f_source, void *p_source,
                         size_t threshold )
 {
-    int index, ret = 0;
+    int idx, ret = 0;
 
 #if defined(POLARSSL_THREADING_C)
     if( ( ret = polarssl_mutex_lock( &ctx->mutex ) ) != 0 )
         return( ret );
 #endif
 
-    index = ctx->source_count;
-    if( index >= ENTROPY_MAX_SOURCES )
+    idx = ctx->source_count;
+    if( idx >= ENTROPY_MAX_SOURCES )
     {
         ret = POLARSSL_ERR_ENTROPY_MAX_SOURCES;
         goto exit;
     }
 
-    ctx->source[index].f_source = f_source;
-    ctx->source[index].p_source = p_source;
-    ctx->source[index].threshold = threshold;
+    ctx->source[idx].f_source  = f_source;
+    ctx->source[idx].p_source  = p_source;
+    ctx->source[idx].threshold = threshold;
 
     ctx->source_count++;
 
@@ -155,6 +169,8 @@ static int entropy_update( entropy_context *ctx, unsigned char source_id,
     sha256_update( &ctx->accumulator, p, use_len );
 #endif
 
+    polarssl_zeroize( tmp, sizeof( tmp ) );
+
     return( 0 );
 }
 
@@ -183,12 +199,10 @@ int entropy_update_manual( entropy_context *ctx,
  */
 static int entropy_gather_internal( entropy_context *ctx )
 {
-    int ret, i;
+    int ret = POLARSSL_ERR_ENTROPY_NO_SOURCES_DEFINED;
+    int i;
     unsigned char buf[ENTROPY_MAX_GATHER];
     size_t olen;
-
-    if( ctx->source_count == 0 )
-        return( POLARSSL_ERR_ENTROPY_NO_SOURCES_DEFINED );
 
     /*
      * Run through our entropy sources
@@ -199,7 +213,7 @@ static int entropy_gather_internal( entropy_context *ctx )
         if( ( ret = ctx->source[i].f_source( ctx->source[i].p_source,
                         buf, ENTROPY_MAX_GATHER, &olen ) ) != 0 )
         {
-            return( ret );
+            goto cleanup;
         }
 
         /*
@@ -212,7 +226,10 @@ static int entropy_gather_internal( entropy_context *ctx )
         }
     }
 
-    return( 0 );
+cleanup:
+    polarssl_zeroize( buf, sizeof( buf ) );
+
+    return( ret );
 }
 
 /*
@@ -313,6 +330,8 @@ int entropy_func( void *data, unsigned char *output, size_t len )
     ret = 0;
 
 exit:
+    polarssl_zeroize( buf, sizeof( buf ) );
+
 #if defined(POLARSSL_THREADING_C)
     if( polarssl_mutex_unlock( &ctx->mutex ) != 0 )
         return( POLARSSL_ERR_THREADING_MUTEX_ERROR );
@@ -343,12 +362,15 @@ int entropy_write_seed_file( entropy_context *ctx, const char *path )
     ret = 0;
 
 exit:
+    polarssl_zeroize( buf, sizeof( buf ) );
+
     fclose( f );
     return( ret );
 }
 
 int entropy_update_seed_file( entropy_context *ctx, const char *path )
 {
+    int ret = 0;
     FILE *f;
     size_t n;
     unsigned char buf[ ENTROPY_MAX_SEED_SIZE ];
@@ -364,28 +386,22 @@ int entropy_update_seed_file( entropy_context *ctx, const char *path )
         n = ENTROPY_MAX_SEED_SIZE;
 
     if( fread( buf, 1, n, f ) != n )
-    {
-        fclose( f );
-        return( POLARSSL_ERR_ENTROPY_FILE_IO_ERROR );
-    }
+        ret = POLARSSL_ERR_ENTROPY_FILE_IO_ERROR;
+    else
+        ret = entropy_update_manual( ctx, buf, n );
 
     fclose( f );
 
-    entropy_update_manual( ctx, buf, n );
+    polarssl_zeroize( buf, sizeof( buf ) );
+
+    if( ret != 0 )
+        return( ret );
 
     return( entropy_write_seed_file( ctx, path ) );
 }
 #endif /* POLARSSL_FS_IO */
 
 #if defined(POLARSSL_SELF_TEST)
-
-#if defined(POLARSSL_PLATFORM_C)
-#include "polarssl/platform.h"
-#else
-#include <stdio.h>
-#define polarssl_printf     printf
-#endif
-
 /*
  * Dummy source function
  */
