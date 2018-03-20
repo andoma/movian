@@ -95,3 +95,11 @@ signed-apk: ${BUILDDIR}/${APPNAME}.apk
 install: ${BUILDDIR}/${APPNAME}.apk
 	adb install -r $<
 
+run:
+	adb shell am start -n com.lonelycoder.mediaplayer/.GLWActivity
+
+stop:
+	adb shell am force-stop com.lonelycoder.mediaplayer
+
+logcat:
+	adb logcat ActivityManager:I ${APPNAMEUSER}:D AndroidRuntime:D DEBUG:D *:S
