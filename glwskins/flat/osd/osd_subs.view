@@ -52,12 +52,19 @@ widget(container_y, {
             padding: [0.5em, 0, 0, 0];
             align: center;
 
-	    widget(label, {
-              filterConstraintX: true;
-              caption: $self.title;
-              style: "NavSelectedText";
-            });
+            widget(container_x, {
+   	      widget(label, {
+                filterConstraintX: true;
+                caption: $self.title;
+                style: "NavSelectedTextSecondary";
+              });
 
+   	      widget(label, {
+                filterConstraintX: true;
+                caption: $self.longformat;
+                style: "NavSelectedTextSecondary";
+              });
+            });
             widget(container_x, {
 	      widget(label, {
                 filterConstraintX: true;
