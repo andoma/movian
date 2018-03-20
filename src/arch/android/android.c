@@ -334,29 +334,3 @@ Java_com_lonelycoder_mediaplayer_Core_networkStatusChanged(JNIEnv *env, jobject 
   extern void asyncio_trig_network_change(void);
   asyncio_trig_network_change();
 }
-
-
-
-/**
- *
- */
-int
-android_install_apk(const char *path)
-{
-  JNIEnv *env;
-  int r = (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
-
-  if(r) {
-    TRACE(TRACE_DEBUG, "Upgrade", "No JNI environment");
-    return -1;
-  }
-
-  jstring jstr = (*env)->NewStringUTF(env, path);
-  jmethodID upgrade_mid = (*env)->GetStaticMethodID(env, STCore, "Upgrade",
-                                                    "(Ljava/lang/String;)V");
-  assert(upgrade_mid != 0);
-
-  (*env)->CallStaticVoidMethod(env, STCore, upgrade_mid, jstr);
-
-  exit(0);
-}
