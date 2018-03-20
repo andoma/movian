@@ -26,9 +26,9 @@
       ],
       "buildcmd": [
         "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api15_armv7",
-        "make -j${PARALLEL}",
+        "make -j${PARALLEL} apk",
         "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api15_x86",
-        "make -j${PARALLEL}",
+        "make -j${PARALLEL} apk",
       ]
     },
 
