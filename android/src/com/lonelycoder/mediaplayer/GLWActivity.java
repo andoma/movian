@@ -8,7 +8,11 @@ import android.os.Handler;
 
 import android.os.Bundle;
 import android.os.Message;
+import android.os.IBinder;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.Context;
+import android.content.ComponentName;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.KeyEvent;
@@ -19,53 +23,108 @@ import android.util.Log;
 
 import android.widget.FrameLayout;
 
+import com.lonelycoder.mediaplayer.CoreService.LocalBinder;
+
 import android.util.Log;
 
 public class GLWActivity extends Activity implements VideoRendererProvider {
 
+    CoreService mService;
+
     GLWView mGLWView;
     FrameLayout mRoot;
     SurfaceView sv;
+    boolean mBound;
 
     private void startGLW() {
-        // remove title
-        mRoot = new FrameLayout(this);
+        if(mGLWView != null)
+            return;
 
-        mGLWView = new GLWView(getApplication(), this);
+        if(!mBound)
+            return;
+
+        mGLWView = new GLWView(getApplication(), GLWActivity.this);
         mRoot.addView(mGLWView);
+    }
 
-       setContentView(mRoot);
+    private void stopGLW() {
+        if(mGLWView != null) {
+            mGLWView.destroy();
+            mGLWView = null;
+        }
     }
 
     @Override
     protected void onStart() {
+        Log.d("Movian", "GLWActivity onStart");
         super.onStart();
-
-        Handler h = new Handler(new Handler.Callback() {
-                public boolean handleMessage(Message msg) {
-                    startGLW();
-                    return true;
-                }
-            });
-
-        h.sendEmptyMessage(0);
+        startGLW();
     }
 
     @Override
     protected void onStop() {
+        Log.d("Movian", "GLWActivity onStop");
         super.onStop();
-        mGLWView.destroy();
+        stopGLW();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("Movian", "GLWActivity onCreate");
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        startService(new Intent(this, CoreService.class));
+        mRoot = new FrameLayout(this);
+        setContentView(mRoot);
+
+        Intent intent = new Intent(this, CoreService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
+
+    @Override
+    protected void onResume() {
+        Log.d("Movian", "GLWActivity onResume");
+        super.onResume();
+        if(mGLWView != null)
+            mGLWView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d("Movian", "GLWActivity onPause");
+        super.onPause();
+        if(mGLWView != null)
+            mGLWView.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d("Movian", "GLWActivity onDestroy");
+        super.onDestroy();
+    }
+
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            Log.d("Movian", "GLWActivity onServiceConnected");
+            mBound = true;
+            startGLW();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d("Movian", "GLWActivity onServiceDisconnected");
+            mBound = false;
+            stopGLW();
+        }
+    };
+
+
 
     public boolean onKeyUp(int keyCode, KeyEvent event) {
 
@@ -82,20 +141,7 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
 
     // These does not execute on the main ui thread so we need to dispatch
 
