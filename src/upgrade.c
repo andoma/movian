@@ -52,10 +52,6 @@
 #include <sys/utsname.h>
 #endif
 
-#ifdef __ANDROID__
-#include "arch/android/android.h"
-#endif
-
 static HTS_MUTEX_DECL(upgrade_mutex);
 
 static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/3";
@@ -1142,11 +1138,6 @@ install_locked(struct artifact_queue *aq)
       return;
   }
 
-#ifdef __ANDROID__
-  android_install_apk(gconf.upgrade_path);
-  return;
-#endif
-
   move_files_into_place(aq);
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
@@ -1272,11 +1263,6 @@ upgrade_init(void)
 #if PS3
   artifact_type = "self";
   archname = "ps3";
-#endif
-
-#ifdef __ANDROID__
-  artifact_type = "apk";
-  archname = "android";
 #endif
 
 #ifdef __APPLE__
