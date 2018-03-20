@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2014-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,19 +36,20 @@
 
 #include "polarssl/ripemd160.h"
 
-#if defined(POLARSSL_FS_IO) || defined(POLARSSL_SELF_TEST)
+#include <string.h>
+
+#if defined(POLARSSL_FS_IO)
 #include <stdio.h>
 #endif
 
 #if defined(POLARSSL_SELF_TEST)
-#include <string.h>
-#endif
-
 #if defined(POLARSSL_PLATFORM_C)
 #include "polarssl/platform.h"
 #else
+#include <stdio.h>
 #define polarssl_printf printf
-#endif
+#endif /* POLARSSL_PLATFORM_C */
+#endif /* POLARSSL_SELF_TEST */
 
 /*
  * 32-bit integer manipulation macros (little endian)
@@ -387,6 +388,7 @@ void ripemd160( const unsigned char *input, size_t ilen,
  */
 int ripemd160_file( const char *path, unsigned char output[20] )
 {
+    int ret = 0;
     FILE *f;
     size_t n;
     ripemd160_context ctx;
@@ -401,17 +403,16 @@ int ripemd160_file( const char *path, unsigned char output[20] )
     while( ( n = fread( buf, 1, sizeof( buf ), f ) ) > 0 )
         ripemd160_update( &ctx, buf, n );
 
-    ripemd160_finish( &ctx, output );
-    ripemd160_free( &ctx );
-
     if( ferror( f ) != 0 )
-    {
-        fclose( f );
-        return( POLARSSL_ERR_RIPEMD160_FILE_IO_ERROR );
-    }
+        ret = POLARSSL_ERR_RIPEMD160_FILE_IO_ERROR;
+    else
+        ripemd160_finish( &ctx, output );
 
+    ripemd160_free( &ctx );
+    polarssl_zeroize( buf, sizeof( buf ) );
     fclose( f );
-    return( 0 );
+
+    return( ret );
 }
 #endif /* POLARSSL_FS_IO */
 

@@ -7,7 +7,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +35,9 @@
 #include "polarssl/cipher.h"
 #include "polarssl/cipher_wrap.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #if defined(POLARSSL_GCM_C)
 #include "polarssl/gcm.h"
 #endif
@@ -42,8 +45,6 @@
 #if defined(POLARSSL_CCM_C)
 #include "polarssl/ccm.h"
 #endif
-
-#include <stdlib.h>
 
 #if defined(POLARSSL_ARC4_C) || defined(POLARSSL_CIPHER_NULL_CIPHER)
 #define POLARSSL_CIPHER_MODE_STREAM
@@ -164,13 +165,14 @@ int cipher_init_ctx( cipher_context_t *ctx, const cipher_info_t *cipher_info )
     return( 0 );
 }
 
-/* Deprecated, redirects to cipher_free() */
+#if ! defined(POLARSSL_DEPRECATED_REMOVED)
 int cipher_free_ctx( cipher_context_t *ctx )
 {
     cipher_free( ctx );
 
     return( 0 );
 }
+#endif
 
 int cipher_setkey( cipher_context_t *ctx, const unsigned char *key,
         int key_length, const operation_t operation )
@@ -313,9 +315,9 @@ int cipher_update( cipher_context_t *ctx, const unsigned char *input,
          * If there is not enough data for a full block, cache it.
          */
         if( ( ctx->operation == POLARSSL_DECRYPT &&
-                ilen + ctx->unprocessed_len <= cipher_get_block_size( ctx ) ) ||
+                ilen <= cipher_get_block_size( ctx ) - ctx->unprocessed_len ) ||
              ( ctx->operation == POLARSSL_ENCRYPT &&
-                ilen + ctx->unprocessed_len < cipher_get_block_size( ctx ) ) )
+                ilen < cipher_get_block_size( ctx ) - ctx->unprocessed_len ) )
         {
             memcpy( &( ctx->unprocessed_data[ctx->unprocessed_len] ), input,
                     ilen );
@@ -498,14 +500,14 @@ static int get_one_and_zeros_padding( unsigned char *input, size_t input_len,
     if( NULL == input || NULL == data_len )
         return( POLARSSL_ERR_CIPHER_BAD_INPUT_DATA );
 
-    bad = 0xFF;
+    bad = 0x80;
     *data_len = 0;
     for( i = input_len; i > 0; i-- )
     {
         prev_done = done;
-        done |= ( input[i-1] != 0 );
+        done |= ( input[i - 1] != 0 );
         *data_len |= ( i - 1 ) * ( done != prev_done );
-        bad &= ( input[i-1] ^ 0x80 ) | ( done == prev_done );
+        bad ^= input[i - 1] * ( done != prev_done );
     }
 
     return( POLARSSL_ERR_CIPHER_INVALID_PADDING * ( bad != 0 ) );
