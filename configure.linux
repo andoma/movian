@@ -586,6 +586,7 @@ echo "  Man pages:     ${mandir}"
 echo "  Data files:    ${datadir}"
 echo "  Libraries:     ${libdir}"
 echo
+echo >>${CONFIG_MAK} "CFLAGS_cfg+=-D_FILE_OFFSET_BITS=64"
 echo >>${CONFIG_MAK} "prefix=$prefix"
 echo >>${CONFIG_MAK} "bindir=\${DESTDIR}$bindir"
 echo >>${CONFIG_MAK} "mandir=\${DESTDIR}$mandir"

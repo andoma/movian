@@ -103,7 +103,7 @@ fi
 
 cat >> ${CONFIG_MAK} <<EOF
 FINALIZE = ${FINALIZE}
-CFLAGS_cfg += -I${PEPPER}/include
+CFLAGS_cfg += -I${PEPPER}/include -D_FILE_OFFSET_BITS=64
 LDFLAGS_cfg += -lppapi_gles2 -lppapi -lpthread
 EOF
 

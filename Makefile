@@ -31,6 +31,8 @@ ALLDEPS += ${STAMPS}
 
 OPTFLAGS ?= -O${OPTLEVEL}
 
+VERSION ?= $(shell echo ${GIT_DESCRIBE_OUTPUT} | awk -F. '{ print $$1 "." $$2 "." $$3 }')
+
 PROG=${BUILDDIR}/movian
 LIB=${BUILDDIR}/libmovian
 
@@ -789,6 +791,8 @@ ${BUILDDIR}/support/dataroot/%.o : CFLAGS = -O2
 ##############################################################
 ##############################################################
 
+include support/gitver.mk
+
 include src/arch/${PLATFORM}/${PLATFORM}.mk
 
 
@@ -812,7 +816,6 @@ BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
 
 # Common CFLAGS for all files
 CFLAGS_com += -g -funsigned-char ${OPTFLAGS} ${CFLAGS_dbg}
-CFLAGS_com += -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -iquote${BUILDDIR} -iquote${C}/src -iquote${C}
 
 # Tools
@@ -884,11 +887,7 @@ reconfigure:
 showconfig:
 	@echo $(CONFIGURE_ARGS)
 
-# Create buildversion.h
-src/version.c: $(BUILDDIR)/buildversion.h
-$(BUILDDIR)/buildversion.h: FORCE
-	@$(C)/support/version.sh $(C) $@
-FORCE:
+src/version.c: ${BUILDDIR}/version_git.h
 
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)

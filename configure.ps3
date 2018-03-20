@@ -16,12 +16,6 @@ DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="ps3"
 
 source support/configure.inc
-TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
-CC=${TOOLCHAIN}gcc
-
-LIBAV_CFLAGS="-mminimal-toc -I${PSL1GHT}/target/include -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
-
-LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my --disable-shared --enable-static"
 
 
 enable sqlite_internal
@@ -56,10 +50,22 @@ for opt do
   ;;
   --logtarget=*) DEFAULT_LOGTARGET="$optval"
   ;;
+  --ps3dev=*) PS3DEV="$optval"
+  ;;
+  --psl1ght=*) PSL1GHT="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
 done
+
+TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
+CC=${TOOLCHAIN}gcc
+
+LIBAV_CFLAGS="-mminimal-toc -I${PSL1GHT}/target/include -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
+
+LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my --disable-shared --enable-static"
+
 
 setup_env "$@"
 
@@ -78,7 +84,8 @@ if enabled libntfs; then
 fi
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
-CFLAGS_cfg += -DPATH_MAX=512 -DPS3
+CFLAGS_cfg += -DPATH_MAX=512 -DPS3 -D_FILE_OFFSET_BITS=64
+PSL1GHT    := - ${PSL1GHT}
 CFLAGS_cfg += -I${PSL1GHT}/target/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include/freetype2
@@ -87,7 +94,7 @@ SQLITE_PLATFORM_DEFINES += -DSQLITE_OS_OTHER=1
 EOF
 
 #
-# 
+#
 #
 cat >> ${CONFIG_MAK} <<EOF
 LDFLAGS_cfg  += -lvdec -lrtc

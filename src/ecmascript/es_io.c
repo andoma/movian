@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -340,7 +340,15 @@ es_http_req(duk_context *ctx)
 
   duk_get_prop_string(ctx, 1, "postdata");
 
-  if(duk_is_object(ctx, -1)) {
+  if(duk_is_buffer(ctx, -1)) {
+    duk_size_t len;
+    unsigned char *buf;
+    buf = (unsigned char *) duk_get_buffer(ctx, -1, &len);
+    ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
+    htsbuf_queue_init(ehr->ehr_postdata, 0);
+    htsbuf_append(ehr->ehr_postdata, buf, len);
+    ehr->ehr_postcontenttype = strdup("application/octet-stream");
+  } else if(duk_is_object(ctx, -1)) {
     const char *prefix = "";
 
     ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
@@ -372,7 +380,7 @@ es_http_req(duk_context *ctx)
     ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
     htsbuf_queue_init(ehr->ehr_postdata, 0);
     htsbuf_append(ehr->ehr_postdata, str, len);
-    ehr->ehr_postcontenttype =  strdup("text/plain");
+    ehr->ehr_postcontenttype = strdup("text/plain");
   } else {
 
   }
@@ -591,7 +599,7 @@ es_http_inspector_create(duk_context *ctx)
   ehi->ehi_prio = strlen(str);
   ehi->ehi_async = async;
 
-  es_debug(ec, "Adding HTTP insepction for pattern %s", str);
+  es_debug(ec, "Adding HTTP inspection for pattern %s", str);
 
   LIST_INSERT_SORTED(&http_inspectors, ehi, ehi_link, ehi_cmp,
                      es_http_inspector_t);

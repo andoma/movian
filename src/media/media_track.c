@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,7 +68,8 @@ mp_add_trackr(prop_t *parent,
     if(il != NULL) {
       prop_set(p, "language", PROP_SET_STRING, il->fullname);
       prop_set(p, "isolang", PROP_SET_STRING, il->iso639_2);
-    }
+    } else 
+      TRACE(TRACE_DEBUG, "Media", "Got unknown language code: %s", rstr_get(isolang));
   }
 
   prop_set(p, "title", PROP_SET_RSTRING, title);

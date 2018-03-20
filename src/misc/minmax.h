@@ -17,13 +17,11 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#if defined(__ANDROID__) || defined(_MSC_VER)
 
+#ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-
-#else
-
-#include <sys/param.h>
-
 #endif

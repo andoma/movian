@@ -21,9 +21,13 @@ SRCS += src/htsmsg/persistent_file.c
 # Install
 #
 
-VERSION := $(shell support/getver.sh)
 SFO := $(PSL1GHT)/host/bin/sfo.py
 PKG := $(PSL1GHT)/host/bin/pkg.py
+MAKE_SELF := $(PSL1GHT)/host/bin/make_self
+MAKE_SELF_NPDRM := $(PSL1GHT)/host/bin/make_self_npdrm
+SPRXLINKER := $(PSL1GHT)/host/bin/sprxlinker
+PACKAGE_FINALIZE := $(PSL1GHT)/host/bin/package_finalize
+
 ICON0 := $(TOPDIR)/support/ps3icon.png
 APPID		:=	HTSS00003
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
@@ -44,11 +48,11 @@ $(BUILDDIR)/PARAM.SFO: $(SFOXML)
 ${EBOOT}: support/ps3/eboot.c src/arch/ps3/ps3.mk
 	$(CC) $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)  -o $@ $< ${LDFLAGS_EBOOT}
 	${STRIP} $@
-	sprxlinker $@
+	${SPRXLINKER} $@
 
 ${ELF}: ${BUILDDIR}/${APPNAME}.ziptail src/arch/ps3/ps3.mk
 	${STRIP} -o $@ $<
-	sprxlinker $@
+	${SPRXLINKER} $@
 
 ${SYMS}: ${BUILDDIR}/${APPNAME}.ziptail src/arch/ps3/ps3.mk
 	${OBJDUMP} -t -j .text $< | awk '{print $$1 " " $$NF}'|sort >$@
@@ -59,7 +63,7 @@ ${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} src/arch/ps3/ps3.mk $(BUILDDIR
 	zip -9j ${ZS} ${SYMS} $(BUILDDIR)/PARAM.SFO $(BUILDDIR)/ICON0.PNG
 
 ${SELF}: ${ELF} ${ZS} src/arch/ps3/ps3.mk
-	make_self $< $@
+	${MAKE_SELF} $< $@
 	cat ${ZS} >>$@
 
 $(BUILDDIR)/pkg/USRDIR/${APPNAME}.self: ${SELF}  src/arch/ps3/ps3.mk
@@ -67,7 +71,7 @@ $(BUILDDIR)/pkg/USRDIR/${APPNAME}.self: ${SELF}  src/arch/ps3/ps3.mk
 
 $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  src/arch/ps3/ps3.mk
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
-	make_self_npdrm $< $@ $(CONTENTID)
+	${MAKE_SELF_NPDRM} $< $@ $(CONTENTID)
 
 $(BUILDDIR)/${APPNAME}.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/${APPNAME}.self $(BUILDDIR)/PARAM.SFO
 	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
@@ -76,7 +80,7 @@ $(BUILDDIR)/${APPNAME}.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USR
 
 $(BUILDDIR)/${APPNAME}_geohot.pkg: $(BUILDDIR)/${APPNAME}.pkg  src/arch/ps3/ps3.mk
 	cp $< $@
-	package_finalize $@
+	${PACKAGE_FINALIZE} $@
 
 pkg: $(BUILDDIR)/${APPNAME}.pkg $(BUILDDIR)/${APPNAME}_geohot.pkg
 self: ${SELF}

@@ -7,56 +7,84 @@ CONFIGURE_POSTFIX="android"
 source support/configure.inc
 
 SDK="${ANDROID_HOME}"
-NDK="${ANDROID_HOME}/../ndk"
 
-export ANDROID_API=android-17
-export ANDROID_EABI=arm-linux-androideabi-4.9
-
-install_openssl()
-{
-    OPENSSL_VER="1.0.2"
-
-    download_file http://www.lonelycoder.com/download/openssl-${OPENSSL_VER}-${ANDROID_API}-${ANDROID_EABI}.tar.gz openssltarball
-
-    tar -C "${BUILDDIR}/inst" --strip-components=1 -xf "${openssltarball}"
-}
+BUILD_TOOLS=27.0.3
 
 
 show_help(){
   common_help
   echo "  --sdk=PREFIX          Use Android SDK from this path [$SDK]"
-  echo "  --ndk=DIR             Use Android NDK from this path [$NDK]"
+  echo "  --ndk=DIR             Use Android NDK from this path [$SDK/ndk-bundle]"
+  echo "  --kind=KIND           Build for specific android configuration"
+  echo "                        api15_armv7  ARMv7 SDK version 15 (4.0.3)"
+  echo "                        api15_x86      x86 SDK version 15 (4.0.3)"
   exit 1
 }
 
 enable sqlite_internal
 enable glw_backend_opengl_es
 enable glw
-#enable librtmp
+enable librtmp
 enable httpserver
 enable libfreetype
 enable stdin
-enable openssl
+enable polarssl
 enable vmir
+disable upgrade
 
 [ -f project.config ] && source project.config
 
 for opt do
-  optval="${opt#*=}"
-  case "$opt" in
-  --help) show_help
-  ;;
-  --ndk=*) NDK="$optval"
-  ;;
-  --sdk=*) SDK="$optval"
-  ;;
-  *)
-  common_opt $opt $optval
-  esac
+    optval="${opt#*=}"
+    case "$opt" in
+        --help)
+            show_help
+            ;;
+        --ndk=*)
+            NDK="$optval"
+            ;;
+        --sdk=*)
+            SDK="$optval"
+            ;;
+        --kind=api15_armv7)
+            ANDROID_MIN_SDK_VERSION=15
+            ANDROID_TARGET_SDK_VERSION=21
+            TOOLCHAIN_NAME=arm-linux-androideabi-4.9
+            ANDROID_BUILDKIND_DESCRIMINATOR=1
+            ANDROID_ABI=armeabi
+            BUILD=android.api15_armv7
+            TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/arm-linux-androideabi-
+            ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
+            ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
+            LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc"
+            CC=${TOOLCHAIN}clang
+            CXX=${TOOLCHAIN}clang++
+            ;;
+        --kind=api15_x86)
+            ANDROID_MIN_SDK_VERSION=15
+            ANDROID_TARGET_SDK_VERSION=21
+            TOOLCHAIN_NAME=x86-linux
+            ANDROID_ABI=x86
+            ANDROID_BUILDKIND_DESCRIMINATOR=2
+            BUILD=android.api15_x86
+            TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/i686-linux-android-
+            LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc --disable-inline-asm"
+            CC="${TOOLCHAIN}clang -mstackrealign"
+            CXX="${TOOLCHAIN}clang++ -mstackrealign"
+            ;;
+        *)
+            common_opt $opt $optval
+    esac
 done
 
+if [ -z "${ANDROID_BUILDKIND_DESCRIMINATOR}" ]; then
+    echo "Android build kind not set (--kind option)"
+    echo "See ./configure.android --help"
+    die
+fi
+
 if [ -z "${SDK}" ]; then
-    echo "Android SDK not found"
+    echo "Android SDK not set"
     echo "Either specify path to SDK using --sdk=/path/to/sdk"
     echo " OR "
     echo "Set ANDROID_HOME environment variable"
@@ -66,15 +94,10 @@ fi
 echo "Using Android SDK at : ${SDK}"
 echo
 
-if [ ! -x "${SDK}/tools/ant" ]; then
-    echo "''ant'' not found in ${SDK}/tools/"
-    echo "Check that your configured path to the SDK is correct"
-    die
+if [ -z "${NDK}" ]; then
+    NDK=${SDK}/ndk-bundle
 fi
 
-TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
-CC=${TOOLCHAIN}gcc
-CXX=${TOOLCHAIN}g++
 
 setup_env "$@"
 
@@ -90,19 +113,15 @@ if [ ! -f "${CC}" ]; then
         echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
         die
     fi
-    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=${ANDROID_API} --install-dir=${TOPDIR}/build.android/toolchain --toolchain=${ANDROID_EABI}
+    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-${ANDROID_MIN_SDK_VERSION} --install-dir=${TOPDIR}/build.${BUILD}/toolchain --toolchain=${TOOLCHAIN_NAME}
 fi
 
 
 bzip2_setup
 freetype_setup --host=arm-linux-gnueabihf
-install_openssl
-ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
-ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
 
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static"
 
 ext_setup
 libyuv_setup
@@ -111,10 +130,12 @@ cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_arch = ${ARCH_CFLAGS}
 CFLAGS_cfg += ${ARCH_CFLAGS}
 LDFLAGS_cfg += ${ARCH_LDFLAGS} -lOpenSLES -lGLESv2 -llog -landroid -ljnigraphics
-LDFLAGS_cfg += -lssl -lcrypto
-SDK = ${SDK}
-NDK = ${NDK}
-ADB = ${SDK}/platform-tools/adb
+ANDROID_BUILD_TOOLS := ${SDK}/build-tools/${BUILD_TOOLS}
+ANDROID_PLATFORM_PATH := ${SDK}/platforms/android-${ANDROID_TARGET_SDK_VERSION}
+ANDROID_BUILDKIND_DESCRIMINATOR := ${ANDROID_BUILDKIND_DESCRIMINATOR}
+ANDROID_MIN_SDK_VERSION := ${ANDROID_MIN_SDK_VERSION}
+ANDROID_TARGET_SDK_VERSION := ${ANDROID_TARGET_SDK_VERSION}
+ANDROID_ABI := ${ANDROID_ABI}
 EOF
 
 finalize

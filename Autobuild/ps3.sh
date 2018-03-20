@@ -6,11 +6,6 @@ cleanup() {
     exit 1
 }
 
-export PS3DEV=${TOOLCHAIN}
-export PSL1GHT=${TOOLCHAIN}/psl1ght
-export PATH=$PATH:$PS3DEV/bin:$PS3DEV/host/ppu/bin:$PS3DEV/host/spu/bin
-export PATH=$PATH:$PSL1GHT/host/bin
-
 echo "Toolchain from: '${TOOLCHAIN_URL}' Local install in: ${TOOLCHAIN}"
 if [ -d $TOOLCHAIN ]; then
     echo "Toolchain seems to exist"
@@ -42,6 +37,7 @@ else
 fi
 
 ./configure.ps3 --build=${TARGET} \
+    --ps3dev=${TOOLCHAIN} --psl1ght=${TOOLCHAIN}/psl1ght \
     ${RELEASE} \
     ${VERSIONARGS} \
     --cleanbuild \

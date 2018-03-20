@@ -314,6 +314,7 @@ http_connection_get(const char *hostname, int port, int ssl,
 {
   http_connection_t *hc;
   tcpcon_t *tc;
+  char xerrbuf[256];
 
   hts_mutex_lock(&http_connections_mutex);
 
@@ -373,7 +374,6 @@ http_connection_get(const char *hostname, int port, int ssl,
   const int id = atomic_add_and_fetch(&http_connection_tally, 1);
 
   if(errbuf == NULL || errlen == 0) {
-    char xerrbuf[256];
     errbuf = xerrbuf;
     errlen = sizeof(xerrbuf);
   }

@@ -56,6 +56,11 @@ static __inline const char *rstr_get(const rstr_t *rs)
   return rs ? rs->str : NULL;
 }
 
+static __inline const char *rstr_get_always(const rstr_t *rs)
+{
+  return rs->str;
+}
+
 
 static __inline char *rstr_data(rstr_t *rs)
 {
