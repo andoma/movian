@@ -21,7 +21,7 @@ ${BUILDDIR}/src/arch/android/%.o : CFLAGS = ${OPTFLAGS} \
 	-Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 			-Wno-multichar -std=gnu99
 
-.DEFAULT_GOAL := ${BUILDDIR}/${APPNAME}.aligned.apk
+.DEFAULT_GOAL := ${BUILDDIR}/${APPNAME}.apk
 
 
 MANIFEST := ${BUILDDIR}/AndroidManifest.xml
@@ -87,9 +87,9 @@ ${BUILDDIR}/${APPNAME}.aligned.apk: ${BUILDDIR}/${APPNAME}.unsigned.apk
 	${ZIPALIGN} -f -p 4 $< $@
 
 ${BUILDDIR}/${APPNAME}.apk: ${BUILDDIR}/${APPNAME}.aligned.apk
-	${APKSIGNER} sign -ks android/movian.keystore -ks-pass env:MOVIAN_KEYSTORE_PASS --out $@ $<
+	@[ -z "$$MOVIAN_KEYSTORE_PASS" ] && (cp $< $@ ; echo "Warning: Keystore password not present, producing unsigned APK") || (${APKSIGNER} sign -ks android/movian.keystore -ks-pass env:MOVIAN_KEYSTORE_PASS --out $@ $< ; echo "APK signed")
 
-signed-apk: ${BUILDDIR}/${APPNAME}.apk
+apk: ${BUILDDIR}/${APPNAME}.apk
 	@echo "doozer-artifact:${BUILDDIR}/${APPNAME}.apk:apk:application/vnd.android.package-archive:${APPNAME}_api${ANDROID_MIN_SDK_VERSION}_${ANDROID_ABI}.apk:versioncode=${NUMVER}"
 
 install: ${BUILDDIR}/${APPNAME}.apk
