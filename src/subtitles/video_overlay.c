@@ -83,8 +83,8 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 		vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
 		vo->vo_stop  = mb->mb_pts + sub.end_display_time * 1000;
 
-		vo->vo_canvas_width  = 720; // ctx->width;
-		vo->vo_canvas_height = 576; // ctx->height;
+		vo->vo_canvas_width  = ctx->width ? ctx->width : 720;
+		vo->vo_canvas_height = ctx->height ? ctx->height : 576;
 
 		vo->vo_x = r->x;
 		vo->vo_y = r->y;

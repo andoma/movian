@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@
 
 #include "polarssl/dhm.h"
 
+#include <string.h>
+
 #if defined(POLARSSL_PEM_PARSE_C)
 #include "polarssl/pem.h"
 #endif
@@ -47,6 +49,7 @@
 #include "polarssl/platform.h"
 #else
 #include <stdlib.h>
+#include <stdio.h>
 #define polarssl_printf     printf
 #define polarssl_malloc     malloc
 #define polarssl_free       free
@@ -88,6 +91,9 @@ static int dhm_read_bignum( mpi *X,
  *
  * Parameter should be: 2 <= public_param <= P - 2
  *
+ * This means that we need to return an error if
+ *              public_param < 2 or public_param > P-2
+ *
  * For more information on the attack, see:
  *  http://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf
  *  http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2005-2643
@@ -95,17 +101,17 @@ static int dhm_read_bignum( mpi *X,
 static int dhm_check_range( const mpi *param, const mpi *P )
 {
     mpi L, U;
-    int ret = POLARSSL_ERR_DHM_BAD_INPUT_DATA;
+    int ret = 0;
 
     mpi_init( &L ); mpi_init( &U );
 
     MPI_CHK( mpi_lset( &L, 2 ) );
     MPI_CHK( mpi_sub_int( &U, P, 2 ) );
 
-    if( mpi_cmp_mpi( param, &L ) >= 0 &&
-        mpi_cmp_mpi( param, &U ) <= 0 )
+    if( mpi_cmp_mpi( param, &L ) < 0 ||
+        mpi_cmp_mpi( param, &U ) > 0 )
     {
-        ret = 0;
+        ret = POLARSSL_ERR_DHM_BAD_INPUT_DATA;
     }
 
 cleanup:
@@ -160,7 +166,7 @@ int dhm_make_params( dhm_context *ctx, int x_size,
      */
     do
     {
-        mpi_fill_random( &ctx->X, x_size, f_rng, p_rng );
+        MPI_CHK( mpi_fill_random( &ctx->X, x_size, f_rng, p_rng ) );
 
         while( mpi_cmp_mpi( &ctx->X, &ctx->P ) >= 0 )
             MPI_CHK( mpi_shift_r( &ctx->X, 1 ) );
@@ -246,7 +252,7 @@ int dhm_make_public( dhm_context *ctx, int x_size,
      */
     do
     {
-        mpi_fill_random( &ctx->X, x_size, f_rng, p_rng );
+        MPI_CHK( mpi_fill_random( &ctx->X, x_size, f_rng, p_rng ) );
 
         while( mpi_cmp_mpi( &ctx->X, &ctx->P ) >= 0 )
             MPI_CHK( mpi_shift_r( &ctx->X, 1 ) );
@@ -319,7 +325,7 @@ static int dhm_update_blinding( dhm_context *ctx,
     count = 0;
     do
     {
-        mpi_fill_random( &ctx->Vi, mpi_size( &ctx->P ), f_rng, p_rng );
+        MPI_CHK( mpi_fill_random( &ctx->Vi, mpi_size( &ctx->P ), f_rng, p_rng ) );
 
         while( mpi_cmp_mpi( &ctx->Vi, &ctx->P ) >= 0 )
             MPI_CHK( mpi_shift_r( &ctx->Vi, 1 ) );
@@ -441,8 +447,9 @@ int dhm_parse_dhm( dhm_context *dhm, const unsigned char *dhmin,
 
     /*
      *  DHParams ::= SEQUENCE {
-     *      prime            INTEGER,  -- P
-     *      generator        INTEGER,  -- g
+     *      prime              INTEGER,  -- P
+     *      generator          INTEGER,  -- g
+     *      privateValueLength INTEGER OPTIONAL
      *  }
      */
     if( ( ret = asn1_get_tag( &p, end, &len,
@@ -463,9 +470,23 @@ int dhm_parse_dhm( dhm_context *dhm, const unsigned char *dhmin,
 
     if( p != end )
     {
-        ret = POLARSSL_ERR_DHM_INVALID_FORMAT +
-              POLARSSL_ERR_ASN1_LENGTH_MISMATCH;
-        goto exit;
+        /* this might be the optional privateValueLength; If so, we
+         can cleanly discard it; */
+        mpi rec;
+        mpi_init( &rec );
+        ret = asn1_get_mpi( &p, end, &rec );
+        mpi_free( &rec );
+        if ( ret != 0 )
+        {
+            ret = POLARSSL_ERR_DHM_INVALID_FORMAT + ret;
+            goto exit;
+        }
+        if ( p != end )
+        {
+            ret = POLARSSL_ERR_DHM_INVALID_FORMAT +
+                POLARSSL_ERR_ASN1_LENGTH_MISMATCH;
+            goto exit;
+        }
     }
 
     ret = 0;
@@ -505,7 +526,7 @@ static int load_file( const char *path, unsigned char **buf, size_t *n )
     *n = (size_t) size;
 
     if( *n + 1 == 0 ||
-        ( *buf = (unsigned char *) polarssl_malloc( *n + 1 ) ) == NULL )
+        ( *buf = polarssl_malloc( *n + 1 ) ) == NULL )
     {
         fclose( f );
         return( POLARSSL_ERR_DHM_MALLOC_FAILED );
@@ -514,7 +535,10 @@ static int load_file( const char *path, unsigned char **buf, size_t *n )
     if( fread( *buf, 1, *n, f ) != *n )
     {
         fclose( f );
+
+        polarssl_zeroize( *buf, *n + 1 );
         polarssl_free( *buf );
+
         return( POLARSSL_ERR_DHM_FILE_IO_ERROR );
     }
 
