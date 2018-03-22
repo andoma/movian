@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,15 +35,20 @@
 
 #include "polarssl/ctr_drbg.h"
 
+#include <string.h>
+
 #if defined(POLARSSL_FS_IO)
 #include <stdio.h>
 #endif
 
+#if defined(POLARSSL_SELF_TEST)
 #if defined(POLARSSL_PLATFORM_C)
 #include "polarssl/platform.h"
 #else
+#include <stdio.h>
 #define polarssl_printf printf
-#endif
+#endif /* POLARSSL_PLATFORM_C */
+#endif /* POLARSSL_SELF_TEST */
 
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
@@ -272,7 +277,8 @@ int ctr_drbg_reseed( ctr_drbg_context *ctx,
     unsigned char seed[CTR_DRBG_MAX_SEED_INPUT];
     size_t seedlen = 0;
 
-    if( ctx->entropy_len + len > CTR_DRBG_MAX_SEED_INPUT )
+    if( ctx->entropy_len > CTR_DRBG_MAX_SEED_INPUT ||
+        len > CTR_DRBG_MAX_SEED_INPUT - ctx->entropy_len )
         return( POLARSSL_ERR_CTR_DRBG_INPUT_TOO_BIG );
 
     memset( seed, 0, CTR_DRBG_MAX_SEED_INPUT );
@@ -396,20 +402,20 @@ int ctr_drbg_write_seed_file( ctr_drbg_context *ctx, const char *path )
         goto exit;
 
     if( fwrite( buf, 1, CTR_DRBG_MAX_INPUT, f ) != CTR_DRBG_MAX_INPUT )
-    {
         ret = POLARSSL_ERR_CTR_DRBG_FILE_IO_ERROR;
-        goto exit;
-    }
-
-    ret = 0;
+    else
+        ret = 0;
 
 exit:
+    polarssl_zeroize( buf, sizeof( buf ) );
+
     fclose( f );
     return( ret );
 }
 
 int ctr_drbg_update_seed_file( ctr_drbg_context *ctx, const char *path )
 {
+    int ret = 0;
     FILE *f;
     size_t n;
     unsigned char buf[ CTR_DRBG_MAX_INPUT ];
@@ -428,14 +434,16 @@ int ctr_drbg_update_seed_file( ctr_drbg_context *ctx, const char *path )
     }
 
     if( fread( buf, 1, n, f ) != n )
-    {
-        fclose( f );
-        return( POLARSSL_ERR_CTR_DRBG_FILE_IO_ERROR );
-    }
+        ret = POLARSSL_ERR_CTR_DRBG_FILE_IO_ERROR;
+    else
+        ctr_drbg_update( ctx, buf, n );
 
     fclose( f );
 
-    ctr_drbg_update( ctx, buf, n );
+    polarssl_zeroize( buf, sizeof( buf ) );
+
+    if( ret != 0 )
+        return( ret );
 
     return( ctr_drbg_write_seed_file( ctx, path ) );
 }
@@ -443,9 +451,7 @@ int ctr_drbg_update_seed_file( ctr_drbg_context *ctx, const char *path )
 
 #if defined(POLARSSL_SELF_TEST)
 
-#include <stdio.h>
-
-static unsigned char entropy_source_pr[96] =
+static const unsigned char entropy_source_pr[96] =
     { 0xc1, 0x80, 0x81, 0xa6, 0x5d, 0x44, 0x02, 0x16,
       0x19, 0xb3, 0xf1, 0x80, 0xb1, 0xc9, 0x20, 0x02,
       0x6a, 0x54, 0x6f, 0x0c, 0x70, 0x81, 0x49, 0x8b,
@@ -459,7 +465,7 @@ static unsigned char entropy_source_pr[96] =
       0x93, 0x92, 0xcf, 0xc5, 0x23, 0x12, 0xd5, 0x56,
       0x2c, 0x4a, 0x6e, 0xff, 0xdc, 0x10, 0xd0, 0x68 };
 
-static unsigned char entropy_source_nopr[64] =
+static const unsigned char entropy_source_nopr[64] =
     { 0x5a, 0x19, 0x4d, 0x5e, 0x2b, 0x31, 0x58, 0x14,
       0x54, 0xde, 0xf6, 0x75, 0xfb, 0x79, 0x58, 0xfe,
       0xc7, 0xdb, 0x87, 0x3e, 0x56, 0x89, 0xfc, 0x9d,
@@ -518,7 +524,7 @@ int ctr_drbg_self_test( int verbose )
 
     test_offset = 0;
     CHK( ctr_drbg_init_entropy_len( &ctx, ctr_drbg_self_test_entropy,
-                                entropy_source_pr, nonce_pers_pr, 16, 32 ) );
+                                (void *) entropy_source_pr, nonce_pers_pr, 16, 32 ) );
     ctr_drbg_set_prediction_resistance( &ctx, CTR_DRBG_PR_ON );
     CHK( ctr_drbg_random( &ctx, buf, CTR_DRBG_BLOCKSIZE ) );
     CHK( ctr_drbg_random( &ctx, buf, CTR_DRBG_BLOCKSIZE ) );
@@ -535,7 +541,7 @@ int ctr_drbg_self_test( int verbose )
 
     test_offset = 0;
     CHK( ctr_drbg_init_entropy_len( &ctx, ctr_drbg_self_test_entropy,
-                            entropy_source_nopr, nonce_pers_nopr, 16, 32 ) );
+                            (void *) entropy_source_nopr, nonce_pers_nopr, 16, 32 ) );
     CHK( ctr_drbg_random( &ctx, buf, 16 ) );
     CHK( ctr_drbg_reseed( &ctx, NULL, 0 ) );
     CHK( ctr_drbg_random( &ctx, buf, 16 ) );

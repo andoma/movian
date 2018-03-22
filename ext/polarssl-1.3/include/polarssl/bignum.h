@@ -5,7 +5,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,13 +24,13 @@
 #ifndef POLARSSL_BIGNUM_H
 #define POLARSSL_BIGNUM_H
 
-#include <string.h>
-
 #if !defined(POLARSSL_CONFIG_FILE)
 #include "config.h"
 #else
 #include POLARSSL_CONFIG_FILE
 #endif
+
+#include <stddef.h>
 
 #if defined(POLARSSL_FS_IO)
 #include <stdio.h>
@@ -152,6 +152,7 @@ typedef uint32_t t_udbl;
        #define POLARSSL_HAVE_INT64
        typedef  int64_t t_sint;
        typedef uint64_t t_uint;
+       /* mbedtls_t_udbl defined as 128-bit unsigned int */
        typedef unsigned int t_udbl __attribute__((mode(TI)));
        #define POLARSSL_HAVE_UDBL
     #else
@@ -188,7 +189,9 @@ typedef struct
 mpi;
 
 /**
- * \brief           Initialize one MPI
+ * \brief           Initialize one MPI (make internal references valid)
+ *                  This just makes it ready to be set or freed,
+ *                  but does not define a value for the MPI.
  *
  * \param X         One MPI to initialize.
  */
@@ -374,7 +377,7 @@ int mpi_write_string( const mpi *X, int radix, char *s, size_t *slen );
 
 #if defined(POLARSSL_FS_IO)
 /**
- * \brief          Read X from an opened file
+ * \brief          Read MPI from a line in an opened file
  *
  * \param X        Destination MPI
  * \param radix    Input numeric base
@@ -383,6 +386,14 @@ int mpi_write_string( const mpi *X, int radix, char *s, size_t *slen );
  * \return         0 if successful, POLARSSL_ERR_MPI_BUFFER_TOO_SMALL if
  *                 the file read buffer is too small or a
  *                 POLARSSL_ERR_MPI_XXX error code
+ *
+ * \note           On success, this function advances the file stream
+ *                 to the end of the current line or to EOF.
+ *
+ *                 The function returns 0 on an empty line.
+ *
+ *                 Leading whitespaces are ignored, as is a
+ *                 '0x' prefix for radix 16.
  */
 int mpi_read_file( mpi *X, int radix, FILE *fin );
 
@@ -688,6 +699,8 @@ int mpi_fill_random( mpi *X, size_t size,
  *
  * \return         0 if successful,
  *                 POLARSSL_ERR_MPI_MALLOC_FAILED if memory allocation failed
+ *                 POLARSSL_ERR_MPI_BAD_INPUT_DATA if N is <= 1,
+ *                 POLARSSL_ERR_MPI_NOT_ACCEPTABLE if A has no inverse mod N.
  */
 int mpi_gcd( mpi *G, const mpi *A, const mpi *B );
 

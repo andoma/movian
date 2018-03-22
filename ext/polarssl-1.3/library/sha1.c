@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,22 +35,27 @@
 
 #include "polarssl/sha1.h"
 
-#if defined(POLARSSL_FS_IO) || defined(POLARSSL_SELF_TEST)
+#include <string.h>
+
+#if defined(POLARSSL_FS_IO)
 #include <stdio.h>
 #endif
 
+#if defined(POLARSSL_SELF_TEST)
 #if defined(POLARSSL_PLATFORM_C)
 #include "polarssl/platform.h"
 #else
+#include <stdio.h>
 #define polarssl_printf printf
-#endif
+#endif /* POLARSSL_PLATFORM_C */
+#endif /* POLARSSL_SELF_TEST */
+
+#if !defined(POLARSSL_SHA1_ALT)
 
 /* Implementation that should never be optimized out by the compiler */
 static void polarssl_zeroize( void *v, size_t n ) {
     volatile unsigned char *p = v; while( n-- ) *p++ = 0;
 }
-
-#if !defined(POLARSSL_SHA1_ALT)
 
 /*
  * 32-bit integer manipulation macros (big endian)
@@ -358,6 +363,7 @@ void sha1( const unsigned char *input, size_t ilen, unsigned char output[20] )
  */
 int sha1_file( const char *path, unsigned char output[20] )
 {
+    int ret = 0;
     FILE *f;
     size_t n;
     sha1_context ctx;
@@ -372,17 +378,16 @@ int sha1_file( const char *path, unsigned char output[20] )
     while( ( n = fread( buf, 1, sizeof( buf ), f ) ) > 0 )
         sha1_update( &ctx, buf, n );
 
-    sha1_finish( &ctx, output );
-    sha1_free( &ctx );
-
     if( ferror( f ) != 0 )
-    {
-        fclose( f );
-        return( POLARSSL_ERR_SHA1_FILE_IO_ERROR );
-    }
+        ret = POLARSSL_ERR_SHA1_FILE_IO_ERROR;
+    else
+        sha1_finish( &ctx, output );
 
+    sha1_free( &ctx );
+    polarssl_zeroize( buf, sizeof( buf ) );
     fclose( f );
-    return( 0 );
+
+    return( ret );
 }
 #endif /* POLARSSL_FS_IO */
 
@@ -471,7 +476,7 @@ void sha1_hmac( const unsigned char *key, size_t keylen,
 /*
  * FIPS-180-1 test vectors
  */
-static unsigned char sha1_test_buf[3][57] =
+static const unsigned char sha1_test_buf[3][57] =
 {
     { "abc" },
     { "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" },
@@ -496,7 +501,7 @@ static const unsigned char sha1_test_sum[3][20] =
 /*
  * RFC 2202 test vectors
  */
-static unsigned char sha1_hmac_test_key[7][26] =
+static const unsigned char sha1_hmac_test_key[7][26] =
 {
     { "\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B"
       "\x0B\x0B\x0B\x0B" },
@@ -516,7 +521,7 @@ static const int sha1_hmac_test_keylen[7] =
     20, 4, 20, 25, 20, 80, 80
 };
 
-static unsigned char sha1_hmac_test_buf[7][74] =
+static const unsigned char sha1_hmac_test_buf[7][74] =
 {
     { "Hi There" },
     { "what do ya want for nothing?" },
@@ -617,7 +622,7 @@ int sha1_self_test( int verbose )
 
         if( i == 5 || i == 6 )
         {
-            memset( buf, '\xAA', buflen = 80 );
+            memset( buf, 0xAA, buflen = 80 );
             sha1_hmac_starts( &ctx, buf, buflen );
         }
         else

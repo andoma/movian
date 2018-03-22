@@ -5,7 +5,7 @@
  *
  *  Copyright (C) 2006-2014, ARM Limited, All Rights Reserved
  *
- *  This file is part of mbed TLS (https://polarssl.org)
+ *  This file is part of mbed TLS (https://tls.mbed.org)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -97,13 +97,10 @@
 #define POLARSSL_KEY_EXCHANGE__SOME__ECDHE_ENABLED
 #endif
 
-#if defined(_MSC_VER) && !defined(inline)
-#define inline _inline
-#else
-#if defined(__ARMCC_VERSION) && !defined(inline)
+#if ( defined(__ARMCC_VERSION) || defined(_MSC_VER) ) && \
+    !defined(inline) && !defined(__cplusplus)
 #define inline __inline
-#endif /* __ARMCC_VERSION */
-#endif /*_MSC_VER */
+#endif
 
 /*
  * SSL Error codes
@@ -198,6 +195,8 @@
 #endif /* POLARSSL_SSL_PROTO_TLS1_1 */
 #endif /* POLARSSL_SSL_PROTO_TLS1_2 */
 
+#define SSL_MAX_HOST_NAME_LEN           255 /*!< Maximum host name defined in RFC 1035 */
+
 /* RFC 6066 section 4, see also mfl_code_to_length in ssl_tls.c
  * NONE must be zero so that memset()ing structure to zero works */
 #define SSL_MAX_FRAG_LEN_NONE           0   /*!< don't use this extension   */
@@ -282,6 +281,14 @@
 #define SSL_MAX_CONTENT_LEN         16384   /**< Size of the input / output buffer */
 #endif
 
+/*
+ * Minimum size of the Diffie-Hellman parameters to accept from a server.
+ * The default is 1024 bits (128 bytes) for compatibility reasons.
+ * From a purely security perspective, 2048 bits would be better.
+ */
+#if !defined(SSL_MIN_DHM_BYTES)
+#define SSL_MIN_DHM_BYTES             128   /**< Min size of the Diffie-Hellman prime */
+#endif
 /* \} name SECTION: Module settings */
 
 /*
@@ -296,7 +303,7 @@
 #define SSL_COMPRESSION_ADD             0
 #endif
 
-#if defined(POLARSSL_RC4_C) || defined(POLARSSL_CIPHER_MODE_CBC)
+#if defined(POLARSSL_ARC4_C) || defined(POLARSSL_CIPHER_MODE_CBC)
 /* Ciphersuites using HMAC */
 #if defined(POLARSSL_SHA512_C)
 #define SSL_MAC_ADD                 48  /* SHA-384 used for HMAC */
@@ -532,6 +539,7 @@ typedef struct _ssl_session ssl_session;
 typedef struct _ssl_context ssl_context;
 typedef struct _ssl_transform ssl_transform;
 typedef struct _ssl_handshake_params ssl_handshake_params;
+typedef struct _ssl_sig_hash_set_t ssl_sig_hash_set_t;
 #if defined(POLARSSL_SSL_SESSION_TICKETS)
 typedef struct _ssl_ticket_keys ssl_ticket_keys;
 #endif
@@ -618,6 +626,24 @@ struct _ssl_transform
 #endif
 };
 
+#if defined(POLARSSL_SSL_PROTO_TLS1_2) && \
+    defined(POLARSSL_KEY_EXCHANGE__WITH_CERT__ENABLED)
+/*
+ * Abstraction for a grid of allowed signature-hash-algorithm pairs.
+ */
+struct _ssl_sig_hash_set_t
+{
+    /* At the moment, we only need to remember a single suitable
+     * hash algorithm per signature algorithm. As long as that's
+     * the case - and we don't need a general lookup function -
+     * we can implement the sig-hash-set as a map from signatures
+     * to hash algorithms. */
+    md_type_t rsa;
+    md_type_t ecdsa;
+};
+#endif /* POLARSSL_SSL_PROTO_TLS1_2) &&
+          POLARSSL_KEY_EXCHANGE__WITH_CERT__ENABLED */
+
 /*
  * This structure contains the parameters only needed during handshake.
  */
@@ -626,7 +652,10 @@ struct _ssl_handshake_params
     /*
      * Handshake specific crypto variables
      */
-    int sig_alg;                        /*!<  Hash algorithm for signature   */
+#if defined(POLARSSL_SSL_PROTO_TLS1_2) && \
+    defined(POLARSSL_KEY_EXCHANGE__WITH_CERT__ENABLED)
+    ssl_sig_hash_set_t hash_algs;       /*!< Set of suitable sig-hash pairs  */
+#endif
     int cert_type;                      /*!<  Requested cert type            */
     int verify_sig_alg;                 /*!<  Signature algorithm for verify */
 #if defined(POLARSSL_DHM_C)
@@ -817,7 +846,9 @@ struct _ssl_context
 
     size_t in_hslen;            /*!< current handshake message length */
     int nb_zero;                /*!< # of 0-length encrypted messages */
-    int record_read;            /*!< record is already present        */
+
+    int keep_current_message;   /*!< drop or reuse current message
+                                     on next call to record layer?    */
 
     /*
      * Record layer (outgoing data)
@@ -1154,6 +1185,9 @@ int ssl_set_session( ssl_context *ssl, const ssl_session *session );
  *                      order. First in the list has the highest preference.
  *                      (Overrides all version specific lists)
  *
+ *                      The ciphersuites array is not copied, and must remain
+ *                      valid for the lifetime of the ssl_context.
+ *
  *                      Note: The server uses its own preferences
  *                      over the preference of the client unless
  *                      POLARSSL_SSL_SRV_RESPECT_CLIENT_PREFERENCE is defined!
@@ -1213,6 +1247,12 @@ void ssl_set_ca_chain( ssl_context *ssl, x509_crt *ca_chain,
 int ssl_set_own_cert( ssl_context *ssl, x509_crt *own_cert,
                        pk_context *pk_key );
 
+#if ! defined(POLARSSL_DEPRECATED_REMOVED)
+#if defined(POLARSSL_DEPRECATED_WARNING)
+#define DEPRECATED    __attribute__((deprecated))
+#else
+#define DEPRECATED
+#endif
 #if defined(POLARSSL_RSA_C)
 /**
  * \brief          Set own certificate chain and private RSA key
@@ -1221,8 +1261,7 @@ int ssl_set_own_cert( ssl_context *ssl, x509_crt *own_cert,
  *                 up your certificate chain. The top certificate (self-signed)
  *                 can be omitted.
  *
- * \warning        This backwards-compatibility function is deprecated!
- *                 Please use \c ssl_set_own_cert() instead.
+ * \deprecated     Please use \c ssl_set_own_cert() instead.
  *
  * \param ssl      SSL context
  * \param own_cert own public certificate chain
@@ -1231,7 +1270,7 @@ int ssl_set_own_cert( ssl_context *ssl, x509_crt *own_cert,
  * \return          0 on success, or a specific error code.
  */
 int ssl_set_own_cert_rsa( ssl_context *ssl, x509_crt *own_cert,
-                          rsa_context *rsa_key );
+                          rsa_context *rsa_key ) DEPRECATED;
 #endif /* POLARSSL_RSA_C */
 
 /**
@@ -1246,8 +1285,7 @@ int ssl_set_own_cert_rsa( ssl_context *ssl, x509_crt *own_cert,
  *                 up your certificate chain. The top certificate (self-signed)
  *                 can be omitted.
  *
- * \warning        This backwards-compatibility function is deprecated!
- *                 Please use \c pk_init_ctx_rsa_alt()
+ * \deprecated     Please use \c pk_init_ctx_rsa_alt()
  *                 and \c ssl_set_own_cert() instead.
  *
  * \param ssl      SSL context
@@ -1263,7 +1301,9 @@ int ssl_set_own_cert_alt( ssl_context *ssl, x509_crt *own_cert,
                           void *rsa_key,
                           rsa_decrypt_func rsa_decrypt,
                           rsa_sign_func rsa_sign,
-                          rsa_key_len_func rsa_key_len );
+                          rsa_key_len_func rsa_key_len ) DEPRECATED;
+#undef DEPRECATED
+#endif /* POLARSSL_DEPRECATED_REMOVED */
 #endif /* POLARSSL_X509_CRT_PARSE_C */
 
 #if defined(POLARSSL_KEY_EXCHANGE__SOME__PSK_ENABLED)
@@ -1312,7 +1352,7 @@ void ssl_set_psk_cb( ssl_context *ssl,
 /**
  * \brief          Set the Diffie-Hellman public P and G values,
  *                 read as hexadecimal strings (server-side only)
- *                 (Default: POLARSSL_DHM_RFC5114_MODP_1024_[PG])
+ *                 (Default: POLARSSL_DHM_RFC5114_MODP_2048_[PG])
  *
  * \param ssl      SSL context
  * \param dhm_P    Diffie-Hellman-Merkle modulus
@@ -1358,15 +1398,23 @@ void ssl_set_curves( ssl_context *ssl, const ecp_group_id *curves );
 
 #if defined(POLARSSL_SSL_SERVER_NAME_INDICATION)
 /**
- * \brief          Set hostname for ServerName TLS extension
- *                 (client-side only)
- *
+ * \brief          Set or reset the hostname to check against the received
+ *                 server certificate. It sets the ServerName TLS extension,
+ *                 too, if that extension is enabled. (client-side only)
  *
  * \param ssl      SSL context
- * \param hostname the server hostname
+ * \param hostname the server hostname, may be NULL to clear hostname
  *
- * \return         0 if successful or POLARSSL_ERR_SSL_MALLOC_FAILED
- */
+ * \note           Maximum hostname length SSL_MAX_HOST_NAME_LEN.
+ *
+ * \return         0 if successful, POLARSSL_ERR_SSL_MALLOC_FAILED on
+ *                 allocation failure, POLARSSL_ERR_BAD_INPUT_DATA on
+ *                 too long input hostname.
+ *
+ * \note           Hostname set to the one provided on success (cleared
+ *                 when NULL). On allocation failure hostname is cleared.
+ *                 On too long input failure, old hostname is unchanged.
+*/
 int ssl_set_hostname( ssl_context *ssl, const char *hostname );
 
 /**
@@ -1534,7 +1582,7 @@ void ssl_set_arc4_support( ssl_context *ssl, char arc4 );
  *                 SSL_MAX_FRAG_LEN_512,  SSL_MAX_FRAG_LEN_1024,
  *                 SSL_MAX_FRAG_LEN_2048, SSL_MAX_FRAG_LEN_4096)
  *
- * \return         O if successful or POLARSSL_ERR_SSL_BAD_INPUT_DATA
+ * \return         0 if successful or POLARSSL_ERR_SSL_BAD_INPUT_DATA
  */
 int ssl_set_max_frag_len( ssl_context *ssl, unsigned char mfl_code );
 #endif /* POLARSSL_SSL_MAX_FRAGMENT_LENGTH */
@@ -1583,7 +1631,7 @@ void ssl_set_cbc_record_splitting( ssl_context *ssl, char split );
  * \param use_tickets   Enable or disable (SSL_SESSION_TICKETS_ENABLED or
  *                                         SSL_SESSION_TICKETS_DISABLED)
  *
- * \return         O if successful,
+ * \return         0 if successful,
  *                 or a specific error code (server only).
  */
 int ssl_set_session_tickets( ssl_context *ssl, int use_tickets );
@@ -1941,14 +1989,39 @@ int ssl_psk_derive_premaster( ssl_context *ssl, key_exchange_type_t key_ex );
 
 #if defined(POLARSSL_PK_C)
 unsigned char ssl_sig_from_pk( pk_context *pk );
+unsigned char ssl_sig_from_pk_alg( pk_type_t type );
 pk_type_t ssl_pk_alg_from_sig( unsigned char sig );
 #endif
 
 md_type_t ssl_md_alg_from_hash( unsigned char hash );
+unsigned char ssl_hash_from_md_alg( md_type_t md );
 
 #if defined(POLARSSL_SSL_SET_CURVES)
 int ssl_curve_is_acceptable( const ssl_context *ssl, ecp_group_id grp_id );
 #endif
+
+#if defined(POLARSSL_SSL_PROTO_TLS1_2) && \
+    defined(POLARSSL_KEY_EXCHANGE__WITH_CERT__ENABLED)
+
+/* Find an entry in a signature-hash set matching a given hash algorithm. */
+md_type_t ssl_sig_hash_set_find( ssl_sig_hash_set_t *set,
+                                 pk_type_t sig_alg );
+/* Add a signature-hash-pair to a signature-hash set */
+void ssl_sig_hash_set_add( ssl_sig_hash_set_t *set,
+                           pk_type_t sig_alg,
+                           md_type_t md_alg );
+/* Allow exactly one hash algorithm for each signature. */
+void ssl_sig_hash_set_const_hash( ssl_sig_hash_set_t *set,
+                                  md_type_t md_alg );
+
+/* Setup an empty signature-hash set */
+static inline void ssl_sig_hash_set_init( ssl_sig_hash_set_t *set )
+{
+    ssl_sig_hash_set_const_hash( set, POLARSSL_MD_NONE );
+}
+
+#endif /* POLARSSL_SSL_PROTO_TLS1_2) &&
+          POLARSSL_KEY_EXCHANGE__WITH_CERT__ENABLED */
 
 #if defined(POLARSSL_X509_CRT_PARSE_C)
 static inline pk_context *ssl_own_key( ssl_context *ssl )
@@ -1964,6 +2037,12 @@ static inline x509_crt *ssl_own_cert( ssl_context *ssl )
 }
 
 /*
+ * Check if a hash proposed by the peer is in our list.
+ * Return 0 if we're willing to use it, -1 otherwise.
+ */
+int ssl_check_sig_hash( md_type_t md );
+
+/*
  * Check usage of a certificate wrt extensions:
  * keyUsage, extendedKeyUsage (later), and nSCertType (later).
  *
@@ -1974,16 +2053,17 @@ static inline x509_crt *ssl_own_cert( ssl_context *ssl )
  */
 int ssl_check_cert_usage( const x509_crt *cert,
                           const ssl_ciphersuite_t *ciphersuite,
-                          int cert_endpoint );
+                          int cert_endpoint,
+                          int *flags );
 #endif /* POLARSSL_X509_CRT_PARSE_C */
 
 /* constant-time buffer comparison */
 static inline int safer_memcmp( const void *a, const void *b, size_t n )
 {
     size_t i;
-    const unsigned char *A = (const unsigned char *) a;
-    const unsigned char *B = (const unsigned char *) b;
-    unsigned char diff = 0;
+    volatile const unsigned char *A = (volatile const unsigned char *) a;
+    volatile const unsigned char *B = (volatile const unsigned char *) b;
+    volatile unsigned char diff = 0;
 
     for( i = 0; i < n; i++ )
         diff |= A[i] ^ B[i];
