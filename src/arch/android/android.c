@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -284,7 +284,6 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   (*env)->ReleaseStringUTFChars(env, j_settings, settings);
   (*env)->ReleaseStringUTFChars(env, j_cachedir, cachedir);
-  (*env)->ReleaseStringUTFChars(env, j_sdcard,   sdcard);
   (*env)->ReleaseStringUTFChars(env, j_android_id, android_id);
 
 
@@ -301,9 +300,15 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   prop_jni_init(env);
 
+
+  char filesdcard[PATH_MAX];
+  snprintf(filesdcard, sizeof(filesdcard), "file://%s", sdcard);
+
   service_createp("androidstorage", _p("Android Storage"),
-                  "file:///storage",
+                  filesdcard,
                   "storage", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+
+  (*env)->ReleaseStringUTFChars(env, j_sdcard, sdcard);
 
   android_nav = nav_spawn();
 
