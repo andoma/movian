@@ -28,7 +28,7 @@ widget(container_y, {
 
       widget(label, {
         filterConstraintX: true;
-        caption: fmt(_("%d kb/s"), $nav.currentpage.model.io.bitrate);
+        caption: fmt(_("%d kB/s"), $nav.currentpage.model.io.bitrate);
       });
     });
 

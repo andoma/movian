@@ -128,7 +128,7 @@ msg:
 #
 # ./glwskins/flat/loading.view
 #
-id: %d kb/s
+id: %d kB/s
 msg: %d кб/с
 
 id: Bitrate:
