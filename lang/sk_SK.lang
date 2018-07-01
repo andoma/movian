@@ -1725,19 +1725,19 @@ id: %d years ago
 msg: pred %d rokmi
 
 id: Just now
-msg: Práve teraz
+msg: práve teraz
 
 id: One day ago
-msg: Pred dňom
+msg: pred jedným dňom
 
 id: One hour ago
-msg: Pred hodinou
+msg: pred hodinou
 
 id: One minute ago
-msg: Pred minútou
+msg: pred minútou
 
 id: One month ago
-msg: Pred mesiacom
+msg: pred mesiacom
 
 #
 # ./src/ui/linux/nvidia.c
