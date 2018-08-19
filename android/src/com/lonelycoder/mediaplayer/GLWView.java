@@ -37,6 +37,7 @@ class GLWView extends GLSurfaceView {
         setRenderer(new Renderer());
         //        setRenderMode(RENDERMODE_WHEN_DIRTY);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        setZOrderMediaOverlay(true);
     }
 
     @Override
