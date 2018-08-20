@@ -246,7 +246,6 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard, jstring j_android_id, jint time_24hrs, jstring j_music, jstring j_pictures, jstring j_movies, jint audio_sample_rate, jint audio_frames_per_buffer)
 {
-  char path[PATH_MAX];
   trace_arch(TRACE_INFO, "Core", "Native core initializing");
 
   gconf.trace_level = TRACE_DEBUG;
@@ -263,12 +262,6 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   gconf.persistent_path = strdup(settings);
   gconf.cache_path      = strdup(cachedir);
-
-  snprintf(path, sizeof(path), "%s/Download", sdcard);
-  mkdir(path, 0770);
-  snprintf(path, sizeof(path), "%s/Download/movian_upgrade.apk", sdcard);
-  gconf.upgrade_path = strdup(path);
-  unlink(gconf.upgrade_path);
 
   uint8_t digest[16];
 
