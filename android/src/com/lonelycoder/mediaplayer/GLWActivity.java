@@ -128,7 +128,7 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
 
     public boolean onKeyUp(int keyCode, KeyEvent event) {
 
-        if(mGLWView.keyUp(keyCode, event))
+        if(mGLWView != null && mGLWView.keyUp(keyCode, event))
             return true;
         return super.onKeyUp(keyCode, event);
     }
@@ -136,7 +136,7 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-        if(mGLWView.keyDown(keyCode, event))
+        if(mGLWView != null && mGLWView.keyDown(keyCode, event))
             return true;
         return super.onKeyDown(keyCode, event);
     }
