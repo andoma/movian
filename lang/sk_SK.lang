@@ -1,0 +1,1858 @@
+language: Slovak
+native: Slovenský
+maintainer: Vladimír Záhradník <vladimir.zahradnik@gmail.com>
+#
+# ./glwskins/flat/ctxmenu/default_details.view
+#
+id: Bookmark
+msg: Záložka
+
+id: Bookmarked
+msg: Pridané do záložiek
+
+id: Copy to clipboard
+msg: Kopírovať do schránky
+
+id: Copy to location...
+msg: Kopírovať do umiestnenia...
+
+id: Delete
+msg: Vymazať
+
+id: Queue
+msg: Fronta
+
+#
+# ./glwskins/flat/ctxmenu/plugin_details.view
+#
+id: Author:
+msg: Autor
+
+id: Available version:
+msg: Dostupná verzia:
+
+id: Changelog
+msg: História zmien
+
+id: Install
+msg: Inštalovať
+
+id: Installed version:
+msg: Nainštalovaná verzia
+
+id: Status:
+msg: Stav
+
+id: Uninstall
+msg: Odnštalovať
+
+id: Upgrade
+msg: Aktualizovať
+
+#
+# ./glwskins/flat/ctxmenu/video_details.view
+#
+id: Continue from %s
+msg: Pokračovať od %s
+
+id: Mark as seen
+msg: Označiť ako pozreté
+
+id: Mark as unseen
+msg: Označiť ako nepozreté
+
+id: Play from beginning
+msg: Prehrať od začiatku
+
+id: Play until end of list
+msg: Prehrávať do konca zoznamu
+
+id: Video Cast
+msg: Video Cast
+
+#
+# ./glwskins/flat/items/details/video.view
+#
+id: Season %d - Episode %d
+msg: Séria %d - Epizóda %d
+
+id: Seen %d times, %s
+msg[0]: Pozreté %d-krát, %s
+msg[1]: Pozreté %d raz, %s
+
+#
+# ./glwskins/flat/items/list/add.view
+#
+id: Add new entry
+msg: Pridať novú položku
+
+#
+# ./glwskins/flat/items/list/bool.view
+#
+id: Off
+msg: Vypnuté
+
+id: On
+msg: Zapnuté
+
+#
+# ./glwskins/flat/items/list/font.view
+#
+id: Condensed
+msg: Zhustené
+
+id: Subtitles
+msg: Titulky
+
+id: User interface
+msg: Používateľské rozhranie
+
+#
+# ./glwskins/flat/items/list/tvepisode.view
+#
+id: Episode %d - %s
+msg: Epizóda %d - %s
+
+#
+# ./glwskins/flat/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: Dátový tok
+
+#
+# ./glwskins/flat/log.view
+#
+id: System log
+msg: Systémový denník
+
+#
+# ./glwskins/flat/mediainfo.view
+#
+id: A/V diff
+msg: Rozdiel A/V
+
+id: Audio bitrate
+msg: Dátový tok zvuku
+
+id: Audio codec
+msg: Zvukový kodek
+
+id: Audio packets
+msg: Pakety zvuku
+
+id: Buffer usage
+msg: Využitie zásobníka
+
+id: No media loaded
+msg: Žiadne médium
+
+id: Remaining buffer
+msg: Zostatok v zásobníku
+
+id: Source
+msg: Zdroj
+
+id: Video bitrate
+msg: Dátový tok videa
+
+id: Video codec
+msg: Video kodek
+
+id: Video framerate
+msg: Snímková frekvencia
+
+id: Video packets
+msg: Pakety videa
+
+#
+# ./glwskins/flat/menu/sidebar.view
+#
+id: Bookmark page
+msg: Pridať stránku ako záložku
+
+id: Page settings
+msg: Nastavenia stránky
+
+id: Paste
+msg: Vložiť
+
+id: Reload page
+msg: Obnoviť stránku
+
+id: Remove bookmark
+msg: Odstrániť záložku
+
+id: Settings
+msg: Nastavenia
+
+#
+# ./glwskins/flat/menu/sidebar_common.view
+#
+id: Activate sleep timer
+msg: Povoliť automatické vypnutie
+
+id: Disable sleep timer
+msg: Zakázať automatické vypnutie
+
+id: Exit %s
+msg: Ukončiť %s
+
+id: Hide media info
+msg: Skryť informácie o médiu
+
+id: Hide system info
+msg: Skryť systémové informácie
+
+id: Master volume
+msg: Hlavná hlasitosť
+
+id: Show media info
+msg: Zobraziť informácie o médiu
+
+id: Show system info
+msg: Zobraziť systémové informácie
+
+id: Suspend
+msg: Vypnúť systém
+
+id: Time until sleep
+msg: Čas do vypnutia
+
+id: View log
+msg: Zobraziť denník
+
+id: dB
+msg: dB
+
+id: min
+msg: min.
+
+#
+# ./glwskins/flat/osd/osd_audio.view
+#
+id: Audio
+msg: Zvuk
+
+#
+# ./glwskins/flat/osd/osd_main.view
+#
+id: Audio settings
+msg: Nastavenia zvuku
+
+id: Subtitle settings
+msg: Nastavenia titulkov
+
+id: Video settings
+msg: Nastavenia videa
+
+#
+# ./glwskins/flat/osk.view
+#
+id: Default
+msg: Predvolené
+
+id: Keyboard layout:
+msg: Rozloženie klávesnice
+
+#
+# ./glwskins/flat/pages/directory.view
+#
+id: Album
+msg: Album
+
+id: Artist
+msg: Umelec
+
+id: Custom
+msg: Vlastné
+
+id: Grid
+msg: Mriežka
+
+id: List
+msg: Zoznam
+
+id: Page layout
+msg: Rozloženie stránky
+
+id: Search results
+msg: Výsledky hľadania
+
+id: TV Season
+msg: TV séria
+
+#
+# ./glwskins/flat/pages/empty.view
+#
+id: No contents
+msg: Bez obsahu
+
+#
+# ./glwskins/flat/pages/home.view
+#
+id: Dismiss
+msg: Zavrieť
+
+id: Home
+msg: Domov
+
+#
+# ./glwskins/flat/pages/openerror.view
+#
+id: Unable to open resource
+msg: Nie je možné otvoriť zdroj
+
+#
+# ./glwskins/flat/pages/playqueue.view
+#
+id: Playqueue
+msg: Fronta prehrávania
+
+#
+# ./glwskins/flat/pages/searchresults.view
+#
+id: Show more
+msg: Zobraziť viac
+
+id: %d hits
+# Missing plural translation for '%d hits' and '%d hit'
+msg[0]: %d výsledkov
+msg[1]: %d výsledok
+
+#
+# ./glwskins/flat/pages/slideshow.view
+#
+id: Interval: %ds
+msg: Interval: %ds
+
+id: Play/Pause
+msg: Prehrať/pozastaviť
+
+id: Stop
+msg: Zastaviť
+
+#
+# ./glwskins/flat/pages/stpp.view
+#
+id: Remote control - %s
+msg: Diaľkový ovládač - %s
+
+id: Remote controlling %s
+msg: Diaľkové ovládanie %s
+
+#
+# ./glwskins/flat/pages/stppstpp.view
+#
+id: Nested remote controll is not supported
+msg: Vnorené diaľkové ovládanie nie je podporované
+
+id: Remote control
+msg: Diaľkové ovládanie
+
+#
+# ./glwskins/flat/pages/stppvideo.view
+#
+id: Audio tracks
+msg: Zvukové stopy
+
+id: Audio volume adjustment: %d dB
+msg: Prispôsobenie zvukovej hlasitosti: %d dB
+
+id: CPU is too slow to decode this video
+msg: Procesor je príliš pomalý, aby dekódoval toto video
+
+id: Next
+msg: Ďalšie
+
+id: Previous
+msg: Predchádzajúce
+
+#
+# ./glwskins/flat/pages/tvseason.view
+#
+id: Season %d
+msg: Séria %d
+
+#
+# ./glwskins/flat/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s je aktuálny
+
+id: An error occured during download
+msg: Pri preberaní sa stala chyba
+
+id: Changelog for %s releases
+msg: Zoznam zmien pre %s
+
+id: Check for updates now
+msg: Skontrolovať aktualizácie
+
+id: Checking for updates
+msg: Kontroluje sa dostupnosť aktualizácií
+
+id: Current version:
+msg: Aktuálna verzia:
+
+id: Download and install
+msg: Prevziať a nainštalovať
+
+id: Downloading %s
+msg: Preberá sa %s
+
+id: New version %s is available for download
+msg: Nová verzia %s je k dispozícií na prevzatie
+
+id: No upgrade available
+msg: Žiadna aktualizácia nie je k dispozícii
+
+id: Retry
+msg: Skúsiť znova
+
+id: Stable
+msg: Stabilné vydania
+
+id: Testing
+msg: Testovacie vydania
+
+# TODO: Use in the app
+#id: Bleeding Edge (Very unstable)
+#msg: Nočné zostavy (veľmi nestabilné)
+
+id: Unable to query for new version
+msg: Nepodarilo sa overiť dostupnosť novej verzie
+
+#
+# ./glwskins/flat/popups/auth.view
+#
+id: Domain
+msg: Doména
+
+id: Password
+msg: Heslo
+
+id: Remember me
+msg: Zapamätať si meno
+
+id: Username
+msg: Meno používateľa
+
+#
+# ./glwskins/flat/popups/common.view
+#
+id: Cancel
+msg: Zrušiť
+
+id: Ok
+msg: Ok
+
+#
+# ./glwskins/flat/popups/filepicker.view
+#
+id: Back
+msg: Naspäť
+
+id: Close
+msg: Zavrieť
+
+id: Folder select mode, press right to open subfolder
+msg: Režim výberu priečinka, stlačte pravé tlačidlo na otvorenie podpriečinka
+
+#
+# ./glwskins/flat/popups/resume.view
+#
+id: No, Start over
+msg: Nie, začať od začiatku
+
+id: Resume from %s
+msg: Pokračovať od %s
+
+id: Yes
+msg: Áno
+
+#
+# ./glwskins/flat/popups/textDialog.view
+#
+id: OK
+msg: OK
+
+#
+# ./glwskins/flat/sysinfo.view
+#
+id: CPU Temp
+msg: Teplota procesora
+
+id: Connected
+msg: Pripojené
+
+id: Fragmentation
+msg: Fragmentácia
+
+id: Framerate
+msg: Snímková frekvencia
+
+id: GPU Temp
+msg: Teplota grafického čipu
+
+id: HDD Avail
+msg: Dostupné pevné disky
+
+id: IP Address
+msg: IP adresa
+
+id: Inactive memory
+msg: Neaktívna pamäť
+
+id: Memory usage
+msg: Využitie pamäte
+
+id: Network
+msg: Sieť
+
+id: Not available
+msg: Nie je k dispozícii
+
+id: System Free
+msg: Systémová - voľná
+
+id: System Total
+msg: Systémová - celkovo
+
+id: VM Page In/Out
+msg: Stránky VM vstup/výstup
+
+id: Version
+msg: Verzia
+
+#
+# ./glwskins/flat/universe.view
+#
+id: Audio muted
+msg: Zvuk je stlmený
+
+id: Copying %d files
+msg: Kopíruje sa %d súborov
+
+id: Master volume: %d dB
+msg: Hlasitosť: %d dB
+
+id: Overscan adjustment\nPosition border at screen edges
+msg: Prispôsobenie okrajov obrazovky\nUmiestnite hrany na okraje obrazovky
+
+#
+# ./src/api/stpp.c
+#
+id: Allow remote control
+msg: Povoliť diaľkové ovládanie
+
+id: Device not available
+msg: Zariadenie nie je k dispozícii
+
+id: Movians for remote control
+msg: Movians ako diaľkové ovládanie
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Jazyk (kód ISO 639-1)
+
+id: Use original title
+msg: Použiť pôvodný titul
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+msg: Android úložisko
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Nie je možné inicializovať zvukový systém %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Systém má málo pamäte (%d kB RAM k dispozícii)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: %d referenčných snímkov pre obsah %d je nekompatibilných s PS3 HW dekodérom. HW akcelerácia sa zakazuje
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: Poškodené hlavičky, HW akcelerácia sa zakazuje
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Vynucuje sa úroveň 4.2 pre obsah v úrovni %d.%d. Týmto môže dôjsť k narušeniu prehrávania videa.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Nie je možné spustiť akceleráciu pre %s, knižnica nie je načítaná.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Nie je možné otvoriť Cell kodek. Chyba 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Nie je možné otvoriť Cell kodek. Nie je možné vyhradiť %d bajtov RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Nie je možné sa dopytovať Cell kodeku. Chyba 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8-kanálové PCM
+
+id: AC3 Pass-Through
+msg: Preposielanie AC3
+
+id: Analog
+msg: Analógový
+
+id: Audio output port
+msg: Výstupný port zvuku
+
+id: Autodetect
+msg: Zistiť automaticky
+
+id: DTS Pass-Through
+msg: Preposielanie DTS
+
+id: HDMI
+msg: HDMI
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+msg: Zosúladiť snímkovú frekvenciu obrazovky a obsahu
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Oneskorenie zvuku
+
+id: Audio gain
+msg: Zisk zvuku
+
+id: Setup audio output
+msg: Nastavenie výstupu zvuku
+
+id: Video playback
+msg: Prehrávanie videa
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz sínusová vlna -12dB
+
+id: Audio test
+msg: Test zvuku
+
+id: Center
+msg: Stredný
+
+id: Front Left
+msg: Predný ľavý
+
+id: Front Right
+msg: Predný pravý
+
+id: LFE
+msg: LFE
+
+id: Pink noise
+msg: Ružový šum
+
+id: Play test signal
+msg: Prehrať testovací signál
+
+id: Rear Left
+msg: Zadný ľavý
+
+id: Rear Right
+msg: Zadný pravý
+
+id: Speaker position
+msg: Pozícia reproduktorov
+
+id: Surround Left
+msg: Surroundový ľavý
+
+id: Surround Right
+msg: Surroundový pravý
+
+id: Test signal type
+msg: Typ testovacieho signálu
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: V torrente nie sú žiadne súbory
+
+id: Unable to open torrent: %s
+msg: Nie je možné otvoriť torrent: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Nacachované torrenty používajú %d MB z povolených %d MB. Celkové voľné miesto na zväzku: %d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Počet pripojených peerov
+
+id: Known peers
+msg: Počet známych peerov
+
+id: Receiving from
+msg: Prijíma sa od
+
+id: Torrent leechers
+msg: Počet leecherov torrentu
+
+id: Torrent seeders
+msg: Počet seederov torrentu
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: BitTorrent
+msg: BitTorrent
+
+id: Clear cache
+msg: Vymazať cache
+
+id: Enable bittorrent
+msg: Povoliť bittorrent
+
+id: Max upload speed
+msg: Najvyššia rýchlosť odovzdávania
+
+id: Max usage of free space for caching torrents
+msg: Najvyššie využitie voľného miesta na cachovanie torrentov
+
+id: Status
+msg: Stav
+
+id: Torrent cache path
+msg: Cesta k cache pre torrenty
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Chyba pri čítaní DVD, disk bude načítaný znovu
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Primárne
+
+id: Supplementary
+msg: Doplňujúce
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+msg: Kanály
+
+id: Invalid HTSP URL
+msg: Neplatná HTSP URL adresa
+
+id: No such channel
+msg: Takýto kanál neexistuje
+
+id: Recorded shows
+msg: Nahraných relácií
+
+id: Recorder
+msg: Rekordér
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+msg: Nie je možné otvoriť zoznam videí
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Hľadať
+
+id: Search result for: %s
+msg: Výsledky hľadania pre: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+msg: 3 sekundy
+
+id: 5 seconds
+msg: 5 sekúnd
+
+id: 7 seconds
+msg: 7 sekúnd
+
+id: Slideshow speed
+msg: Rýchlosť prezentácie
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Cache bola vymazaná
+
+id: Clear cached files
+msg: Vymazať dočasné súbory
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Nie je možné spracovať typ obsahu %d
+
+id: Checking file contents
+msg: Kontroluje sa obsah súborov
+
+id: Invalid URL from redirect
+msg: Neplatná URL adresa z presmerovania
+
+id: Unable to open file: %s
+msg: Nie je možné otvoriť súbor: %s
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+msg: Vyberte súbor
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Pre hľadanie použiť Unix locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Deleted %s
+msg: %s vymazaný
+
+id: Filename
+msg: Názov súboru
+
+id: Include in library
+msg: Pridať do knižnice
+
+id: Newest first
+msg: Najprv najnovšie
+
+id: Oldest first
+msg: Najprv najstaršie
+
+id: Show only supported files
+msg: Zobraziť len podporované súbory
+
+id: Sort folders first
+msg: Zoradiť najprv adresáre
+
+id: Sort on
+msg: Zoradiť podľa
+
+id: Unable to delete %s\n%s
+msg: Nie je možné vymazať %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Hľadať pomocou Spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Skutočne chcete vymazať:
+
+id: Browse archives as folders
+msg: Prehľadávať archívy ako priečinky
+
+id: Enable file deletion from item menu
+msg: Povoliť vymazanie súboru z ponuky položky
+
+id: Show filename extensions
+msg: Zobrazovať pri názvoch súborov prípony
+
+id: Store per-file settings in filesystem
+msg: Ukladať nastavenia súborov v súborovom systéme
+
+id: %d archive parts
+msg[0]: %d častí archívu
+msg[1]: %d časť archívu
+
+id: %d directories
+msg[0]: %d adresárov
+msg[1]: %d adresár
+
+id: %d files
+msg[0]: %d súborov
+msg[1]: %d súbor
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Prístup zamietnutý
+
+id: Account restricted
+msg: Účet obmedzený
+
+id: Bad network share name
+msg: Nesprávný názov sieťového umiestnenia
+
+id: Logon failure
+msg: Chyba prihlásenia
+
+id: Object name not found
+msg: Názov objektu nenájdený
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+msg: 12 hodín
+
+id: 24 Hour
+msg: 24 hodín
+
+id: Default character set
+msg: Predvolená znaková sada
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Ignorovať pri zoradzovaní 'The' na začiatku slov
+
+id: Language
+msg: Jazyk
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Výber jazyka sa nastavuje ako trojznakový ISO kód, napr. (eng, swe, cze, slo)
+
+id: Languages
+msg: Jazyky
+
+id: Preferred languages
+msg: Uprednostňované jazyky
+
+id: Primary audio language code
+msg: Uprednostňovaný jazyk zvuku
+
+id: Primary subtitle language code
+msg: Uprednostňovaný jazyk titulkov
+
+id: Secondary audio language code
+msg: Druhý jazyk zvuku
+
+id: Secondary subtitle language code
+msg: Druhý jazyk titulkov
+
+id: System default
+msg: Predvolené systémové nastavenia
+
+id: Tertiary audio language code
+msg: Tretí jazyk zvuku
+
+id: Tertiary subtitle language code
+msg: Tretí jazyk titulkov
+
+id: Time format
+msg: Formát času
+
+id: Timezone
+msg: Časová zóna
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+msg: Pre zobrazenie ponuky položky podržte dlhšie SELECT
+
+id: Switch TV input source
+msg: Prepnúť zdroj vstupu TV
+
+id: Use STOP key for combo input
+msg: Použite kláves STOP pre combo vstup
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Vymazať uložené heslá
+
+id: Rembered passwords erased
+msg: Uložené heslá boli vymazané
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+msg: Zarovnať na snímku videa
+
+id: Audio volume
+msg: Hlasitosť zvuku
+
+id: Delay
+msg: Oneskorenie
+
+id: Go to standby after video ends
+msg: Prejsť do standby po skončení videa
+
+id: Horizontal pan
+msg: Vodorovný posun
+
+id: Horizontal position
+msg: Vodorovná pozícia
+
+id: Horizontal scale
+msg: Vodorovná veľkosť
+
+id: Reset defaults for folder '%s'
+msg: Obnoviť predvolené nastavenia pre priečinok '%s'
+
+id: Save as defaults for folder '%s'
+msg: Uložiť ako predvolené nastavenia pre priečinok '%s'
+
+id: Save as global default
+msg: Uložiť ako globálne predvolené nastavenia
+
+id: Scaling
+msg: Zmena veľkosti
+
+id: Stretch video to fullscreen
+msg: Roztiahnuť video na celú obrazovku
+
+id: Stretch video to widescreen
+msg: Roztiahnuť video na šírku obrazovky 
+
+id: Vertical pan
+msg: Zvislý posun
+
+id: Vertical position
+msg: Zvislá pozícia
+
+id: Vertical scale
+msg: Zvislá veľkosť
+
+id: Video frame interpolation
+msg: Interpolácia snímku videa
+
+id: Video zoom
+msg: Priblíženie videa
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Prebieha indexácia
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Automaticky
+
+id: Erase all playback info
+msg: Vymazať všetky informácie o prehrávaní
+
+id: Manual
+msg: Ručne
+
+id: Mark all as seen
+msg: Označiť všetko ako pozreté
+
+id: Mark all as unseen
+msg: Označiť všetko ako nepozreté
+
+id: Metadata mode
+msg: Režim Metadáta
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Vložené v súbore
+
+id: Track %d
+msg: Stopa %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Povolené
+
+id: Metadata
+msg: Metadáta
+
+id: Metadata configuration and provider settings
+msg: Nastavenia metadát a poskytovateľov
+
+id: Providers for Music
+msg: Poskytovatelia pre hudbu
+
+id: Providers for Video
+msg: Poskytovatelia pre video
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: Vymazaných %d položiek
+
+id: Clear all metadata
+msg: Vymazať všetky metadáta
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Vymazanie všetkých metadát znamená stratu <b>všetkých</b> metadát uložených z externých zdrojov ako napr. themoviedb.org, atď.\n\nInformácie o časových pozíciách v rozpozeraných súboroch, počty prehratí, atď. budú uložené.\nChcete pokračovať?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Vlastná otázka pre hľadanie
+
+id: Custom title
+msg: Vlastný titul
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+msg: Metadáta načítané z <b>%s</b> na základe %s
+
+id: Metadata source
+msg: Zdroj metadat
+
+id: Movie
+msg: Film
+
+id: Movie title
+msg: Filmový titul
+
+id: No data found
+msg: Nenašli sa žiadne dáta
+
+id: None
+msg: Nič
+
+id: Refresh metadata
+msg: Obnoviť metadáta
+
+id: Title, Season, Episode
+msg: Titul, séria, epizóda
+
+id: custom IMDb ID
+msg: vlastné IMDb ID
+
+id: custom query
+msg: vlastná otázka
+
+id: filename
+msg: názov súboru
+
+id: filename as TV episode
+msg: názov súboru ako TV epizóda
+
+id: folder name
+msg: názov priečinka
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Pridať/odstrániť položky na domovskej obrazovke
+
+id: Added %s to home page
+msg: %s pridané na domovskú obrazovku
+
+id: Added new bookmark: %s
+msg: Pridaná nová záložka: %s
+
+id: Bookmarks
+msg: Záložky
+
+id: Icon
+msg: Ikona
+
+id: Music
+msg: Hudba
+
+id: No handler for URL
+msg: Nie je možné spracovať URL adresu
+
+id: Other
+msg: Ostatné
+
+id: Photos
+msg: Fotky
+
+id: Removed %s from homepage
+msg: %s odstránené z domovskej obrazovky
+
+id: Removed bookmark: %s
+msg: Odstránená záložka: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Titul
+
+id: Type
+msg: Typ
+
+id: URL
+msg: URL adresa
+
+id: Video
+msg: Video
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Povoliť Wi-Fi
+
+id: Network connections
+msg: Sieťové pripojenia
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Povoliť FTP server
+
+id: FTP server
+msg: FTP server
+
+id: Server TCP port
+msg: TCP port serveru
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+msg: Vypnúť
+
+id: Rebooting
+msg: Rebootuje sa
+
+id: Restarting
+msg: Reštartuje sa
+
+id: Standby
+msg: Standby
+
+#
+# ./src/notifications.c
+#
+id: Show news on home screen
+msg: Zobrazovať novinky na domovskej obrazovke
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: URL adresa alternatívneho repozitára doplnkov
+
+id: Audio decoders
+msg: Zvukové dekodéry
+
+id: Auto install plugins on demand
+msg: Automaticky inštalovať dopnky podľa potreby
+
+id: Auto installed plugin %s (Version %s)
+msg: Automaticky nainštalované doplnky %s (verzia %s)
+
+id: Automatically upgrade plugins
+msg: Automaticky aktualizovať doplnky
+
+id: Available plugins
+msg: Dostupné doplnky
+
+id: Background
+msg: Pozadia
+
+id: Beta testing passwords
+msg: Heslá pre betatestovanie
+
+id: Browse available plugins
+msg: Prehľadávať dostupné doplnky
+
+id: Browsing
+msg: Prehľadávanie
+
+id: Cloud services
+msg: Cloudové služby
+
+id: Corrupt plugin bundle
+msg: Balík poškodených doplnkov
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+msg: Teraz je možné nastaviť vlastné pozadia v časti Nastavenia -> Vzhľad a chovanie
+
+id: Disk write error
+msg: Chyba pri zápise na disk
+
+id: Downloading
+msg: Preberá sa
+
+id: File open error
+msg: Chyba pri otváraní súboru
+
+id: Home page
+msg: Domovská stránka
+
+id: Images
+msg: Obrázky
+
+id: Installed
+msg: Nainštalované
+
+id: Installed plugins
+msg: Nainštalované doplnky
+
+id: Installed version higher than available
+msg: Nainštalovaná verzia je vyššia ako tá dostupná
+
+id: Installing
+msg: Inštaluje sa
+
+id: List of albums
+msg: Zoznam albumov
+
+id: Loading screen
+msg: Načítacia obrazovka
+
+id: Movies
+msg: Filmy
+
+id: Music streaming
+msg: Streamovanie hudby
+
+id: Not installable
+msg: Nie je možné nainštalovať
+
+id: Not installed
+msg: Nenainštalované
+
+id: Not upgradable
+msg: Nie je možné aktualizovať
+
+id: On Screen Keyboards
+msg: Klávesnica na obrazovke
+
+id: Online TV
+msg: Online TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Doplnok %s %s bol odinštalovaný, pretože môže spôsobovať problémy.\nMôžete sa pokúsiť ručne nainštalovať inú verziu.
+
+id: Plugin %s has been uninstalled - %s
+msg: Doplnok %s bol odinštalovaný - %s
+
+id: Plugin categories
+msg: Kategórie doplnkov
+
+id: Plugins
+msg: Doplnky
+
+id: Preferred views from plugins
+msg: Uprednostňovaný pohľad z doplnkov
+
+id: Screen saver
+msg: Šetrič obrazovky
+
+id: TV channels
+msg: TV kanály
+
+id: Unable to load plugin.json: %s
+msg: Nie je možné načítať plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Nie je možné načítať plugin.json: nesprávny JSON
+
+id: Uncategorized
+msg: Bez kategórie
+
+id: Up to date
+msg: Aktuálny
+
+id: Upgradable
+msg: Dostupná aktualizácia
+
+id: Upgraded plugin %s to version %s
+msg: Doplnok %s bol aktualizovaný na verziu %s
+
+id: User interface extensions
+msg: Rozšírenia používateľského rozhrania
+
+id: Version %s is no longer compatible with Movian
+msg: Verzia %s už nie je viac kompatibilná s prehrávačom Movian
+
+id: Video streaming
+msg: Streamovanie videa
+
+#
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+msg: Vzdialená strana ukončila spojenie
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automaticky prepnúť do standby
+
+id: Enable SSH server
+msg: Povoliť SSH server
+
+id: Logout
+msg: Odhlásiť sa
+
+id: Open shell
+msg: Otvoriť príkazový riadok
+
+id: Power off system
+msg: Vypnúť systém
+
+id: Quit
+msg: Skončiť
+
+id: SSH server
+msg: SSH server
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Povolené na hlavnej obrazovke
+
+id: Name
+msg: Názov
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Miestna sieť
+
+id: Remove from homepage
+msg: Vymazať z domovskej stránky
+
+#
+# ./src/settings.c
+#
+id: About
+msg: O programe
+
+id: Applications and installed plugins
+msg: Aplikácie a nainštalované doplnky
+
+id: Configure communications with your TV
+msg: Nastaviť komunikáciu s vašim TV
+
+id: Developer settings
+msg: Nastavenia pre vývojárov
+
+id: Discovered media sources
+msg: Objavené zdroje médií
+
+id: File browsing
+msg: Prehľadávanie súborov
+
+id: Fonts and user interface styling
+msg: Prispôsobenie písma a používateľského rozhrania
+
+id: General
+msg: Všeobecné
+
+id: Global settings
+msg: Všeobecné nastavenia
+
+id: Look and feel
+msg: Vzhľad a chovanie
+
+id: Network services, etc
+msg: Sieťové služby, atď.
+
+id: Network settings
+msg: Nastavenia siete
+
+id: Reset
+msg: Obnovenie
+
+id: Settings useful for developers
+msg: Nastavenia užitočné pre vývojárov
+
+id: Software upgrade
+msg: Aktualizácia softvéru
+
+id: Starting and stopping
+msg: Spustenie a zastavenie
+
+id: System name
+msg: Názov systému
+
+id: System related settings
+msg: Nastavenia týkajúce sa systému
+
+id: TV Control
+msg: Ovládanie TV
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Akékoľvek titulky v centrálnom priečinku
+
+id: Any subtitle in same folder as video
+msg: Akékoľvek titulky v rovnakom priečinku ako video
+
+id: Auto
+msg: Automaticky
+
+id: Automatically select from this source
+msg: Automaticky vybrať z tohto zdroja
+
+id: Central subtitle folder
+msg: Centrálny priečinok titulkov
+
+id: Color
+msg: Farba
+
+id: External file
+msg: Externý súbor
+
+id: Force subtitles to reside on video frame
+msg: Vynúniť titulky, aby sa nachádzali na ploche videa
+
+id: Generic settings for video subtitles
+msg: Všeobecné nastavenia video titulkov
+
+id: Ignore embedded styling
+msg: Ignorovat vložené štýly
+
+id: Left
+msg: Ľavý
+
+id: Outline color
+msg: Farba obrysu
+
+id: Outline size
+msg: Veľkosť obrysu
+
+id: Path to central folder
+msg: Cesta k centrálnemu priečinku
+
+id: Providers for Subtitles
+msg: Poskytovatelia titulkov
+
+id: Right
+msg: Pravý
+
+id: Shadow color
+msg: Farba tieňa
+
+id: Shadow offset
+msg: Posun tieňa
+
+id: Subtitle horizontal displacement
+msg: Vodorovný posun titulkov
+
+id: Subtitle position
+msg: Pozícia titulkov
+
+id: Subtitle size
+msg: Veľkosť titulkov
+
+id: Subtitle size and positioning
+msg: Veľkosť a pozícia titulkov
+
+id: Subtitle vertical displacement
+msg: Zvislý posun titulkov
+
+id: Subtitles embedded in video file
+msg: Titulky vložené vo video súbore
+
+id: Subtitles with matching filename in central folder
+msg: Titulky so zodpovedajúcim názvom súboru v centrálnom priečinku
+
+id: Subtitles with matching filename in same folder as video
+msg: Titulky so zodpovedajúcim názvom súboru v rovnakom priečinku ako video
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Predvolené
+
+id: Fonts
+msg: Písma
+
+id: Installed fonts
+msg: Nainštalované písma
+
+id: Narrow text
+msg: Úzky text
+
+id: Reset main font to default
+msg: Obnoviť hlavné písmo na predvolené
+
+id: Reset narrow font to default
+msg: Obnoviť úzky text na predvolené
+
+id: Reset subtitle font to default
+msg: Obnoviť písmo titulkov na predvolené
+
+id: Unable to install font: %s
+msg: Nie je možné nainštalovať písmo: %s
+
+id: Use font %s for
+msg: Použiť písmo %s pre
+
+#
+# ./src/ui/clipboard.c
+#
+id: Copy failed: %s
+msg: Kopírovanie zlyhalo: %s
+
+id: Target folder
+msg: Cieľový priečinok
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+msg: Diaľkový ovládač Dual-Shock
+
+id: No
+msg: Nie
+
+id: Seek using L2 and R2 button
+msg: Vyhľadávať pomocou tlačidiel L2 a R2
+
+id: Yes with Select button
+msg: Áno pomocou tlačidla Select
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+msg: Vlastný obrázok pozadia
+
+id: Emulate Up/Down buttons with mouse wheel
+msg: Emulovať tlačidlá nahor/nadol kolieskom myši
+
+id: Folder for screensaver images
+msg: Priečinok s obrázkami pre šetrič obrazovky
+
+id: Font and icon size
+msg: Veľkosť písma a ikon
+
+id: Interface horizontal shrink
+msg: Vodorovné zmenšenie rozhrania
+
+id: Interface vertical shrink
+msg: Zvislé zmenšenie rozhrania
+
+id: Screensaver
+msg: Šetrič obrazovky
+
+id: Screensaver delay
+msg: Oneskorenie šetriča obrazovky
+
+id: Seconds per image
+msg: Sekúnd na jeden obrázok
+
+id: Use Bing images of the day
+msg: Použiť obrázky dňa zo služby Bing
+
+id: Wrap when reaching beginning/end of lists
+msg: Nekonečné listovanie v zoznamoch
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+msg: pred %d dňami
+
+id: %d hours ago
+msg: pred %d hodinami
+
+id: %d minutes ago
+msg: pred %d minútami
+
+id: %d months ago
+msg: pred %d mesiacmi
+
+id: %d weeks ago
+msg: pred %d týždňami
+
+id: %d years ago
+msg: pred %d rokmi
+
+id: Just now
+msg: práve teraz
+
+id: One day ago
+msg: pred jedným dňom
+
+id: One hour ago
+msg: pred hodinou
+
+id: One minute ago
+msg: pred minútou
+
+id: One month ago
+msg: pred mesiacom
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Automaticky prepnúť do tohto režimu
+
+id: DVI-Video color range
+msg: Rozsah farieb DVI-Video
+
+id: Switch to this mode now
+msg: Prepnúť sa teraz do tohto režimu
+
+id: Video modes
+msg: Režimy videa
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: Je k dispozícii %s vo verzii %s
+
+id: Notify about upgrades
+msg: Upozorniť na aktualizácie
+
+id: Open download page
+msg: Otvoriť stránku na prevzatie aktualizácie
+
+id: System
+msg: Systém
+
+id: Upgrade to releases from
+msg: Aktualizovať na vydania z kanála
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: Dátum (najprv najnovšie)
+
+id: Date (oldest first)
+msg: Dátum (najprv najstaršie)
+
+id: Device not found
+msg: Zariadenie sa nenašlo
+
+id: Malformed URI after device
+msg: Neplatné URI po zariadení
+
+id: Malformed URI after service
+msg: Neplatné URI po službe
+
+id: Service not found
+msg: Služba nebola nájdená
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Vždy
+
+id: Ask
+msg: Opýtať sa
+
+id: Automatically play next video in list
+msg: Automaticky prehrať ďalšie video v zozname
+
+id: Count video as played when reaching
+msg: Považovať video za prehrané po dosiahnutí
+
+id: Enable VDPAU
+msg: Povoliť VDPAU
+
+id: Hardware accelerated decoding
+msg: Hardvérovo akcelerované dekódovanie
+
+id: Maximum resolution for deinterlacer
+msg: Najvyššie rozlíšenie pre deinterlacer
+
+id: Never
+msg: Nikdy
+
+id: No limit
+msg: Bez obmedzení
+
+id: Per-file volume
+msg: Hlasitosť pre každý súbor zvlášť
+
+id: Preferred VDPAU deinterlacer method
+msg: Preferovaný spôsob VDPAU deinterlacera
+
+id: Resume video playback
+msg: Pokračovať v prehrávaní videa
+
+id: Show clock during playback
+msg: Zobraziť počas prehrávania hodiny
+
+id: Step when seeking backward
+msg: Krok pri vyhľadávaní dozadu
+
+id: Step when seeking forward
+msg: Krok pri vyhľadávaní dopredu
+
+id: Temporal
+msg: Časový
+
+id: Temporal/Spatial
+msg: Časový/priestorový
+
+id: Up / Down during video playback controls
+msg: Tlačidlá Nahor / nadol počas prehrávania videa ovládajú
+
+id: Video acceleration and display behaviour
+msg: Video akcelerácia a nastavenia obrazovky
+
+id: Video buffer size
+msg: Veľkosť zásobníka videa
+

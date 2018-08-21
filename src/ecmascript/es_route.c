@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -160,6 +160,31 @@ es_route_create(duk_context *ctx)
 /**
  *
  */
+static int
+es_route_test(duk_context *ctx)
+{
+  const char *str = duk_safe_to_string(ctx, 0);
+
+  hts_mutex_lock(&route_mutex);
+
+  es_route_t *er;
+  hts_regmatch_t matches[8];
+
+  LIST_FOREACH(er, &routes, er_link)
+    if(!hts_regexec(&er->er_regex, str, 8, matches))
+      break;
+
+  duk_push_boolean(ctx, er != NULL);
+
+  hts_mutex_unlock(&route_mutex);
+
+  return 1;
+}
+
+
+/**
+ *
+ */
 int
 ecmascript_openuri(prop_t *page, const char *url, int sync)
 {
@@ -254,6 +279,7 @@ es_backend_open(duk_context *ctx)
 static const duk_function_list_entry fnlist_route[] = {
   { "create",                  es_route_create,      2 },
   { "backendOpen",             es_backend_open,      3 },
+  { "test",                    es_route_test,        1 },
   { NULL, NULL, 0}
 };
 

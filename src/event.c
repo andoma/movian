@@ -162,6 +162,7 @@ static struct strtab actionnames[] = {
   { "Select",                ACTION_SELECT },
   { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
   { "Home",                  ACTION_HOME },
+  { "SysHome",               ACTION_SYSTEM_HOME },
   { "Reset",                 ACTION_RESET },
   { "Copy",                  ACTION_COPY },
   { "Paste",                 ACTION_PASTE },

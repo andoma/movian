@@ -31,8 +31,9 @@ typedef struct android_glw_root {
 
   lphelper_t agr_dpad_center;
 
-
   prop_sub_t *agr_disable_screensaver_sub;
+
+  prop_sub_t *agr_nav_eventsink_sub;
 
 } android_glw_root_t;
 

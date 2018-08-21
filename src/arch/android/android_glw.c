@@ -52,6 +52,21 @@ dis_screensaver_callback(void *opaque, int value)
   (*env)->CallVoidMethod(env, agr->agr_vrp, mid);
 }
 
+
+static void
+nav_eventsink(void *opaque, event_t *e)
+{
+  android_glw_root_t *agr = opaque;
+  JNIEnv *env;
+  (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
+
+  jclass class = (*env)->GetObjectClass(env, agr->agr_vrp);
+  if(event_is_action(e, ACTION_SYSTEM_HOME)) {
+    jmethodID mid = (*env)->GetMethodID(env, class, "sysHome", "()V");
+    (*env)->CallVoidMethod(env, agr->agr_vrp, mid);
+  }
+}
+
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwCreate(JNIEnv *env,
                                                        jobject obj,
@@ -75,6 +90,14 @@ Java_com_lonelycoder_mediaplayer_Core_glwCreate(JNIEnv *env,
                    PROP_TAG_CALLBACK_INT, dis_screensaver_callback, agr,
                    PROP_TAG_NAME("ui", "disableScreensaver"),
                    PROP_TAG_ROOT, agr->gr.gr_prop_ui,
+                   PROP_TAG_COURIER, agr->gr.gr_courier,
+                   NULL);
+
+  agr->agr_nav_eventsink_sub =
+    prop_subscribe(0,
+                   PROP_TAG_CALLBACK_EVENT, nav_eventsink, agr,
+                   PROP_TAG_NAME("nav", "eventSink"),
+                   PROP_TAG_NAMED_ROOT, android_nav, "nav",
                    PROP_TAG_COURIER, agr->gr.gr_courier,
                    NULL);
 
@@ -124,6 +147,7 @@ Java_com_lonelycoder_mediaplayer_Core_glwDestroy(JNIEnv *env,
   glw_root_t *gr = &agr->gr;
 
   prop_unsubscribe(agr->agr_disable_screensaver_sub);
+  prop_unsubscribe(agr->agr_nav_eventsink_sub);
 
   glw_lock(gr);
   while(agr->agr_running == 1)

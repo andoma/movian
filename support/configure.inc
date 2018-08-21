@@ -495,7 +495,7 @@ zlib_setup()
 bzip2_setup()
 {
     BZIP2_VER="1.0.6"
-    download_file http://www.bzip.org/${BZIP2_VER}/bzip2-${BZIP2_VER}.tar.gz bzip2tarball
+    download_file https://fossies.org/linux/misc/bzip2-${BZIP2_VER}.tar.gz bzip2tarball
 
     BZIP2_SRC_DIR=${BUILDDIR}/bzip2-${BZIP2_VER}
 

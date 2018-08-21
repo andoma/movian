@@ -37,27 +37,28 @@ class GLWView extends GLSurfaceView {
         setRenderer(new Renderer());
         //        setRenderMode(RENDERMODE_WHEN_DIRTY);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        setZOrderMediaOverlay(true);
+
+        setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent e) {
+
+                final int source = e.getSource();
+                final int action = e.getAction();
+                final float x = e.getX();
+                final float y = e.getY();
+                final long ts = e.getEventTime();
+
+                queueEvent(new Runnable() {
+                        public void run() {
+                            Core.glwMotion(glwId, source, action, (int)x, (int)y, ts);
+                        }
+                    });
+                return true;
+            }
+        });
     }
 
-    @Override
-    public boolean onTouchEvent(final MotionEvent e) {
-
-        Rect r = new Rect();
-        if(getGlobalVisibleRect(r)) {
-            final int source = e.getSource();
-            final int action = e.getAction();
-            final float x = e.getX() - r.left;
-            final float y = e.getY() - r.top;
-            final long ts = e.getEventTime();
-
-            queueEvent(new Runnable() {
-                    public void run() {
-                        Core.glwMotion(glwId, source, action, (int)x, (int)y, ts);
-                    }
-                });
-        }
-        return true;
-    }
 
     public boolean keyDown(int keyCode, KeyEvent event) {
 

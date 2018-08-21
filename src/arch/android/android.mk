@@ -89,6 +89,8 @@ ${BUILDDIR}/${APPNAME}.aligned.apk: ${BUILDDIR}/${APPNAME}.unsigned.apk
 ${BUILDDIR}/${APPNAME}.apk: ${BUILDDIR}/${APPNAME}.aligned.apk
 	@[ -z "$$MOVIAN_KEYSTORE_PASS" ] && (cp $< $@ ; echo "Warning: Keystore password not present, producing unsigned APK") || (${APKSIGNER} sign -ks android/movian.keystore -ks-pass env:MOVIAN_KEYSTORE_PASS --out $@ $< ; echo "APK signed")
 
+aligned: ${BUILDDIR}/${APPNAME}.aligned.apk
+
 apk: ${BUILDDIR}/${APPNAME}.apk
 	@echo "doozer-artifact:${BUILDDIR}/${APPNAME}.apk:apk:application/vnd.android.package-archive:${APPNAME}_api${ANDROID_MIN_SDK_VERSION}_${ANDROID_ABI}.apk:versioncode=${NUMVER}"
 

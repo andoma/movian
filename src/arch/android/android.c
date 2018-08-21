@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -246,7 +246,6 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard, jstring j_android_id, jint time_24hrs, jstring j_music, jstring j_pictures, jstring j_movies, jint audio_sample_rate, jint audio_frames_per_buffer)
 {
-  char path[PATH_MAX];
   trace_arch(TRACE_INFO, "Core", "Native core initializing");
 
   gconf.trace_level = TRACE_DEBUG;
@@ -264,12 +263,6 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
   gconf.persistent_path = strdup(settings);
   gconf.cache_path      = strdup(cachedir);
 
-  snprintf(path, sizeof(path), "%s/Download", sdcard);
-  mkdir(path, 0770);
-  snprintf(path, sizeof(path), "%s/Download/movian_upgrade.apk", sdcard);
-  gconf.upgrade_path = strdup(path);
-  unlink(gconf.upgrade_path);
-
   uint8_t digest[16];
 
   md5_decl(ctx);
@@ -284,7 +277,6 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   (*env)->ReleaseStringUTFChars(env, j_settings, settings);
   (*env)->ReleaseStringUTFChars(env, j_cachedir, cachedir);
-  (*env)->ReleaseStringUTFChars(env, j_sdcard,   sdcard);
   (*env)->ReleaseStringUTFChars(env, j_android_id, android_id);
 
 
@@ -301,9 +293,15 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   prop_jni_init(env);
 
+
+  char filesdcard[PATH_MAX];
+  snprintf(filesdcard, sizeof(filesdcard), "file://%s", sdcard);
+
   service_createp("androidstorage", _p("Android Storage"),
-                  "file:///storage",
+                  filesdcard,
                   "storage", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+
+  (*env)->ReleaseStringUTFChars(env, j_sdcard, sdcard);
 
   android_nav = nav_spawn();
 
