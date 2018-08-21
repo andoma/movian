@@ -54,7 +54,7 @@ for opt do
             ANDROID_ABI=armeabi
             BUILD=android.api15_armv7
             TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/arm-linux-androideabi-
-            ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
+            ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon -funwind-tables"
             ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
             LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc"
             CC=${TOOLCHAIN}clang

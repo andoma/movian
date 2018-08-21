@@ -806,6 +806,12 @@ nav_back(navigator_t *nav)
 
     if(doclose)
       nav_close(np, 1);
+  } else {
+    event_t *e = event_create_action(ACTION_SYSTEM_HOME);
+    prop_t *eventsink = prop_create_r(nav->nav_prop_root, "eventSink");
+    prop_send_ext_event(eventsink, e);
+    prop_ref_dec(eventsink);
+    event_release(e);
   }
 }
 

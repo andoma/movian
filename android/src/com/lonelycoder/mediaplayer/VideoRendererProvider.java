@@ -6,4 +6,5 @@ interface VideoRendererProvider {
 
     public void disableScreenSaver();
     public void enableScreenSaver();
+    public void sysHome();
 }
