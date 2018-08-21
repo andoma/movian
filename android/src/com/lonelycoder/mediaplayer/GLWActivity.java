@@ -189,4 +189,15 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
             });
     }
 
+    @Override
+    public void sysHome() {
+        runOnUiThread(new Runnable() {
+                public void run() {
+                    Intent startMain = new Intent(Intent.ACTION_MAIN);
+                    startMain.addCategory(Intent.CATEGORY_HOME);
+                    startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(startMain);
+                }
+            });
+    }
 }
