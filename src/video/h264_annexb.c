@@ -246,7 +246,7 @@ hata_sps(h264_annexb_to_avc_t *hata, const uint8_t *data, int len)
 
   free(hata->sps[sps_id].data);
   hata->sps[sps_id].width  = sps.mb_width  * 16;
-  hata->sps[sps_id].height = sps.mb_height * 16;
+  hata->sps[sps_id].height = sps.mb_height * 16 * (2 - sps.mbs_only_flag);
   hata->sps[sps_id].data = malloc(len);
   hata->sps[sps_id].len = len;
   memcpy(hata->sps[sps_id].data, data, len);
