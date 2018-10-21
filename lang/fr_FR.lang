@@ -1268,6 +1268,10 @@ msg: URL
 id: Video
 msg: Vidéo
 
+id: Show bookmarks in a subdirectory
+# Missing translation
+msg: 
+
 #
 # ./src/networking/connman.c
 #
