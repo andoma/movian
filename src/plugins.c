@@ -56,7 +56,7 @@ typedef enum {
 } plugin_type_t;
 
 static struct strtab catnames[] = {
-  { "tv",          PLUGIN_CAT_TV }, 
+  { "tv",          PLUGIN_CAT_TV },
   { "video",       PLUGIN_CAT_VIDEO },
   { "music",       PLUGIN_CAT_MUSIC },
   { "cloud",       PLUGIN_CAT_CLOUD },
@@ -195,7 +195,7 @@ repo_url(void)
  *
  */
 static void
-set_alt_repo_url(void *opaque, const char *value) 
+set_alt_repo_url(void *opaque, const char *value)
 {
   mystrset(&plugin_alt_repo_url, value);
 }
@@ -205,7 +205,7 @@ set_alt_repo_url(void *opaque, const char *value)
  *
  */
 static void
-set_beta_passwords(void *opaque, const char *value) 
+set_beta_passwords(void *opaque, const char *value)
 {
   mystrset(&plugin_beta_passwords, value);
 }
@@ -215,7 +215,7 @@ set_beta_passwords(void *opaque, const char *value)
  *
  */
 static void
-set_autoupgrade(void *opaque, int value) 
+set_autoupgrade(void *opaque, int value)
 {
   autoupgrade = value;
   plugin_autoupgrade();
@@ -234,7 +234,7 @@ plugin_find(const char *id, int create)
       return pl;
   if(!create)
     return NULL;
-  
+
   pl = calloc(1, sizeof(plugin_t));
   pl->pl_id = strdup(id);
 
@@ -839,7 +839,7 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
     htsmsg_release(json);
     return NULL;
   }
-  
+
   return json;
 }
 
@@ -949,7 +949,7 @@ plugin_load_repo(void)
 	  break;
 
       if(pl != NULL) {
-	notify_add(NULL, NOTIFY_ERROR, NULL, 10, 
+	notify_add(NULL, NOTIFY_ERROR, NULL, 10,
 		   _("Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually."), pl->pl_title, pl->pl_inst_ver);
 	plugin_remove(pl);
       }
@@ -984,7 +984,7 @@ plugin_autoupgrade(void)
       continue;
     if(plugin_install(pl, NULL))
       continue;
-    notify_add(NULL, NOTIFY_INFO, NULL, 5, 
+    notify_add(NULL, NOTIFY_INFO, NULL, 5,
 	       _("Upgraded plugin %s to version %s"), pl->pl_title,
 	       pl->pl_inst_ver);
   }
@@ -1015,7 +1015,7 @@ plugin_setup_start_model(void)
   // Top items
 
   prop_t *sta = prop_create_root(NULL);
-  
+
   p = prop_create(sta, NULL);
   prop_set_string(prop_create(p, "type"), "store");
   prop_link(_p("Browse available plugins"),
