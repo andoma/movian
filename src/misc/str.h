@@ -145,4 +145,12 @@ void rgbstr_to_floatvec(const char *s, float *out);
 
 int pattern_match(const char *str, const char *pat);
 
+void freecharp(char **ptr);
+
+#define scoped_char char __attribute__((cleanup(freecharp)))
+
+char *fmtv(const char *fmt, va_list ap);
+
+char *fmt(const char *fmt, ...)  __attribute__ ((format (printf, 1, 2)));
+
 #endif

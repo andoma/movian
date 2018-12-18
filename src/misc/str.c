@@ -17,6 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1805,4 +1806,31 @@ pattern_match(const char *str, const char *pat)
       return 1;
   } while (*str++);
   return 0;
+}
+
+void
+freecharp(char **ptr)
+{
+  free(*ptr);
+  *ptr = NULL;
+}
+
+char *
+fmtv(const char *fmt, va_list ap)
+{
+  char *ret;
+  if(vasprintf(&ret, fmt, ap) == -1)
+    abort();
+  return ret;
+}
+
+char *
+fmt(const char *fmt, ...)
+{
+  va_list ap;
+  char *ret;
+  va_start(ap, fmt);
+  ret = fmtv(fmt, ap);
+  va_end(ap);
+  return ret;
 }
