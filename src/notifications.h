@@ -53,6 +53,4 @@ int text_dialog(const char *message, char** string, int flags);
 struct prop *add_news(const char *id, const char *message,
                       const char *location, const char *caption);
 
-void load_site_news(void);
-
 #endif // NOTIFICATIONS_H__

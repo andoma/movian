@@ -253,8 +253,6 @@ swthread(void *aux)
     navigator_can_start();
   }
 
-  load_site_news();
-
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 0;
 
@@ -276,7 +274,6 @@ swthread(void *aux)
       plugins_upgrade_check();
 #endif
     upgrade_refresh();
-    load_site_news();
     hts_mutex_lock(&gconf.state_mutex);
   }
   hts_mutex_unlock(&gconf.state_mutex);

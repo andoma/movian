@@ -32,17 +32,11 @@
 #include "misc/time.h"
 #include "settings.h"
 
-#if ENABLE_WEBPOPUP
-#include "ui/webpopup.h"
-#endif
-
 
 static prop_t *notify_prop_entries;
 static hts_mutex_t news_mutex;
 static htsmsg_t *dismissed_news_in;
 static htsmsg_t *dismissed_news_out;
-
-static int shownews;
 
 /**
  *
@@ -58,18 +52,6 @@ notifications_init(void)
   dismissed_news_out = htsmsg_create_map();
 
   notify_prop_entries = prop_create(root, "nodes");
-
-#if ENABLE_WEBPOPUP
-
-  prop_t *dir = setting_get_dir("general:misc");
-
-  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
-                 SETTING_TITLE(_p("Show news on home screen")),
-                 SETTING_VALUE(1),
-                 SETTING_WRITE_BOOL(&shownews),
-                 SETTING_STORE("notifications", "shownews"),
-                 NULL);
-#endif
 }
 
 
@@ -439,178 +421,4 @@ add_news(const char *id, const char *message,
   prop_t *p = add_news_locked(id, message, location, caption, NULL);
   hts_mutex_unlock(&news_mutex);
   return p;
-}
-
-#if ENABLE_WEBPOPUP
-
-/**
- *
- */
-static void
-open_news(void *opaque, prop_event_t event, ...)
-{
-  prop_t *p = opaque;
-  event_t *e;
-  va_list ap;
-
-  va_start(ap, event);
-
-  switch(event) {
-  case PROP_DESTROYED:
-    prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    prop_ref_dec(p);
-    break;
-
-  case PROP_EXT_EVENT:
-    e = va_arg(ap, event_t *);
-    if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      const event_payload_t *ep = (const event_payload_t *)e;
-      const char *id = mystrbegins(ep->payload, "sitenews:");
-      if(id != NULL) {
-
-	dismis_news(ep->payload);
-        char url[512];
-#ifdef PS3
-        // PS3 browser is really bad when it comes to HTTPS
-        snprintf(url, sizeof(url), "http://www2.movian.tv/news/%s", id);
-#else
-        snprintf(url, sizeof(url), "https://movian.tv/news/%s", id);
-#endif
-        TRACE(TRACE_DEBUG, "NEWS", "Opening %s", url);
-        webbrowser_open(url, APPNAMEUSER);
-      }
-    }
-    break;
-
-  default:
-    break;
-  }
-  va_end(ap);
-}
-
-/**
- *
- */
-static int
-parse_created_on_time(time_t *tp, const char *d)
-{
-  int year;
-  int month;
-  int day;
-  int hour;
-  int min;
-  int sec;
-
-  if(sscanf(d, "%d-%d-%dT%d:%d:%dZ",
-	    &year, &month, &day, &hour, &min, &sec) != 6)
-    return -1;
-
-  return mktime_utc(tp, year, month-1, day, hour, min, sec);
-}
-
-#endif
-
-
-/**
- *
- */
-void
-load_site_news(void)
-{
-  if(!shownews)
-    return;
-
-#if ENABLE_WEBPOPUP
-  struct http_header_list response_headers;
-  buf_t *b;
-  char errbuf[512];
-  b = fa_load("https://movian.tv/projects/movian/news.json",
-              FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
-              FA_LOAD_RESPONSE_HEADERS(&response_headers),
-              FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-              NULL);
-  if(b == NULL) {
-    TRACE(TRACE_DEBUG, "News", "Unable to load news -- %s", errbuf);
-    return;
-  }
-
-  const char *dateheader = http_header_get(&response_headers, "date");
-  if(dateheader == NULL) {
-    buf_release(b);
-    http_headers_free(&response_headers);
-    return;
-  }
-  dateheader = mystrdupa(dateheader);
-  http_headers_free(&response_headers);
-
-
-  htsmsg_t *newsinfo = htsmsg_store_load("sitenews");
-  time_t servertime;
-
-  if(http_ctime(&servertime, dateheader)) {
-    buf_release(b);
-    htsmsg_release(newsinfo);
-    return;
-  }
-
-  if(newsinfo == NULL)
-    newsinfo = htsmsg_create_map();
-
-  time_t no_news_before =
-    htsmsg_get_u32_or_default(newsinfo, "nothingbefore", 0);
-
-  if(no_news_before == 0) {
-    no_news_before = servertime;
-    htsmsg_add_u32(newsinfo, "nothingbefore", no_news_before);
-    htsmsg_store_save(newsinfo, "sitenews");
-  }
-  htsmsg_release(newsinfo);
-
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
-  buf_release(b);
-  if(doc == NULL) {
-    return;
-  }
-
-  hts_mutex_lock(&news_mutex);
-
-  htsmsg_t *news = htsmsg_get_list(doc, "news");
-  if(news != NULL) {
-    htsmsg_field_t *f;
-    HTSMSG_FOREACH(f, news) {
-      htsmsg_t *entry;
-      if((entry = htsmsg_get_map_by_field(f)) == NULL)
-        continue;
-
-      const char *title = htsmsg_get_str(entry, "title");
-      const char *created_on = htsmsg_get_str(entry, "created_on");
-      int id = htsmsg_get_u32_or_default(entry, "id", 0);
-      if(created_on == NULL || title == NULL || id == 0)
-        continue;
-
-      time_t t;
-
-      if(parse_created_on_time(&t, created_on))
-        continue;
-
-      if(t < no_news_before || t < servertime - 86400 * 30)
-        continue;
-
-      char idstr[64];
-      snprintf(idstr, sizeof(idstr), "sitenews:%d", id);
-      prop_t *p = add_news_locked(idstr, title, NULL, "Read more", idstr);
-      if(p != NULL) {
-        prop_subscribe(PROP_SUB_TRACK_DESTROY,
-                       PROP_TAG_CALLBACK, open_news, p,
-                       PROP_TAG_ROOT, prop_create(p, "eventSink"),
-                       PROP_TAG_MUTEX, &news_mutex,
-                       NULL);
-      }
-    }
-  }
-
-  hts_mutex_unlock(&news_mutex);
-  htsmsg_release(doc);
-  TRACE(TRACE_DEBUG, "News", "News loaded and updated");
-#endif
 }
