@@ -957,12 +957,6 @@ plugin_load_repo(void)
   }
 
 
-  const char *cc = htsmsg_get_str(msg, "cc");
-  if(cc != NULL) {
-    TRACE(TRACE_DEBUG, "GEO", "Current country: %s", cc);
-    prop_setv(prop_get_global(), "location", "cc", NULL, PROP_SET_STRING, cc);
-  }
-
   htsmsg_release(msg);
   return 0;
 }
