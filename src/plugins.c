@@ -88,7 +88,8 @@ static struct plugin_list plugins;
 
 typedef struct plugin {
   LIST_ENTRY(plugin) pl_link;
-  char *pl_id;
+  char *pl_fqid;
+  char *pl_domain;
   char *pl_package;
   char *pl_title;
 
@@ -226,22 +227,37 @@ set_autoupgrade(void *opaque, int value)
  *
  */
 static plugin_t *
-plugin_find(const char *id, int create)
+plugin_make(const char *id, const char *domain)
 {
   plugin_t *pl;
+  scoped_char *fqid = fmt("%s@%s", id, domain);
+
   LIST_FOREACH(pl, &plugins, pl_link)
-    if(!strcmp(pl->pl_id, id))
+    if(!strcmp(pl->pl_fqid, fqid))
       return pl;
-  if(!create)
-    return NULL;
 
   pl = calloc(1, sizeof(plugin_t));
-  pl->pl_id = strdup(id);
+  pl->pl_fqid = strdup(fqid);
+  pl->pl_domain = strdup(domain);
 
   pl->pl_status = prop_create_root(NULL);
 
   LIST_INSERT_HEAD(&plugins, pl, pl_link);
   return pl;
+}
+
+
+/**
+ *
+ */
+static plugin_t *
+plugin_find(const char *fqid)
+{
+  plugin_t *pl;
+  LIST_FOREACH(pl, &plugins, pl_link)
+    if(!strcmp(pl->pl_fqid, fqid))
+      return pl;
+  return NULL;
 }
 
 
@@ -385,7 +401,7 @@ static void
 plugin_fill_prop(struct htsmsg *pm, struct prop *p,
                  const char *basepath, plugin_t *pl)
 {
-  const char *title = htsmsg_get_str(pm, "title") ?: pl->pl_id;
+  const char *title = htsmsg_get_str(pm, "title") ?: pl->pl_fqid;
   const char *icon  = htsmsg_get_str(pm, "icon");
   const char *cat   = htsmsg_get_str(pm, "category");
 
@@ -470,9 +486,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
 
   if(id != NULL) {
     hts_mutex_lock(&plugin_mutex);
-    plugin_t *pl = plugin_find(id, 1);
-
-
+    plugin_t *pl = plugin_make(id, "local");
     snprintf(path, sizeof(path), "zip://%s", zipfile);
     plugin_fill_prop(pm, prop, path, pl);
     prop_set(prop, "package", PROP_SET_STRING, zipfile);
@@ -492,8 +506,8 @@ plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath)
 {
   prop_t *p;
   hts_mutex_assert(&plugin_mutex);
-  p = prop_create(plugin_root_list, pl->pl_id);
-  mystrset(&pl->pl_title, htsmsg_get_str(pm, "title") ?: pl->pl_id);
+  p = prop_create(plugin_root_list, pl->pl_fqid);
+  mystrset(&pl->pl_title, htsmsg_get_str(pm, "title") ?: pl->pl_fqid);
   prop_set(p, "type", PROP_SET_STRING, "plugin");
   plugin_fill_prop(pm, p, basepath, pl);
   if(basepath == NULL) {
@@ -509,7 +523,7 @@ plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath)
 static void
 plugin_unload_ecmascript(plugin_t *pl)
 {
-  ecmascript_plugin_unload(pl->pl_id);
+  ecmascript_plugin_unload(pl->pl_fqid);
 }
 
 
@@ -520,7 +534,7 @@ plugin_unload_ecmascript(plugin_t *pl)
 static void
 plugin_unload_vmir(plugin_t *pl)
 {
-  np_plugin_unload(pl->pl_id);
+  np_plugin_unload(pl->pl_fqid);
 }
 #endif
 
@@ -549,7 +563,8 @@ plugin_unload(plugin_t *pl)
  *
  */
 static int
-plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
+plugin_load(const char *url, char *errbuf, size_t errlen, int flags,
+            const char *domain)
 {
   char ctrlfile[URL_MAX];
   char errbuf2[1024];
@@ -570,7 +585,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     goto bad;
 
   const char *type = htsmsg_get_str(ctrl, "type");
-  const char *id   = htsmsg_get_str(ctrl, "id");
+  const char *ext_id  = htsmsg_get_str(ctrl, "id");
   const char *version = htsmsg_get_str(ctrl, "version");
   if(type == NULL) {
     snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
@@ -578,19 +593,18 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     goto bad;
   }
 
-  if(id == NULL) {
+  if(ext_id == NULL) {
     snprintf(errbuf, errlen, "Missing \"id\" element in control file %s",
              ctrlfile);
     goto bad;
   }
 
-  plugin_t *pl = plugin_find(id, 1);
-
+  plugin_t *pl = plugin_make(ext_id, domain);
 
   if(version != NULL) {
     rstr_t *notifymsg;
-    if(is_plugin_blacklisted(id, version, &notifymsg)) {
-      const char *title = htsmsg_get_str(ctrl, "title") ?: id;
+    if(is_plugin_blacklisted(ext_id, version, &notifymsg)) {
+      const char *title = htsmsg_get_str(ctrl, "title") ?: ext_id;
       char tmp[512];
       rstr_t *fmt = _("Plugin %s has been uninstalled - %s");
       snprintf(tmp, sizeof(tmp), rstr_get(fmt), title, rstr_get(notifymsg));
@@ -602,7 +616,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
   }
 
   if(!(flags & PLUGIN_LOAD_FORCE) && pl->pl_loaded) {
-    snprintf(errbuf, errlen, "Plugin \"%s\" already loaded", id);
+    snprintf(errbuf, errlen, "Plugin \"%s\" already loaded", pl->pl_fqid);
     goto bad;
   }
 
@@ -632,7 +646,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     int stack_size  = htsmsg_get_u32_or_default(ctrl, "stack-size", 64);
 
     hts_mutex_unlock(&plugin_mutex);
-    r = np_plugin_load(id, fullpath, errbuf, errlen, version, 0,
+    r = np_plugin_load(pl->pl_fqid, fullpath, errbuf, errlen, version, 0,
                        memory_size * 1024, stack_size * 1024);
     hts_mutex_lock(&plugin_mutex);
     if(!r)
@@ -664,7 +678,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
         pflags |= ECMASCRIPT_FILE_BYPASS_ACL_WRITE;
     }
     hts_mutex_unlock(&plugin_mutex);
-    r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version,
+    r = ecmascript_plugin_load(pl->pl_fqid, fullpath, errbuf, errlen, version,
                                buf_cstr(b), pflags);
     hts_mutex_lock(&plugin_mutex);
     if(!r)
@@ -722,10 +736,10 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
       pl->pl_installed = 1;
       mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
 
-      autoplugin_set_installed(pl->pl_id, 1);
+      autoplugin_set_installed(pl->pl_fqid, 1);
     }
 
-    mystrset(&pl->pl_title, htsmsg_get_str(ctrl, "title") ?: id);
+    mystrset(&pl->pl_title, htsmsg_get_str(ctrl, "title") ?: pl->pl_fqid);
 
     pl->pl_loaded = 1;
   }
@@ -754,15 +768,23 @@ plugin_load_installed(void)
   char errbuf[200];
   fa_dir_entry_t *fde;
 
-  snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
+  snprintf(path, sizeof(path), "%s/pluginsv2/installed", gconf.persistent_path);
 
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
 
   if(fd != NULL) {
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+      scoped_char *d0 = strdup(rstr_get(fde->fde_filename));
+      char *domain = strchr(d0, '@');
+      if(domain != NULL) {
+        domain++;
+        char *dot = strchr(domain, '.');
+        if(dot != NULL)
+          *dot = 0;
+      }
       snprintf(path, sizeof(path), "zip://%s", rstr_get(fde->fde_url));
       if(plugin_load(path, errbuf, sizeof(errbuf),
-                     PLUGIN_LOAD_AS_INSTALLED)) {
+                     PLUGIN_LOAD_AS_INSTALLED, domain)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }
     }
@@ -853,6 +875,8 @@ plugin_load_repo(void)
 {
   plugin_t *pl, *next;
   char errbuf[512];
+  const char *domain = "mainrepo";
+
   htsmsg_t *msg = repo_get(repo_url(), errbuf, sizeof(errbuf));
 
   if(msg == REPO_ERROR_NETWORK || msg == NULL) {
@@ -895,7 +919,7 @@ plugin_load_repo(void)
       if(is_plugin_blacklisted(id, version, NULL))
         continue;
 
-      pl = plugin_find(id, 1);
+      pl = plugin_make(id, domain);
       pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, NULL);
       mystrset(&pl->pl_repo_ver, version);
@@ -940,11 +964,13 @@ plugin_load_repo(void)
       const char *id      = htsmsg_get_str(pm, "id");
       const char *version = htsmsg_get_str(pm, "version");
 
+      scoped_char *fqid = fmt("%s@%s", id, domain);
+
       if(id == NULL || version == NULL)
 	continue;
 
       LIST_FOREACH(pl, &plugins, pl_link)
-	if(!strcmp(id, pl->pl_id) && pl->pl_installed && pl->pl_inst_ver &&
+	if(!strcmp(fqid, pl->pl_fqid) && pl->pl_installed && pl->pl_inst_ver &&
 	   !strcmp(version, pl->pl_inst_ver))
 	  break;
 
@@ -1239,7 +1265,7 @@ plugins_init(char **devplugs)
       strvec_addp(&devplugins, path);
 
       if(plugin_load(path, errbuf, sizeof(errbuf),
-                     PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG)) {
+                     PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG, "dev")) {
         TRACE(TRACE_ERROR, "plugins",
               "Unable to load development plugin: %s\n%s", path, errbuf);
       } else {
@@ -1267,7 +1293,8 @@ plugins_reload_dev_plugin(void)
   for(int i = 0; (path = devplugins[i]) != NULL; i++) {
 
     if(plugin_load(path, errbuf, sizeof(errbuf),
-                   PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG | PLUGIN_LOAD_BY_USER))
+                   PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG | PLUGIN_LOAD_BY_USER,
+                   "dev"))
       TRACE(TRACE_ERROR, "plugins",
             "Unable to reload development plugin: %s\n%s", path, errbuf);
     else
@@ -1285,19 +1312,19 @@ plugin_remove(plugin_t *pl)
 {
   char path[PATH_MAX];
 
-  autoplugin_set_installed(pl->pl_id, 0);
+  autoplugin_set_installed(pl->pl_fqid, 0);
 
   usage_event("Plugin remove", 1,
-              USAGE_SEG("plugin", pl->pl_id));
+              USAGE_SEG("plugin", pl->pl_fqid));
 
-  TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
+  TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_fqid);
 
-  snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
-	   gconf.persistent_path, pl->pl_id);
+  snprintf(path, sizeof(path), "%s/pluginsv2/installed/%s.zip",
+	   gconf.persistent_path, pl->pl_fqid);
   fa_unlink(path, NULL, 0);
 
-  snprintf(path, sizeof(path), "%s/plugins/%s",
-	   gconf.persistent_path, pl->pl_id);
+  snprintf(path, sizeof(path), "%s/pluginsv2/settings/%s",
+	   gconf.persistent_path, pl->pl_fqid);
   fa_unlink_recursive(path, NULL, 0, 0);
 
   plugin_unload(pl);
@@ -1319,7 +1346,7 @@ plugin_install(plugin_t *pl, const char *package)
   char path[200];
 
   usage_event(pl->pl_can_upgrade ? "Plugin upgrade" : "Plugin install", 1,
-              USAGE_SEG("plugin", pl->pl_id,
+              USAGE_SEG("plugin", pl->pl_fqid,
                         "source", package ? "File" : "Repo"));
 
   if(package == NULL)
@@ -1335,7 +1362,7 @@ plugin_install(plugin_t *pl, const char *package)
   }
 
   TRACE(TRACE_INFO, "plugins", "Downloading plugin %s from %s",
-	pl->pl_id, package);
+	pl->pl_fqid, package);
 
   prop_link(_p("Downloading"), status);
   prop_set(pl->pl_status, "canInstall", PROP_SET_INT, 0);
@@ -1350,7 +1377,7 @@ plugin_install(plugin_t *pl, const char *package)
     prop_unlink(status);
     prop_set_string(status, errbuf);
     TRACE(TRACE_INFO, "plugins", "Failed to download plugin %s from %s -- %s",
-          pl->pl_id, package, errbuf);
+          pl->pl_fqid, package, errbuf);
 
   cleanup:
     prop_set(pl->pl_status, "canInstall", PROP_SET_INT, 1);
@@ -1364,23 +1391,25 @@ plugin_install(plugin_t *pl, const char *package)
      buf[0] != 0x50 || buf[1] != 0x4b || buf[2] != 0x03 || buf[3] != 0x04) {
     prop_link(_p("Corrupt plugin bundle"), status);
     TRACE(TRACE_INFO, "plugins", "Plugin %s from %s -- not a valid bundle",
-          pl->pl_id, package);
+          pl->pl_fqid, package);
     hexdump("BUNDLE", buf, MIN(b->b_size, 64));
     goto cleanup;
   }
 
   TRACE(TRACE_INFO, "plugins", "Plugin %s valid ZIP archive %d bytes",
-	pl->pl_id, (int)b->b_size);
+	pl->pl_fqid, (int)b->b_size);
 
-  snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
+  snprintf(path, sizeof(path), "%s/pluginsv2", gconf.persistent_path);
+  fa_makedir(path);
+  snprintf(path, sizeof(path), "%s/pluginsv2/installed", gconf.persistent_path);
   fa_makedir(path);
 
   plugin_unload(pl);
 
   prop_link(_p("Installing"), status);
 
-  snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
-	   gconf.persistent_path, pl->pl_id);
+  snprintf(path, sizeof(path), "%s/pluginsv2/installed/%s.zip",
+	   gconf.persistent_path, pl->pl_fqid);
 
   if(fa_unlink(path, errbuf, sizeof(errbuf))) {
     TRACE(TRACE_DEBUG, "plugins", "First unlinking %s -- %s",
@@ -1407,8 +1436,8 @@ plugin_install(plugin_t *pl, const char *package)
   }
 
   snprintf(path, sizeof(path),
-	   "zip://%s/installedplugins/%s.zip", gconf.persistent_path,
-	   pl->pl_id);
+	   "zip://%s/pluginsv2/installed/%s.zip", gconf.persistent_path,
+	   pl->pl_fqid);
 
 #ifdef STOS
   arch_sync_path(path);
@@ -1416,7 +1445,7 @@ plugin_install(plugin_t *pl, const char *package)
 
   if(plugin_load(path, errbuf, sizeof(errbuf),
                  PLUGIN_LOAD_FORCE | PLUGIN_LOAD_AS_INSTALLED |
-                 PLUGIN_LOAD_BY_USER)) {
+                 PLUGIN_LOAD_BY_USER, pl->pl_domain)) {
     prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
     prop_set_string(status, errbuf);
@@ -1603,7 +1632,7 @@ plugin_open_file(prop_t *page, const char *url)
 
   if(id != NULL) {
     hts_mutex_lock(&plugin_mutex);
-    plugin_t *pl = plugin_find(id, 1);
+    plugin_t *pl = plugin_make(id, "local");
     plugin_install(pl, url);
     hts_mutex_unlock(&plugin_mutex);
   } else {
@@ -1769,7 +1798,7 @@ plugin_select_view(const char *plugin_id, const char *filename)
   hts_mutex_lock(&plugin_mutex);
 
   LIST_FOREACH(pl, &plugins, pl_link)
-    if(!strcmp(pl->pl_id, plugin_id))
+    if(!strcmp(pl->pl_fqid, plugin_id))
       break;
 
   if(pl != NULL) {
@@ -1814,7 +1843,7 @@ void
 plugin_uninstall(const char *id)
 {
   hts_mutex_lock(&plugin_mutex);
-  plugin_t *pl = plugin_find(id, 0);
+  plugin_t *pl = plugin_find(id);
   if(pl != NULL) {
     plugin_remove(pl);
   }
@@ -2028,7 +2057,7 @@ plugin_autoinstall(const char *id)
 {
   int errcode = -1;
   hts_mutex_lock(&plugin_mutex);
-  plugin_t *pl = plugin_find(id, 0);
+  plugin_t *pl = plugin_find(id);
   if(pl != NULL) {
     errcode = plugin_install(pl, NULL);
 
