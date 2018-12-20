@@ -986,7 +986,7 @@ blobcache_init(void)
 
 
   prop_t *dir = setting_get_dir("general:resets");
-  settings_create_action(dir, _p("Clear cached files"),
+  settings_create_action(dir, _p("Clear cached files"), NULL,
 			 cache_clear, NULL, 0, NULL);
 
   hts_thread_create_joinable("blobcache", &bcthread, flushthread, NULL,

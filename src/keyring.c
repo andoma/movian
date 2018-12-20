@@ -63,7 +63,7 @@ keyring_init(void)
 
   prop_t *dir = setting_get_dir("general:resets");
   settings_create_action(dir,
-			 _p("Forget remembered passwords"),
+			 _p("Forget remembered passwords"), NULL,
 			 keyring_clear, NULL, 0, NULL);
 }
 
