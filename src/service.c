@@ -103,11 +103,7 @@ service_init(void)
   // $global.service.all
 
   all_services = prop_create(gs, "all");
-#if ENABLE_PLUGINS
-  service_create0("showtime:plugin",
-		  NULL, _p("Plugins"), "plugin:start",
-		  "plugin", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
-#endif
+
   service_create0("showtime:discovered",
 		  NULL, _p("Local network"), "discovered:",
 		  "network", NULL, 0, 1, SVC_ORIGIN_SYSTEM);

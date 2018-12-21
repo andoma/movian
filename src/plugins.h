@@ -25,7 +25,7 @@ struct prop;
 
 void plugins_init(char **devplugins);
 
-void plugins_init2(void);
+void plugins_load_all(void);
 
 int plugins_upgrade_check(void);
 

@@ -35,6 +35,7 @@
 #include "usage.h"
 #include "backend/search.h"
 #include "misc/md5.h"
+#include "service.h"
 
 #include "ecmascript/ecmascript.h"
 
@@ -80,6 +81,8 @@ static prop_t *plugin_root_list;
 static prop_t *plugin_start_model;
 static prop_t *plugin_repo_model;
 static prop_t *plugin_repos_settings;
+
+static service_t *plugin_service;
 
 LIST_HEAD(plugin_list, plugin);
 LIST_HEAD(plugin_repo_list, plugin_repo);
@@ -155,6 +158,29 @@ static const struct {
   { "xperience", VERSION_ENCODE(1,0,0) }
 };
 
+
+static void
+plugin_update_service(void)
+{
+  const int should_show = LIST_FIRST(&plugin_repos) || LIST_FIRST(&plugins);
+
+  if(should_show && plugin_service == NULL) {
+    plugin_service = service_createp("showtime:plugin",
+                                     _p("Plugins"), "plugin:start",
+                                     "plugin", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+    return;
+  }
+
+  if(!should_show && plugin_service != NULL) {
+    service_destroy(plugin_service);
+    plugin_service = NULL;
+    return;
+  }
+}
+
+
+
+
 /**
  *
  */
@@ -224,6 +250,9 @@ plugin_make(const char *id, const char *origin)
   pl->pl_status = prop_create_root(NULL);
 
   LIST_INSERT_HEAD(&plugins, pl, pl_link);
+
+  plugin_update_service();
+
   return pl;
 }
 
@@ -1147,7 +1176,38 @@ plugin_setup_repo_model(void)
 
     prop_concat_add_source(pc, cat, header);
   }
+}
 
+
+static void
+plguin_repo_save(void)
+{
+  htsmsg_t *m = htsmsg_create_list();
+  plugin_repo_t *pr;
+  LIST_FOREACH(pr, &plugin_repos, pr_link) {
+    htsmsg_t *e = htsmsg_create_map();
+    htsmsg_add_str(e, "url", pr->pr_url);
+    htsmsg_add_msg(m, NULL, e);
+  }
+  htsmsg_store_save(m, "pluginrepos");
+  htsmsg_release(m);
+}
+
+
+static void
+plguin_repo_load(void)
+{
+  htsmsg_t *m;
+  if((m = htsmsg_store_load("pluginrepos")) != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, m) {
+      htsmsg_t *e;
+      if((e = htsmsg_get_map_by_field(f)) == NULL)
+        continue;
+      const char *url = htsmsg_get_str(e, "url");
+      plugin_repo_create(url, NULL, 0);
+    }
+  }
 }
 
 
@@ -1164,6 +1224,7 @@ plugins_add_repo_popup(void *opaque, prop_event_t event, ...)
     return;
 
   plugin_repo_create(url, NULL, 1);
+  plguin_repo_save();
 }
 
 
@@ -1201,7 +1262,7 @@ plugins_setup_root_props(void)
  *
  */
 void
-plugins_init2(void)
+plugins_load_all(void)
 {
   hts_mutex_lock(&plugin_mutex);
   plugin_load_installed();
@@ -1271,6 +1332,10 @@ plugin_repo_delete(void *opaque, event_t *e)
     prop_ref_dec(eventsink);
     event_release(be);
   }
+
+  plugin_update_service();
+
+  plguin_repo_save();
 }
 
 
@@ -1278,6 +1343,8 @@ static void
 plugin_repo_create(const char *url, const char *title, int load)
 {
   hts_mutex_lock(&plugin_mutex);
+
+  plugin_update_service();
 
   plugin_repo_t *pr = calloc(1, sizeof(plugin_repo_t));
   LIST_INSERT_HEAD(&plugin_repos, pr, pr_link);
@@ -1328,6 +1395,9 @@ plugin_repo_create(const char *url, const char *title, int load)
   if(load)
     plugin_load_repo(pr);
   pr->pr_initialized = 1;
+
+  plugin_update_service();
+
   hts_mutex_unlock(&plugin_mutex);
 }
 
@@ -1372,6 +1442,8 @@ plugins_init(char **devplugs)
     }
   }
   hts_mutex_unlock(&plugin_mutex);
+
+  plguin_repo_load();
 }
 
 
