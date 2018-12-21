@@ -406,12 +406,54 @@ plugin_fill_prop(struct htsmsg *pm, struct prop *p,
            htsmsg_get_str(pm, "version"));
 
   if(icon != NULL) {
-    scoped_char *iconurl = url_resolve_relative_from_base(baseurl, icon);
-    prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
+    if(mystrbegins(icon, "http://") || mystrbegins(icon, "https://")) {
+      prop_set(metadata, "icon", PROP_SET_STRING, icon);
+    } else if(mystrbegins(baseurl, "http://") ||
+              mystrbegins(baseurl, "https://")) {
+      scoped_char *iconurl = url_resolve_relative_from_base(baseurl, icon);
+      prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
+    } else {
+      scoped_char *iconurl = fmt("%s/%s", baseurl, icon);
+      prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
+    }
   }
   prop_ref_dec(metadata);
 }
 
+
+
+static char *
+plugin_resolve_zip_path(const char *zipfile)
+{
+  scoped_char *zp = fmt("zip://%s", zipfile);
+  fa_dir_t *fd = fa_scandir(zp, NULL, 0);
+  if(fd == NULL) {
+    return NULL;
+  }
+  fa_dir_entry_t *fde;
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(!strcmp(rstr_get(fde->fde_filename), "plugin.json")) {
+      fa_dir_free(fd);
+      return strdup(zp);
+    }
+  }
+
+  fde = RB_FIRST(&fd->fd_entries);
+  if(fde != NULL && fde->fde_type == CONTENT_DIR) {
+    scoped_char *zp2 = fmt("zip://%s/%s/plugin.json", zipfile,
+                           rstr_get(fde->fde_filename));
+
+    struct fa_stat buf;
+    if(!fa_stat(zp2, &buf, NULL, 0)) {
+      char *r = fmt("zip://%s/%s", zipfile, rstr_get(fde->fde_filename));
+      fa_dir_free(fd);
+      return r;
+    }
+  }
+
+  fa_dir_free(fd);
+  return NULL;
+}
 
 
 /**
@@ -420,16 +462,22 @@ plugin_fill_prop(struct htsmsg *pm, struct prop *p,
 void
 plugin_props_from_file(prop_t *prop, const char *zipfile)
 {
-  char path[200];
   char errbuf[200];
   buf_t *b;
 
-  snprintf(path, sizeof(path), "zip://%s/plugin.json", zipfile);
-  b = fa_load(path,
+  scoped_char *zippath = plugin_resolve_zip_path(zipfile);
+  if(zippath == NULL) {
+    TRACE(TRACE_ERROR, "plugins",
+          "Unable to open %s -- Not a valid plugin archive", zipfile);
+    return;
+  }
+  scoped_char *plugin_json = fmt("%s/plugin.json", zippath);
+  b = fa_load(plugin_json,
                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                NULL);
   if(b == NULL) {
-    TRACE(TRACE_ERROR, "plugins", "Unable to open %s -- %s", path, errbuf);
+    TRACE(TRACE_ERROR, "plugins", "Unable to open %s -- %s",
+          plugin_json, errbuf);
     return;
   }
   htsmsg_t *pm = htsmsg_json_deserialize(buf_cstr(b));
@@ -443,8 +491,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
   if(id != NULL) {
     hts_mutex_lock(&plugin_mutex);
     plugin_t *pl = plugin_make(id, "local");
-    snprintf(path, sizeof(path), "zip://%s", zipfile);
-    plugin_fill_prop(pm, prop, path, pl);
+    plugin_fill_prop(pm, prop, zippath, pl);
     prop_set(prop, "package", PROP_SET_STRING, zipfile);
     update_state(pl);
     hts_mutex_unlock(&plugin_mutex);
@@ -738,8 +785,14 @@ plugin_load_installed(void)
         if(dot != NULL)
           *dot = 0;
       }
-      snprintf(path, sizeof(path), "zip://%s", rstr_get(fde->fde_url));
-      if(plugin_load(path, errbuf, sizeof(errbuf),
+      scoped_char *zippath = plugin_resolve_zip_path(rstr_get(fde->fde_url));
+      if(zippath == NULL) {
+	TRACE(TRACE_ERROR, "plugins",
+              "Unable to load %s -- Not a valid plugin archive", path);
+        continue;
+      }
+
+      if(plugin_load(zippath, errbuf, sizeof(errbuf),
                      PLUGIN_LOAD_AS_INSTALLED, domain)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }
@@ -1415,6 +1468,7 @@ plugin_install(plugin_t *pl, const char *package)
 {
   char errbuf[200];
   char path[200];
+  scoped_char *zippath = NULL;
 
   usage_event(pl->pl_can_upgrade ? "Plugin upgrade" : "Plugin install", 1,
               USAGE_SEG("plugin", pl->pl_fqid,
@@ -1506,15 +1560,20 @@ plugin_install(plugin_t *pl, const char *package)
     goto cleanup;
   }
 
-  snprintf(path, sizeof(path),
-	   "zip://%s/pluginsv2/installed/%s.zip", gconf.persistent_path,
-	   pl->pl_fqid);
-
 #ifdef STOS
   arch_sync_path(path);
 #endif
 
-  if(plugin_load(path, errbuf, sizeof(errbuf),
+  zippath = plugin_resolve_zip_path(path);
+  if(zippath == NULL) {
+    prop_unlink(status);
+    TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path,
+          "Not a valid plugin archive");
+    prop_set_string(status, errbuf);
+    goto cleanup;
+  }
+
+  if(plugin_load(zippath, errbuf, sizeof(errbuf),
                  PLUGIN_LOAD_FORCE | PLUGIN_LOAD_AS_INSTALLED |
                  PLUGIN_LOAD_BY_USER, pl->pl_domain)) {
     prop_unlink(status);
@@ -1678,14 +1737,21 @@ BE_REGISTER(plugin);
 void
 plugin_open_file(prop_t *page, const char *url)
 {
-  char path[200];
   char errbuf[200];
   buf_t *b;
 
-  snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-  b = fa_load(path,
-               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-               NULL);
+
+  scoped_char *zippath = plugin_resolve_zip_path(url);
+  if(zippath == NULL) {
+    nav_open_errorf(page, _("Unable to load plugin.json: %s"),
+                    "Not a valid plugin archive");
+    return;
+  }
+
+  scoped_char *plugin_json = fmt("%s/plugin.json", zippath);
+  b = fa_load(plugin_json,
+              FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+              NULL);
   if(b == NULL) {
     nav_open_errorf(page, _("Unable to load plugin.json: %s"), errbuf);
     return;
