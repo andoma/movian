@@ -1152,8 +1152,6 @@ plugins_setup_root_props(void)
   settings_create_action(add, _p("Subscribe to plugin repository feed"), "add",
                          plugins_add_repo_popup, NULL, SETTINGS_RAW_NODES,
                          NULL);
-
-  prop_print_tree(dir, 1);
 }
 
 
@@ -1304,7 +1302,6 @@ plugin_repo_create(const char *url, const char *title, int load)
     plugin_load_repo(pr);
   pr->pr_initialized = 1;
   hts_mutex_unlock(&plugin_mutex);
-  prop_print_tree(plugin_repos_settings, 1);
 }
 
 
