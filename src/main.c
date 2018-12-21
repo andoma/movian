@@ -255,7 +255,7 @@ static void *
 swthread(void *aux)
 {
 #if ENABLE_PLUGINS
-  plugins_init2();
+  plugins_load_all();
 #endif
 
   upgrade_init();
