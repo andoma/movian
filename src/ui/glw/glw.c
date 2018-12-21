@@ -1785,6 +1785,7 @@ glw_focus_step(glw_t *w, int forward)
     return 0;
 
   e = event_create_action(forward ? ACTION_DOWN : ACTION_UP);
+  e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
 
   while(w->glw_focused != NULL) {
     w = w->glw_focused;
@@ -2017,6 +2018,7 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
 
   case GLW_POINTER_RIGHT_PRESS:
     e = event_create_action(ACTION_ITEMMENU);
+    e->e_nav = prop_ref_inc(gr->gr_prop_nav);
     e->e_flags |= EVENT_MOUSE | EVENT_SCREEN_POSITION;
     e->e_screen_x = gpe->screen_x;
     e->e_screen_y = gpe->screen_y;
@@ -2043,6 +2045,7 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
       glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
       e = event_create_action_multi((const action_type_t[]){
           ACTION_CLICK, ACTION_ACTIVATE}, 2);
+      e->e_nav = prop_ref_inc(gr->gr_prop_nav);
       e->e_flags |= flags | EVENT_SCREEN_POSITION;
       e->e_screen_x = gpe->screen_x;
       e->e_screen_y = gpe->screen_y;
@@ -2068,6 +2071,7 @@ glw_touch_longpress(glw_root_t *gr)
   gr->gr_pointer_press_time = 0;
   glw_t *w = gr->gr_pointer_press;
   event_t *e = event_create_action(ACTION_ITEMMENU);
+  e->e_nav = prop_ref_inc(gr->gr_prop_nav);
   int r = glw_event_to_widget(w, e);
   event_release(e);
   if(r) {
@@ -3171,6 +3175,7 @@ glw_osk_done(glw_root_t *gr, int submit)
   if(w != NULL) {
     if(submit) {
       event_t *e = event_create_action(ACTION_SUBMIT);
+      e->e_nav = prop_ref_inc(gr->gr_prop_nav);
       glw_event_to_widget(w, e);
       event_release(e);
     } else {
