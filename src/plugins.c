@@ -24,6 +24,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "htsmsg/htsmsg_store.h"
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 #include "misc/str.h"
 #include "misc/minmax.h"
 #include "prop/prop_nodefilter.h"
@@ -33,6 +34,7 @@
 #include "arch/arch.h"
 #include "usage.h"
 #include "backend/search.h"
+#include "misc/md5.h"
 
 #include "ecmascript/ecmascript.h"
 
@@ -68,9 +70,6 @@ static struct strtab catnames[] = {
 };
 
 
-static const char *plugin_repo_url = PLUGINREPO;
-static char *plugin_alt_repo_url;
-static char *plugin_beta_passwords;
 static HTS_MUTEX_DECL(plugin_mutex);
 static HTS_MUTEX_DECL(autoplugin_mutex);
 
@@ -79,8 +78,10 @@ static char **devplugins;
 static prop_t *plugin_root_list;
 static prop_t *plugin_start_model;
 static prop_t *plugin_repo_model;
+static prop_t *plugin_repos_settings;
 
 LIST_HEAD(plugin_list, plugin);
+LIST_HEAD(plugin_repo_list, plugin_repo);
 LIST_HEAD(plugin_view_list, plugin_view);
 LIST_HEAD(plugin_view_entry_list, plugin_view_entry);
 
@@ -113,6 +114,19 @@ typedef struct plugin {
 
 } plugin_t;
 
+static struct plugin_repo_list plugin_repos;
+
+typedef struct plugin_repo {
+  LIST_ENTRY(plugin_repo) pr_link;
+  char *pr_url;
+  char *pr_domain;
+  prop_t *pr_root;
+  prop_t *pr_title;
+  int pr_autoupgrade;
+  int pr_initialized;
+} plugin_repo_t;
+
+
 static int plugin_install(plugin_t *pl, const char *package);
 static void plugin_remove(plugin_t *pl);
 static void plugin_autoupgrade(void);
@@ -128,8 +142,9 @@ static void autoplugin_create_from_control(const char *id, htsmsg_t *ctrl,
 
 static void autoplugin_set_installed(const char *id, int is_installed);
 
-static int autoupgrade;
-static int autoinstall;
+static void plugin_repo_create(const char *url, const char *title, int load);
+
+static int plugins_upgrade_check_locked(plugin_repo_t *pr);
 
 #define VERSION_ENCODE(a,b,c) ((a) * 10000000 + (b) * 100000 + (c))
 
@@ -173,53 +188,6 @@ is_plugin_blacklisted(const char *id, const char *version, rstr_t **reason)
     return 1;
   }
   return 0;
-}
-
-
-
-
-
-
-
-
-/**
- *
- */
-static const char *
-repo_url(void)
-{
-  return plugin_alt_repo_url && *plugin_alt_repo_url ?
-    plugin_alt_repo_url : plugin_repo_url;
-}
-
-/**
- *
- */
-static void
-set_alt_repo_url(void *opaque, const char *value)
-{
-  mystrset(&plugin_alt_repo_url, value);
-}
-
-
-/**
- *
- */
-static void
-set_beta_passwords(void *opaque, const char *value)
-{
-  mystrset(&plugin_beta_passwords, value);
-}
-
-
-/**
- *
- */
-static void
-set_autoupgrade(void *opaque, int value)
-{
-  autoupgrade = value;
-  plugin_autoupgrade();
 }
 
 
@@ -399,7 +367,7 @@ plugin_event(void *opaque, prop_event_t event, ...)
  */
 static void
 plugin_fill_prop(struct htsmsg *pm, struct prop *p,
-                 const char *basepath, plugin_t *pl)
+                 const char *baseurl, plugin_t *pl)
 {
   const char *title = htsmsg_get_str(pm, "title") ?: pl->pl_fqid;
   const char *icon  = htsmsg_get_str(pm, "icon");
@@ -437,21 +405,9 @@ plugin_fill_prop(struct htsmsg *pm, struct prop *p,
   prop_set(metadata, "version", PROP_SET_STRING,
            htsmsg_get_str(pm, "version"));
 
-  unsigned int popularity;
-
-  if(!htsmsg_get_u32(pm, "popularity", &popularity))
-    prop_set(metadata, "popularity", PROP_SET_INT, popularity);
-
   if(icon != NULL) {
-    if(basepath != NULL) {
-      char url[512];
-      snprintf(url, sizeof(url), "%s/%s", basepath, icon);
-      prop_set(metadata, "icon", PROP_SET_STRING,url);
-    } else {
-      char *iconurl = url_resolve_relative_from_base(repo_url(), icon);
-      prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
-      free(iconurl);
-    }
+    scoped_char *iconurl = url_resolve_relative_from_base(baseurl, icon);
+    prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
   }
   prop_ref_dec(metadata);
 }
@@ -803,29 +759,12 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 {
   buf_t *b;
   htsmsg_t *json;
-  const char *qargs[32];
-  int qp = 0;
 
   TRACE(TRACE_DEBUG, "plugins", "Loading repo from %s", repo);
 
-  if(plugin_beta_passwords != NULL) {
-    char *pws = mystrdupa(plugin_beta_passwords);
-    char *tmp = NULL;
-
-    while(qp < 30) {
-      const char *p = strtok_r(pws, " ", &tmp);
-      if(p == NULL)
-	break;
-      qargs[qp++] = "betapassword";
-      qargs[qp++] = p;
-      pws = NULL;
-    }
-  }
-  qargs[qp] = 0;
   hts_mutex_unlock(&plugin_mutex);
   b = fa_load(repo,
               FA_LOAD_ERRBUF(errbuf, errlen),
-              FA_LOAD_QUERY_ARGVEC(qargs),
               FA_LOAD_FLAGS(FA_COMPRESSION | FA_DISABLE_AUTH),
               NULL);
 
@@ -841,7 +780,6 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
     snprintf(errbuf, errlen, "Malformed JSON in repository");
 
     fa_load(repo,
-            FA_LOAD_QUERY_ARGVEC(qargs),
             FA_LOAD_CACHE_EVICT(),
             NULL);
     return REPO_ERROR_NETWORK;
@@ -871,29 +809,36 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
  *
  */
 static int
-plugin_load_repo(void)
+plugin_load_repo(plugin_repo_t *pr)
 {
   plugin_t *pl, *next;
   char errbuf[512];
-  const char *domain = "mainrepo";
+  const char *url = pr->pr_url;
 
-  htsmsg_t *msg = repo_get(repo_url(), errbuf, sizeof(errbuf));
+  htsmsg_t *msg = repo_get(url, errbuf, sizeof(errbuf));
 
   if(msg == REPO_ERROR_NETWORK || msg == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
-	  repo_url(), errbuf);
+	  url, errbuf);
     return msg == REPO_ERROR_NETWORK ? -1 : 0;
   }
 
   hts_mutex_lock(&autoplugin_mutex);
   autoplugin_clear();
 
+  const char *title = htsmsg_get_str(msg, "title");
+  if(title != NULL)
+    prop_set_string(pr->pr_title, title);
+
   htsmsg_t *r = htsmsg_get_list(msg, "plugins");
   if(r != NULL) {
     htsmsg_field_t *f;
 
-    LIST_FOREACH(pl, &plugins, pl_link)
-      pl->pl_mark = 1;
+    LIST_FOREACH(pl, &plugins, pl_link) {
+      if(!strcmp(pl->pl_domain, pr->pr_domain)) {
+        pl->pl_mark = 1;
+      }
+    }
 
     HTSMSG_FOREACH(f, r) {
       htsmsg_t *pm;
@@ -919,9 +864,9 @@ plugin_load_repo(void)
       if(is_plugin_blacklisted(id, version, NULL))
         continue;
 
-      pl = plugin_make(id, domain);
+      pl = plugin_make(id, pr->pr_domain);
       pl->pl_mark = 0;
-      plugin_prop_setup(pm, pl, NULL);
+      plugin_prop_setup(pm, pl, url);
       mystrset(&pl->pl_repo_ver, version);
       mystrset(&pl->pl_app_min_version,
 	       htsmsg_get_str(pm, "showtimeVersion"));
@@ -929,7 +874,7 @@ plugin_load_repo(void)
 
       const char *dlurl = htsmsg_get_str(pm, "downloadURL");
       if(dlurl != NULL) {
-	char *package = url_resolve_relative_from_base(repo_url(), dlurl);
+	char *package = url_resolve_relative_from_base(url, dlurl);
 	free(pl->pl_package);
 	pl->pl_package = package;
       }
@@ -964,7 +909,7 @@ plugin_load_repo(void)
       const char *id      = htsmsg_get_str(pm, "id");
       const char *version = htsmsg_get_str(pm, "version");
 
-      scoped_char *fqid = fmt("%s@%s", id, domain);
+      scoped_char *fqid = fmt("%s@%s", id, pr->pr_domain);
 
       if(id == NULL || version == NULL)
 	continue;
@@ -995,11 +940,17 @@ static void
 plugin_autoupgrade(void)
 {
   plugin_t *pl;
-
-  if(!autoupgrade)
-    return;
+  plugin_repo_t *pr;
 
   LIST_FOREACH(pl, &plugins, pl_link) {
+
+    LIST_FOREACH(pr, &plugin_repos, pr_link) {
+      if(!strcmp(pr->pr_domain, pl->pl_domain))
+        break;
+    }
+    if(!pr->pr_autoupgrade)
+      continue;
+
     if(!pl->pl_can_upgrade)
       continue;
     if(plugin_install(pl, NULL))
@@ -1145,8 +1096,7 @@ plugin_setup_repo_model(void)
     prop_nf_pred_int_add(pnf, "node.status.inRepo",
 			 PROP_NF_CMP_NEQ, 1, NULL,
 			 PROP_NF_MODE_EXCLUDE);
-    //    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
-    prop_nf_sort(pnf, "node.metadata.popularity", 1, 0, NULL, 1);
+    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
     prop_nf_release(pnf);
 
     prop_t *header = prop_create_root(NULL);
@@ -1156,6 +1106,22 @@ plugin_setup_repo_model(void)
     prop_concat_add_source(pc, cat, header);
   }
 
+}
+
+
+
+static void
+plugins_add_repo_popup(void *opaque, prop_event_t event, ...)
+{
+  rstr_t *msg = _("Enter URL of plugin repository");
+  scoped_char *url = NULL;
+  int x = text_dialog(rstr_get(msg), &url,
+                      MESSAGE_POPUP_OK | MESSAGE_POPUP_CANCEL);
+  rstr_release(msg);
+  if(x)
+    return;
+
+  plugin_repo_create(url, NULL, 1);
 }
 
 
@@ -1175,38 +1141,19 @@ plugins_setup_root_props(void)
   // Settings
 
   prop_t *dir = setting_get_dir("general:plugins");
+  prop_concat_t *pc  = prop_concat_create(prop_create(dir, "nodes"));
 
-  setting_create(SETTING_STRING, dir,
-                 SETTINGS_INITIAL_UPDATE,
-                 SETTING_STORE("pluginconf", "alt_repo"),
-                 SETTING_TITLE(_p("Alternate plugin Repository URL")),
-                 SETTING_CALLBACK(set_alt_repo_url, NULL),
-                 SETTING_MUTEX(&plugin_mutex),
-                 NULL);
+  plugin_repos_settings = prop_create_root(NULL);
+  prop_concat_add_source(pc, plugin_repos_settings, NULL);
 
-  setting_create(SETTING_STRING, dir,
-                 SETTINGS_INITIAL_UPDATE,
-                 SETTING_STORE("pluginconf", "betapasswords"),
-                 SETTING_TITLE(_p("Beta testing passwords")),
-                 SETTING_CALLBACK(set_beta_passwords, NULL),
-                 SETTING_MUTEX(&plugin_mutex),
-                 NULL);
+  prop_t *add = prop_create_root(NULL);
+  prop_concat_add_source(pc, add, NULL);
 
-  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
-                 SETTING_STORE("pluginconf", "autoupgrade"),
-                 SETTING_TITLE(_p("Automatically upgrade plugins")),
-                 SETTING_VALUE(1),
-                 SETTING_CALLBACK(set_autoupgrade, NULL),
-                 SETTING_MUTEX(&plugin_mutex),
-                 NULL);
+  settings_create_action(add, _p("Subscribe to plugin repository feed"), "add",
+                         plugins_add_repo_popup, NULL, SETTINGS_RAW_NODES,
+                         NULL);
 
-  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
-                 SETTING_STORE("pluginconf", "autoupgrade"),
-                 SETTING_TITLE(_p("Auto install plugins on demand")),
-                 SETTING_VALUE(1),
-                 SETTING_WRITE_INT(&autoinstall),
-                 SETTING_MUTEX(&plugin_mutex),
-                 NULL);
+  prop_print_tree(dir, 1);
 }
 
 
@@ -1222,6 +1169,25 @@ plugins_init2(void)
 }
 
 
+static int
+plugins_upgrade_check_locked(plugin_repo_t *pr)
+{
+  int r = 0;
+  if(pr != NULL) {
+    r = plugin_load_repo(pr);
+  } else {
+    LIST_FOREACH(pr, &plugin_repos, pr_link) {
+      r |= plugin_load_repo(pr);
+    }
+  }
+  if(!r) {
+    update_global_state();
+    plugin_autoupgrade();
+  }
+  return r;
+}
+
+
 /**
  *
  */
@@ -1229,14 +1195,118 @@ int
 plugins_upgrade_check(void)
 {
   hts_mutex_lock(&plugin_mutex);
-  int r = plugin_load_repo();
-  if(!r) {
-    update_global_state();
-    plugin_autoupgrade();
-  }
+  int r = plugins_upgrade_check_locked(NULL);
   hts_mutex_unlock(&plugin_mutex);
   return r;
 }
+
+
+static char *
+plugin_repo_hash(const char *url)
+{
+  md5_decl(md5);
+  md5_init(md5);
+  md5_update(md5, (const void *)url, strlen(url));
+  uint8_t hash[16];
+  md5_final(md5, hash);
+
+  return fmt("%02x%02x%02x%02x%02x%02x%02x%02x",
+             hash[0], hash[1], hash[2], hash[3],
+             hash[4], hash[5], hash[6], hash[7]);
+}
+
+
+static void
+set_autoupgrade(void *opaque, int value)
+{
+  plugin_repo_t *pr = opaque;
+  pr->pr_autoupgrade = value;
+  if(value && pr->pr_initialized)
+    plugins_upgrade_check_locked(pr);
+}
+
+
+static void
+plugin_repo_delete(void *opaque, event_t *e)
+{
+  plugin_repo_t *pr = opaque;
+
+  free(pr->pr_url);
+  free(pr->pr_domain);
+  LIST_REMOVE(pr, pr_link);
+  prop_destroy(pr->pr_root);
+  prop_ref_dec(pr->pr_title);
+  prop_ref_dec(pr->pr_root);
+  free(pr);
+  if(e->e_nav != NULL) {
+    event_t *be = event_create_action(ACTION_NAV_BACK);
+    prop_t *eventsink = prop_create_r(e->e_nav, "eventSink");
+    prop_send_ext_event(eventsink, be);
+    prop_ref_dec(eventsink);
+    event_release(be);
+  }
+}
+
+
+static void
+plugin_repo_create(const char *url, const char *title, int load)
+{
+  hts_mutex_lock(&plugin_mutex);
+
+  plugin_repo_t *pr = calloc(1, sizeof(plugin_repo_t));
+  LIST_INSERT_HEAD(&plugin_repos, pr, pr_link);
+
+  pr->pr_url = strdup(url);
+  pr->pr_domain = plugin_repo_hash(pr->pr_url);
+  pr->pr_root = prop_create_r(plugin_repos_settings, NULL);
+
+  pr->pr_title = prop_ref_inc(prop_create_multi(pr->pr_root, "metadata",
+                                                "title", NULL));
+  prop_set_string(pr->pr_title, title ?: url);
+  prop_set(pr->pr_root, "type", PROP_SET_STRING, "directory");
+  prop_set(pr->pr_root, "subtype", PROP_SET_STRING, "plugins");
+  prop_t *m = prop_create(pr->pr_root, "model");
+  prop_set(pr->pr_root, "url", PROP_ADOPT_RSTRING, backend_prop_make(m, NULL));
+
+  prop_set(m, "type", PROP_SET_STRING, "settings");
+  prop_t *md = prop_create(m, "metadata");
+  prop_set(md, "title", PROP_SET_LINK, pr->pr_title);
+
+  prop_t *nodes = prop_create(m, "nodes");
+
+  prop_t *info = prop_create(nodes, NULL);
+  prop_setv(info, "type", NULL, PROP_SET_STRING, "info");
+  scoped_char *infostr = fmt("URL: %s", pr->pr_url);
+  prop_setv(info, "description", NULL, PROP_SET_STRING, infostr);
+
+  setting_create(SETTING_SEPARATOR, m, 0,
+                  NULL);
+
+  setting_create(SETTING_BOOL, m, SETTINGS_INITIAL_UPDATE,
+                 SETTING_STORE("pluginconf", "autoupgrade"),
+                 SETTING_TITLE(_p("Automatically upgrade plugins")),
+                 SETTING_VALUE(1),
+                 SETTING_KVSTORE(url, "autoupgrade"),
+                 SETTING_CALLBACK(set_autoupgrade, pr),
+                 SETTING_MUTEX(&plugin_mutex),
+                 NULL);
+
+  setting_create(SETTING_SEPARATOR, m, 0,
+                  NULL);
+
+  setting_create(SETTING_ACTION, m, 0,
+                 SETTING_TITLE(_p("Stop subscribing to repository feed")),
+                 SETTING_CALLBACK(plugin_repo_delete, pr),
+                 SETTING_MUTEX(&plugin_mutex),
+                 NULL);
+
+  if(load)
+    plugin_load_repo(pr);
+  pr->pr_initialized = 1;
+  hts_mutex_unlock(&plugin_mutex);
+  prop_print_tree(plugin_repos_settings, 1);
+}
+
 
 
 /**
@@ -1250,6 +1320,10 @@ plugins_init(char **devplugs)
   hts_mutex_init(&plugin_mutex);
 
   plugins_setup_root_props();
+
+  if(gconf.plugin_repo)
+    plugin_repo_create(gconf.plugin_repo, NULL, 0);
+
 
   hts_mutex_lock(&plugin_mutex);
 
@@ -2084,7 +2158,7 @@ plugin_probe_for_autoinstall(fa_handle_t *fh, const uint8_t *buf, size_t len,
   autoplugin_t *ap;
   const char *installme = NULL;
 
-  if(!autoinstall)
+  if(!0)
     return;
 
   hts_mutex_lock(&autoplugin_mutex);
@@ -2124,7 +2198,7 @@ plugin_check_prefix_for_autoinstall(const char *uri)
   autoplugin_t *ap;
   const char *installme = NULL;
 
-  if(!autoinstall || devplugins)
+  if(!0 || devplugins)
     return -1;
 
   hts_mutex_lock(&autoplugin_mutex);

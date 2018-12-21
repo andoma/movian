@@ -1721,7 +1721,7 @@ setting_get_dir(const char *key)
       upgrade    = addgroup(pc, _p("Software upgrade"));
       filebrowse = addgroup(pc, _p("File browsing"));
       runcontrol = addgroup(pc, _p("Starting and stopping"));
-      plugins    = addgroup(pc, _p("Plugins"));
+      plugins    = addgroup(pc, _p("Plugin repositories"));
       resets     = addgroup(pc, _p("Reset"));
     }
 
