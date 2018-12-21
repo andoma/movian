@@ -58,7 +58,7 @@ typedef struct glw_x11 {
 
   glw_root_t gr;
 
-  int running;
+  int *running;
   hts_thread_t thread;
 
   Display *display;
@@ -989,7 +989,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
 
 
-  while(gx11->running) {
+  while(*gx11->running) {
 
     autohide_cursor(gx11);
 
@@ -1323,40 +1323,20 @@ glw_x11_thread(void *aux)
 /**
  *
  */
-static void *
-glw_x11_start(struct prop *nav)
+void
+glw_x11_main(int *running)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
 
   gx11->gr.gr_prop_ui = prop_create_root("ui");
-  gx11->gr.gr_prop_nav = nav ?: nav_spawn();
-  gx11->running = 1;
+  gx11->gr.gr_prop_nav = nav_spawn();
+  gx11->running = running;
 
+  glw_x11_thread(gx11);
   hts_thread_create_joinable("glw", &gx11->thread,
 			     glw_x11_thread, gx11, 0);
 
-  return gx11;
-}
-
-/**
- *
- */
-static prop_t *
-glw_x11_stop(void *aux)
-{
-  glw_x11_t *gx11 = aux;
   glw_root_t *gr = &gx11->gr;
-  prop_t *nav = gr->gr_prop_nav;
-  gx11->running = 0;
-  hts_thread_join(&gx11->thread);
   prop_destroy(gr->gr_prop_ui);
   glw_release_root(gr);
-  return nav;
 }
-
-
-
-const linux_ui_t ui_glw = {
-  .start = glw_x11_start,
-  .stop  = glw_x11_stop,
-};

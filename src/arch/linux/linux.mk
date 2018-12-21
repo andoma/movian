@@ -14,7 +14,6 @@ SRCS += src/arch/linux/linux_main.c \
 	src/networking/net_ifaddr.c \
 	src/fileaccess/fa_opencookie.c \
 	src/fileaccess/fa_fs.c \
-	src/prop/prop_glib_courier.c \
 	src/arch/linux/linux_process_monitor.c \
 
 SRCS += src/htsmsg/persistent_file.c

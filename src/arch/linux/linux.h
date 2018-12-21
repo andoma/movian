@@ -28,9 +28,4 @@ void linux_webpopup_check(void);
 
 void linux_init_monitors(void);
 
-struct prop;
-
-typedef struct linux_ui {
-  void *(*start)(struct prop *nav);
-  struct prop *(*stop)(void *ui);
-} linux_ui_t;
+void glw_x11_main(int *running);
