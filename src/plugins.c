@@ -69,6 +69,7 @@ static struct strtab catnames[] = {
   { "subtitles",   PLUGIN_CAT_SUBTITLES },
 };
 
+const char *storage_prefix = "mrp"; // multi-repo plugins
 
 static HTS_MUTEX_DECL(plugin_mutex);
 static HTS_MUTEX_DECL(autoplugin_mutex);
@@ -90,7 +91,7 @@ static struct plugin_list plugins;
 typedef struct plugin {
   LIST_ENTRY(plugin) pl_link;
   char *pl_fqid;
-  char *pl_domain;
+  char *pl_origin;
   char *pl_package;
   char *pl_title;
 
@@ -107,6 +108,7 @@ typedef struct plugin {
   char pl_loaded;
   char pl_installed;
   char pl_can_upgrade;
+  char pl_auto_upgrade;
   char pl_new_version_avail;
   char pl_mark;
 
@@ -119,7 +121,6 @@ static struct plugin_repo_list plugin_repos;
 typedef struct plugin_repo {
   LIST_ENTRY(plugin_repo) pr_link;
   char *pr_url;
-  char *pr_domain;
   prop_t *pr_root;
   prop_t *pr_title;
   int pr_autoupgrade;
@@ -143,8 +144,6 @@ static void autoplugin_create_from_control(const char *id, htsmsg_t *ctrl,
 static void autoplugin_set_installed(const char *id, int is_installed);
 
 static void plugin_repo_create(const char *url, const char *title, int load);
-
-static int plugins_upgrade_check_locked(plugin_repo_t *pr);
 
 #define VERSION_ENCODE(a,b,c) ((a) * 10000000 + (b) * 100000 + (c))
 
@@ -190,15 +189,29 @@ is_plugin_blacklisted(const char *id, const char *version, rstr_t **reason)
   return 0;
 }
 
+static char *
+origin_hash(const char *url)
+{
+  md5_decl(md5);
+  md5_init(md5);
+  md5_update(md5, (const void *)url, strlen(url));
+  uint8_t hash[16];
+  md5_final(md5, hash);
+
+  return fmt("%02x%02x%02x%02x%02x%02x%02x%02x",
+             hash[0], hash[1], hash[2], hash[3],
+             hash[4], hash[5], hash[6], hash[7]);
+}
+
 
 /**
  *
  */
 static plugin_t *
-plugin_make(const char *id, const char *domain)
+plugin_make(const char *id, const char *origin)
 {
   plugin_t *pl;
-  scoped_char *fqid = fmt("%s@%s", id, domain);
+  scoped_char *fqid = fmt("%s@%s", id, origin);
 
   LIST_FOREACH(pl, &plugins, pl_link)
     if(!strcmp(pl->pl_fqid, fqid))
@@ -206,7 +219,7 @@ plugin_make(const char *id, const char *domain)
 
   pl = calloc(1, sizeof(plugin_t));
   pl->pl_fqid = strdup(fqid);
-  pl->pl_domain = strdup(domain);
+  pl->pl_origin = strdup(origin);
 
   pl->pl_status = prop_create_root(NULL);
 
@@ -566,8 +579,8 @@ plugin_unload(plugin_t *pl)
  *
  */
 static int
-plugin_load(const char *url, char *errbuf, size_t errlen, int flags,
-            const char *domain)
+plugin_load(const char *url, const char *origin,
+            char *errbuf, size_t errlen, int flags)
 {
   char ctrlfile[URL_MAX];
   char errbuf2[1024];
@@ -602,7 +615,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags,
     goto bad;
   }
 
-  plugin_t *pl = plugin_make(ext_id, domain);
+  plugin_t *pl = plugin_make(ext_id, origin);
 
   if(version != NULL) {
     rstr_t *notifymsg;
@@ -771,17 +784,18 @@ plugin_load_installed(void)
   char errbuf[200];
   fa_dir_entry_t *fde;
 
-  snprintf(path, sizeof(path), "%s/pluginsv2/installed", gconf.persistent_path);
+  snprintf(path, sizeof(path), "%s/%s/installed",
+           gconf.persistent_path, storage_prefix);
 
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
 
   if(fd != NULL) {
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       scoped_char *d0 = strdup(rstr_get(fde->fde_filename));
-      char *domain = strchr(d0, '@');
-      if(domain != NULL) {
-        domain++;
-        char *dot = strchr(domain, '.');
+      char *origin = strchr(d0, '@');
+      if(origin != NULL) {
+        origin++;
+        char *dot = strchr(origin, '.');
         if(dot != NULL)
           *dot = 0;
       }
@@ -792,8 +806,8 @@ plugin_load_installed(void)
         continue;
       }
 
-      if(plugin_load(zippath, errbuf, sizeof(errbuf),
-                     PLUGIN_LOAD_AS_INSTALLED, domain)) {
+      if(plugin_load(zippath, origin, errbuf, sizeof(errbuf),
+                     PLUGIN_LOAD_AS_INSTALLED)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }
     }
@@ -857,6 +871,34 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 }
 
 
+static void
+plugin_mark(void)
+{
+  plugin_t *pl;
+
+  LIST_FOREACH(pl, &plugins, pl_link) {
+    pl->pl_mark = 1;
+  }
+}
+
+
+static void
+plugin_sweep(void)
+{
+  plugin_t *pl, *next;
+
+  for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
+    next = LIST_NEXT(pl, pl_link);
+    prop_set(pl->pl_status, "inRepo", PROP_SET_INT, !pl->pl_mark);
+    if(pl->pl_mark) {
+      prop_ref_dec(pl->pl_repo_model);
+      pl->pl_repo_model = NULL;
+      pl->pl_mark = 0;
+    }
+  }
+}
+
+
 
 /**
  *
@@ -864,7 +906,7 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 static int
 plugin_load_repo(plugin_repo_t *pr)
 {
-  plugin_t *pl, *next;
+  plugin_t *pl;
   char errbuf[512];
   const char *url = pr->pr_url;
 
@@ -886,12 +928,6 @@ plugin_load_repo(plugin_repo_t *pr)
   htsmsg_t *r = htsmsg_get_list(msg, "plugins");
   if(r != NULL) {
     htsmsg_field_t *f;
-
-    LIST_FOREACH(pl, &plugins, pl_link) {
-      if(!strcmp(pl->pl_domain, pr->pr_domain)) {
-        pl->pl_mark = 1;
-      }
-    }
 
     HTSMSG_FOREACH(f, r) {
       htsmsg_t *pm;
@@ -917,7 +953,16 @@ plugin_load_repo(plugin_repo_t *pr)
       if(is_plugin_blacklisted(id, version, NULL))
         continue;
 
-      pl = plugin_make(id, pr->pr_domain);
+      const char *relurl = htsmsg_get_str(pm, "downloadURL");
+      if(relurl == NULL)
+        continue;
+
+      char *package_url = url_resolve_relative_from_base(url, relurl);
+
+      scoped_char *origin = origin_hash(package_url);
+      pl = plugin_make(id, origin);
+      free(pl->pl_package);
+      pl->pl_package = package_url;
       pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, url);
       mystrset(&pl->pl_repo_ver, version);
@@ -925,61 +970,14 @@ plugin_load_repo(plugin_repo_t *pr)
 	       htsmsg_get_str(pm, "showtimeVersion"));
       update_state(pl);
 
-      const char *dlurl = htsmsg_get_str(pm, "downloadURL");
-      if(dlurl != NULL) {
-	char *package = url_resolve_relative_from_base(url, dlurl);
-	free(pl->pl_package);
-	pl->pl_package = package;
-      }
-
       htsmsg_t *ctrl = htsmsg_get_map(pm, "control");
       if(ctrl != NULL) {
         autoplugin_create_from_control(id, ctrl, pl->pl_installed);
       }
     }
-
-    for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
-      next = LIST_NEXT(pl, pl_link);
-      prop_set(pl->pl_status, "inRepo", PROP_SET_INT, !pl->pl_mark);
-      if(pl->pl_mark) {
-        prop_ref_dec(pl->pl_repo_model);
-        pl->pl_repo_model = NULL;
-        pl->pl_mark = 0;
-      }
-    }
   }
 
   hts_mutex_unlock(&autoplugin_mutex);
-
-  r = htsmsg_get_list(msg, "blacklist");
-  if(r != NULL) {
-    htsmsg_field_t *f;
-    HTSMSG_FOREACH(f, r) {
-      htsmsg_t *pm;
-      if((pm = htsmsg_get_map_by_field(f)) == NULL)
-	continue;
-
-      const char *id      = htsmsg_get_str(pm, "id");
-      const char *version = htsmsg_get_str(pm, "version");
-
-      scoped_char *fqid = fmt("%s@%s", id, pr->pr_domain);
-
-      if(id == NULL || version == NULL)
-	continue;
-
-      LIST_FOREACH(pl, &plugins, pl_link)
-	if(!strcmp(fqid, pl->pl_fqid) && pl->pl_installed && pl->pl_inst_ver &&
-	   !strcmp(version, pl->pl_inst_ver))
-	  break;
-
-      if(pl != NULL) {
-	notify_add(NULL, NOTIFY_ERROR, NULL, 10,
-		   _("Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually."), pl->pl_title, pl->pl_inst_ver);
-	plugin_remove(pl);
-      }
-    }
-  }
-
 
   htsmsg_release(msg);
   return 0;
@@ -993,18 +991,9 @@ static void
 plugin_autoupgrade(void)
 {
   plugin_t *pl;
-  plugin_repo_t *pr;
 
   LIST_FOREACH(pl, &plugins, pl_link) {
-
-    LIST_FOREACH(pr, &plugin_repos, pr_link) {
-      if(!strcmp(pr->pr_domain, pl->pl_domain))
-        break;
-    }
-    if(!pr->pr_autoupgrade)
-      continue;
-
-    if(!pl->pl_can_upgrade)
+    if(!pl->pl_can_upgrade || !pl->pl_auto_upgrade)
       continue;
     if(plugin_install(pl, NULL))
       continue;
@@ -1220,24 +1209,6 @@ plugins_init2(void)
 }
 
 
-static int
-plugins_upgrade_check_locked(plugin_repo_t *pr)
-{
-  int r = 0;
-  if(pr != NULL) {
-    r = plugin_load_repo(pr);
-  } else {
-    LIST_FOREACH(pr, &plugin_repos, pr_link) {
-      r |= plugin_load_repo(pr);
-    }
-  }
-  if(!r) {
-    update_global_state();
-    plugin_autoupgrade();
-  }
-  return r;
-}
-
 
 /**
  *
@@ -1245,26 +1216,28 @@ plugins_upgrade_check_locked(plugin_repo_t *pr)
 int
 plugins_upgrade_check(void)
 {
+  int r = 0;
+  plugin_repo_t *pr;
   hts_mutex_lock(&plugin_mutex);
-  int r = plugins_upgrade_check_locked(NULL);
+
+  plugin_mark();
+
+  LIST_FOREACH(pr, &plugin_repos, pr_link) {
+    r |= plugin_load_repo(pr);
+  }
+
+  plugin_sweep();
+
+  if(!r) {
+    update_global_state();
+    plugin_autoupgrade();
+  }
+
   hts_mutex_unlock(&plugin_mutex);
   return r;
 }
 
 
-static char *
-plugin_repo_hash(const char *url)
-{
-  md5_decl(md5);
-  md5_init(md5);
-  md5_update(md5, (const void *)url, strlen(url));
-  uint8_t hash[16];
-  md5_final(md5, hash);
-
-  return fmt("%02x%02x%02x%02x%02x%02x%02x%02x",
-             hash[0], hash[1], hash[2], hash[3],
-             hash[4], hash[5], hash[6], hash[7]);
-}
 
 
 static void
@@ -1272,8 +1245,11 @@ set_autoupgrade(void *opaque, int value)
 {
   plugin_repo_t *pr = opaque;
   pr->pr_autoupgrade = value;
-  if(value && pr->pr_initialized)
-    plugins_upgrade_check_locked(pr);
+  if(value && pr->pr_initialized) {
+    if(!plugin_load_repo(pr)) {
+      update_global_state();
+    }
+  }
 }
 
 
@@ -1283,7 +1259,6 @@ plugin_repo_delete(void *opaque, event_t *e)
   plugin_repo_t *pr = opaque;
 
   free(pr->pr_url);
-  free(pr->pr_domain);
   LIST_REMOVE(pr, pr_link);
   prop_destroy(pr->pr_root);
   prop_ref_dec(pr->pr_title);
@@ -1308,7 +1283,6 @@ plugin_repo_create(const char *url, const char *title, int load)
   LIST_INSERT_HEAD(&plugin_repos, pr, pr_link);
 
   pr->pr_url = strdup(url);
-  pr->pr_domain = plugin_repo_hash(pr->pr_url);
   pr->pr_root = prop_create_r(plugin_repos_settings, NULL);
 
   pr->pr_title = prop_ref_inc(prop_create_multi(pr->pr_root, "metadata",
@@ -1388,8 +1362,8 @@ plugins_init(char **devplugs)
 
       strvec_addp(&devplugins, path);
 
-      if(plugin_load(path, errbuf, sizeof(errbuf),
-                     PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG, "dev")) {
+      if(plugin_load(path, "dev", errbuf, sizeof(errbuf),
+                     PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG)) {
         TRACE(TRACE_ERROR, "plugins",
               "Unable to load development plugin: %s\n%s", path, errbuf);
       } else {
@@ -1416,9 +1390,8 @@ plugins_reload_dev_plugin(void)
   const char *path;
   for(int i = 0; (path = devplugins[i]) != NULL; i++) {
 
-    if(plugin_load(path, errbuf, sizeof(errbuf),
-                   PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG | PLUGIN_LOAD_BY_USER,
-                   "dev"))
+    if(plugin_load(path, "dev", errbuf, sizeof(errbuf),
+                   PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG | PLUGIN_LOAD_BY_USER))
       TRACE(TRACE_ERROR, "plugins",
             "Unable to reload development plugin: %s\n%s", path, errbuf);
     else
@@ -1443,12 +1416,12 @@ plugin_remove(plugin_t *pl)
 
   TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_fqid);
 
-  snprintf(path, sizeof(path), "%s/pluginsv2/installed/%s.zip",
-	   gconf.persistent_path, pl->pl_fqid);
+  snprintf(path, sizeof(path), "%s/%s/installed/%s.zip",
+	   gconf.persistent_path, storage_prefix, pl->pl_fqid);
   fa_unlink(path, NULL, 0);
 
-  snprintf(path, sizeof(path), "%s/pluginsv2/settings/%s",
-	   gconf.persistent_path, pl->pl_fqid);
+  snprintf(path, sizeof(path), "%s/%s/settings/%s",
+	   gconf.persistent_path, storage_prefix, pl->pl_fqid);
   fa_unlink_recursive(path, NULL, 0, 0);
 
   plugin_unload(pl);
@@ -1524,17 +1497,19 @@ plugin_install(plugin_t *pl, const char *package)
   TRACE(TRACE_INFO, "plugins", "Plugin %s valid ZIP archive %d bytes",
 	pl->pl_fqid, (int)b->b_size);
 
-  snprintf(path, sizeof(path), "%s/pluginsv2", gconf.persistent_path);
+  snprintf(path, sizeof(path), "%s/%s", gconf.persistent_path,
+           storage_prefix);
   fa_makedir(path);
-  snprintf(path, sizeof(path), "%s/pluginsv2/installed", gconf.persistent_path);
+  snprintf(path, sizeof(path), "%s/%s/installed", gconf.persistent_path,
+           storage_prefix);
   fa_makedir(path);
 
   plugin_unload(pl);
 
   prop_link(_p("Installing"), status);
 
-  snprintf(path, sizeof(path), "%s/pluginsv2/installed/%s.zip",
-	   gconf.persistent_path, pl->pl_fqid);
+  snprintf(path, sizeof(path), "%s/%s/installed/%s.zip",
+	   gconf.persistent_path, storage_prefix, pl->pl_fqid);
 
   if(fa_unlink(path, errbuf, sizeof(errbuf))) {
     TRACE(TRACE_DEBUG, "plugins", "First unlinking %s -- %s",
@@ -1573,9 +1548,9 @@ plugin_install(plugin_t *pl, const char *package)
     goto cleanup;
   }
 
-  if(plugin_load(zippath, errbuf, sizeof(errbuf),
+  if(plugin_load(zippath, pl->pl_origin, errbuf, sizeof(errbuf),
                  PLUGIN_LOAD_FORCE | PLUGIN_LOAD_AS_INSTALLED |
-                 PLUGIN_LOAD_BY_USER, pl->pl_domain)) {
+                 PLUGIN_LOAD_BY_USER)) {
     prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
     prop_set_string(status, errbuf);
