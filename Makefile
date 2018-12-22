@@ -838,6 +838,9 @@ ${PROG}: $(OBJS) $(ALLDEPS)  ${BUILDDIR}/support/dataroot/wd.o
 ${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS) ${BUILDDIR}/support/dataroot/bundle.o
 	$(LINKER) -o $@ $(OBJS) ${BUILDDIR}/support/dataroot/bundle.o $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
+${PROG}.sbundle: ${PROG}.bundle $(ALLDEPS)
+	$(STRIP) -o $@ $<
+
 ${PROG}.datadir: $(OBJS) $(ALLDEPS) ${BUILDDIR}/support/dataroot/datadir.o
 	$(LINKER) -o $@ $(OBJS) ${BUILDDIR}/support/dataroot/datadir.o $(LDFLAGS) ${LDFLAGS_cfg}
 

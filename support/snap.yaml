@@ -1,0 +1,20 @@
+name: movian
+version: @@VERSION@@
+summary: Media player
+architectures:
+- amd64
+confinement: strict
+grade: stable
+apps:
+  movian:
+    command: command-movian.wrapper
+    environment:
+      TMPDIR: $XDG_RUNTIME_DIR
+    plugs:
+    - desktop
+    - home
+    - network
+    - network-bind
+    - opengl
+    - pulseaudio
+    - x11
