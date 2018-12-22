@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Movian
+GenericName=Media Player
+Icon=${SNAP}/usr/share/movian/icons/movian-128.png
+TryExec=movian
+Exec=movian %U
+Terminal=false
+Categories=Audio;Music;Player;AudioVideo;
+StartupWMClass=movian

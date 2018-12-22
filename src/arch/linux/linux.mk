@@ -66,3 +66,106 @@ uninstall:
 
 #	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
 
+#
+#
+#
+
+SNAPROOT=$(BUILDDIR)/snaproot
+
+SNAPDEPS = \
+	$(SNAPROOT)/bin/movian \
+	$(SNAPROOT)/bin/xdg-user-dir \
+	$(SNAPROOT)/meta/snap.yaml \
+	$(SNAPROOT)/meta/gui/movian.desktop \
+	$(SNAPROOT)/usr/share/movian/icons/movian-128.png \
+	$(SNAPROOT)/command-movian.wrapper \
+	$(SNAPROOT)/lib/libfontconfig.so.1 \
+	$(SNAPROOT)/lib/libX11.so.6 \
+	$(SNAPROOT)/lib/libX11-xcb.so.1 \
+	$(SNAPROOT)/lib/libelf.so.1 \
+	$(SNAPROOT)/lib/libLLVM-6.0.so.1 \
+	$(SNAPROOT)/lib/libdrm.so.2 \
+	$(SNAPROOT)/lib/libdrm_radeon.so.1 \
+	$(SNAPROOT)/lib/libdrm_nouveau.so.2 \
+	$(SNAPROOT)/lib/libdrm_intel.so.1 \
+	$(SNAPROOT)/lib/libdrm_amdgpu.so.1 \
+	$(SNAPROOT)/lib/libxcb.so.1 \
+	$(SNAPROOT)/lib/libxcb-glx.so.0 \
+	$(SNAPROOT)/lib/libxcb-dri2.so.0 \
+	$(SNAPROOT)/lib/libxcb-dri3.so.0 \
+	$(SNAPROOT)/lib/libxcb-present.so.0 \
+	$(SNAPROOT)/lib/libxcb-sync.so.1 \
+	$(SNAPROOT)/lib/libxshmfence.so.1 \
+	$(SNAPROOT)/lib/libglapi.so.0 \
+	$(SNAPROOT)/lib/libXdamage.so.1 \
+	$(SNAPROOT)/lib/libXfixes.so.3 \
+	$(SNAPROOT)/lib/libXau.so.6 \
+	$(SNAPROOT)/lib/libXdmcp.so.6 \
+	$(SNAPROOT)/lib/libXext.so.6 \
+	$(SNAPROOT)/lib/libpulse.so.0 \
+	$(SNAPROOT)/lib/libXss.so.1 \
+	$(SNAPROOT)/lib/libXxf86vm.so.1 \
+	$(SNAPROOT)/lib/libsndfile.so.1 \
+	$(SNAPROOT)/lib/libasyncns.so.0 \
+	$(SNAPROOT)/lib/libFLAC.so.8 \
+	$(SNAPROOT)/lib/libogg.so.0 \
+	$(SNAPROOT)/lib/libvorbisenc.so.2 \
+	$(SNAPROOT)/lib/libvorbis.so.0 \
+	$(SNAPROOT)/lib/libsensors.so.4 \
+	$(SNAPROOT)/lib/libpciaccess.so.0 \
+	$(SNAPROOT)/lib/mesa/libGL.so.1 \
+	$(SNAPROOT)/lib/mesa/dri/i915_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/i965_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/kms_swrast_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/nouveau_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/nouveau_vieux_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/r200_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/r300_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/r600_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/radeon_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/radeonsi_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/swrast_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/virtio_gpu_dri.so \
+	$(SNAPROOT)/lib/mesa/dri/vmwgfx_dri.so \
+	$(SNAPROOT)/lib/pulseaudio/libpulsecommon-8.0.so \
+
+$(SNAPROOT)/meta/snap.yaml: support/snap.yaml
+	@mkdir -p $(dir $@)
+	sed >$@ -e s/@@VERSION@@/${VERSION}/g -e s/@@APPNAME@@/${APPNAMEUSER}/g -e s/@@VERCODE@@/${NUMVER}/g $<
+
+
+$(SNAPROOT)/lib/%: /usr/lib/x86_64-linux-gnu/%
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/lib/mesa/dri/%.so: /usr/lib/x86_64-linux-gnu/dri/%.so
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/bin/movian: $(BUILDDIR)/movian.sbundle
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/bin/xdg-user-dir: /usr/bin/xdg-user-dir
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/command-movian.wrapper: support/command-movian.wrapper
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/meta/gui/movian.desktop: support/movian.desktop
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/usr/share/movian/icons/movian-128.png: support/artwork/movian-128.png
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+
+$(BUILDDIR)/movian.snap: $(SNAPDEPS)
+	rm -f $@
+	mksquashfs $(SNAPROOT) $@ -comp xz
+
+snap: $(BUILDDIR)/movian.snap
+
