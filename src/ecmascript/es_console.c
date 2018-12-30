@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -87,5 +87,6 @@ es_console_error(duk_context *ctx)
 const duk_function_list_entry es_fnlist_console[] = {
   { "log",    es_console_log,    DUK_VARARGS },
   { "error",  es_console_error,  DUK_VARARGS },
+  { "warn",   es_console_error,  DUK_VARARGS },
   { NULL, NULL, 0}
 };
