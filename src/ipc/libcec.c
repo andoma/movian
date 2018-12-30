@@ -31,6 +31,7 @@ static int longpress_select;
 static libcec_configuration cec_config;
 static libcec_connection_t conn;
 
+#if CEC_LIB_VERSION_MAJOR < 4
 static int
 log_message(void *lib, const cec_log_message message)
 {
@@ -54,6 +55,31 @@ log_message(void *lib, const cec_log_message message)
   TRACE(level, "CEC", "%s", message.message);
   return 1;
 }
+#else
+static void
+log_message(void *lib, const cec_log_message *message)
+{
+  int level;
+  switch (message->level) {
+  case CEC_LOG_ERROR:
+    level = TRACE_ERROR;
+    break;
+
+  case CEC_LOG_WARNING:
+  case CEC_LOG_NOTICE:
+    level = TRACE_INFO;
+    break;
+
+  default:
+    if(!gconf.enable_cec_debug)
+      return;
+    level = TRACE_DEBUG;
+    break;
+  }
+  TRACE(level, "CEC", "%s", message->message);
+  return;
+}
+#endif
 
 
 #define AVEC(x...) (const action_type_t []){x, ACTION_NONE}
@@ -80,13 +106,13 @@ const static action_type_t *btn_to_action[256] = {
   [CEC_USER_CONTROL_CODE_CHANNEL_DOWN]= AVEC(ACTION_PREV_CHANNEL),
 
   [CEC_USER_CONTROL_CODE_F1_BLUE]     = AVEC(ACTION_SYSINFO),
-  [CEC_USER_CONTROL_CODE_F2_RED]      = AVEC(ACTION_SWITCH_VIEW),
   [CEC_USER_CONTROL_CODE_F4_YELLOW]   = AVEC(ACTION_SHOW_MEDIA_STATS),
 
   [CEC_USER_CONTROL_CODE_SUB_PICTURE] = AVEC(ACTION_CYCLE_SUBTITLE),
 
 };
 
+#if CEC_LIB_VERSION_MAJOR < 4
 static int
 keypress(void *aux, const cec_keypress kp)
 {
@@ -127,7 +153,48 @@ keypress(void *aux, const cec_keypress kp)
   }
   return 1;
 }
+#else
+static void
+keypress(void *aux, const cec_keypress *kp)
+{
+  event_t *e = NULL;
+  if(gconf.enable_cec_debug)
+    TRACE(TRACE_DEBUG, "CEC", "Got keypress code=0x%x duration=0x%x",
+          kp->keycode, kp->duration);
 
+  if(longpress_select) {
+    if(kp->keycode == CEC_USER_CONTROL_CODE_SELECT) {
+      if(kp->duration == 0)
+        return;
+
+      if(kp->duration < 500)
+        e = event_create_action(ACTION_ACTIVATE);
+      else
+        e = event_create_action(ACTION_ITEMMENU);
+    }
+  }
+
+  if(e == NULL) {
+    const action_type_t *avec = NULL;
+    if(kp->duration == 0 || kp->keycode == cec_config.comboKey) {
+      avec = btn_to_action[kp->keycode];
+    }
+
+    if(avec != NULL) {
+      int i = 0;
+      while(avec[i] != 0)
+        i++;
+      e = event_create_action_multi(avec, i);
+    }
+  }
+
+  if(e != NULL) {
+    e->e_flags |= EVENT_KEYPRESS;
+    event_to_ui(e);
+  }
+  return;
+}
+#endif
 
 static void
 source_activated(void *aux, const cec_logical_address la, const uint8_t on)
@@ -136,7 +203,7 @@ source_activated(void *aux, const cec_logical_address la, const uint8_t on)
         la, on ? "active" : "inactive");
 }
 
-
+#if CEC_LIB_VERSION_MAJOR < 4
 static int
 handle_cec_command(void *aux, const cec_command cmd)
 {
@@ -151,13 +218,35 @@ handle_cec_command(void *aux, const cec_command cmd)
   }
   return 1;
 }
-
+#else
+static void
+handle_cec_command(void *aux, const cec_command *cmd)
+{
+  switch(cmd->opcode) {
+  case CEC_OPCODE_STANDBY:
+    if(cmd->initiator == CECDEVICE_TV) {
+      TRACE(TRACE_INFO, "CEC", "TV STANDBY");
+    }
+    break;
+  default:
+    break;
+  }
+  return;
+}
+#endif
 
 static ICECCallbacks g_callbacks = {
+#if CEC_LIB_VERSION_MAJOR < 4
   .CBCecLogMessage = log_message,
   .CBCecKeyPress   = keypress,
   .CBCecSourceActivated = source_activated,
   .CBCecCommand = handle_cec_command,
+#else
+  .logMessage = log_message,
+  .keyPress   = keypress,
+  .sourceActivated = source_activated,
+  .commandReceived = handle_cec_command,
+#endif
 };
 
 
