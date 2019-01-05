@@ -4,7 +4,6 @@ summary: Media player
 architectures:
 - amd64
 confinement: strict
-grade: stable
 plugs:
   gnome-3-26-1604:
     default-provider: gnome-3-26-1604
