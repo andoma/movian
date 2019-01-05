@@ -108,7 +108,7 @@ $(SNAPROOT)/usr/share/movian/icons/movian-128.png: support/artwork/movian-128.pn
 
 $(BUILDDIR)/movian.snap: $(SNAPDEPS)
 	rm -f $@
-	mksquashfs $(SNAPROOT) $@ -comp xz
+	mksquashfs $(SNAPROOT) $@ -noappend -comp xz -all-root -no-xattrs -no-fragments
 
 snap: $(BUILDDIR)/movian.snap
 
