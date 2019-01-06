@@ -34,40 +34,8 @@ DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFI
 
 
 #
-# Install
-#
-
-
-MAN = man/showtime.1
-DESKTOP = support/gnome/showtime.desktop
-ICON = support/gnome/showtime.svg
-
-INSTDESKTOP= ${DESTDIR}$(prefix)/share/applications
-INSTICON= ${DESTDIR}$(prefix)/share/icons/hicolor/scalable/apps
-
-
-install: ${PROG}.datadir ${MAN} ${DESKTOP} ${ICON}
-	install -D ${PROG}.datadir ${bindir}/showtime
-	install -D ${MAN} ${mandir}/showtime.1
-
-	install -D ${DESKTOP} ${INSTDESKTOP}/showtime.desktop
-	install -D ${ICON} ${INSTICON}/showtime.svg
-
-	for bundle in ${BUNDLES}; do \
-		mkdir -p ${datadir}/$$bundle ;\
-		cp -r $$bundle/*  ${datadir}/$$bundle ;\
-	done
-
-uninstall:
-	rm -f ${bindir}/showtime
-	rm -f ${mandir}/showtime.1
-	rm -f ${INSTDESKTOP}/showtime.desktop
-	rm -f ${INSTICON}/showtime.svg
-
-#	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
-
-#
-#
+# Build a snap archive just using mksquashfs and some file copying
+# This is only tested on Ubuntu 16.04
 #
 
 SNAPROOT=$(BUILDDIR)/snaproot

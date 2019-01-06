@@ -32,65 +32,6 @@
       ]
     },
 
-
-    "precise-amd64": {
-
-      "buildenv": "precise-amd64",
-      "builddeps": [
-        "ccache",
-        "git",
-        "build-essential",
-        "pkg-config",
-        "libfreetype6-dev",
-        "libfontconfig1-dev",
-        "libx11-dev",
-        "libxext-dev",
-        "libgl1-mesa-dev",
-        "libasound-dev",
-        "libpulse-dev",
-        "libgtk2.0-dev",
-        "libxss-dev",
-        "libxxf86vm-dev",
-        "libxv-dev",
-        "libssl-dev",
-        "libvdpau-dev",
-        "yasm",
-        "curl",
-        "libsqlite3-dev",
-        "libwebkitgtk-dev"
-      ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
-    },
-
-    "precise-i386": {
-
-      "buildenv": "precise-i386",
-      "builddeps": [
-        "ccache",
-        "git",
-        "build-essential",
-        "pkg-config",
-        "libfreetype6-dev",
-        "libfontconfig1-dev",
-        "libx11-dev",
-        "libxext-dev",
-        "libgl1-mesa-dev",
-        "libasound-dev",
-        "libpulse-dev",
-        "libgtk2.0-dev",
-        "libxss-dev",
-        "libxxf86vm-dev",
-        "libxv-dev",
-        "libssl-dev",
-        "libvdpau-dev",
-        "yasm",
-        "curl",
-        "libsqlite3-dev",
-        "libwebkitgtk-dev"
-      ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
-    },
-
     "ps3": {
       "buildenv": "xenial-amd64",
       "builddeps": [
@@ -155,6 +96,36 @@
         "./configure.osx --release --version=${VERSION} --cleanbuild --ccache",
         "make -j ${PARALLEL} dist",
       ]
+    },
+
+    "snap-x86_64": {
+      "buildenv": "docker:ubuntu:16.04",
+      "builddeps": [
+        "ccache",
+        "git",
+        "build-essential",
+        "pkg-config",
+        "libfreetype6-dev",
+        "libfontconfig1-dev",
+        "libx11-dev",
+        "libxext-dev",
+        "libgl1-mesa-dev",
+        "libpulse-dev",
+        "libssl-dev",
+        "libsqlite3-dev",
+        "libxss-dev",
+        "yasm",
+        "curl",
+        "squashfs-tools"
+      ],
+
+      "buildcmd": [
+        "./configure --ccache --disable-avahi --disable-vdpau",
+        "make -j${PARALLEL} snap"
+      ],
+      "artifacts": [
+        "build.linux/movian.snap"
+      ],
     }
   }
 }

@@ -1,3 +1,0 @@
-support/debian/custom_showtime_badge.png /usr/share/unity-greeter/
-support/debian/showtime.desktop /usr/share/xsessions/
-support/debian/showtime-session /usr/bin/
