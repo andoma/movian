@@ -3,7 +3,7 @@
                  "ext/libyuv"],
   "targets": {
     "android": {
-      "buildenv": "docker:andoma/movian-android",
+      "buildenv": "docker:andoma/movian-android:26",
       "builddeps": [
         "git-core",
         "build-essential",
