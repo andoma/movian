@@ -528,9 +528,8 @@ freetype_setup()
     tar -x -C "${BUILDDIR}" -f "${freetypetarball}"
     mkdir -p "${FREETYPE_BUILD_DIR}"
 
-    
     (cd ${FREETYPE_BUILD_DIR} && \
-        CC="${CC}" AR=${TOOLCHAIN}ar RANLIB=${TOOLCHAIN}ranlib \
+        CFLAGS="${ARCH_CFLAGS}" CC="${CC}" AR=${TOOLCHAIN}ar RANLIB=${TOOLCHAIN}ranlib \
         ${FREETYPE_SRC_DIR}/configure \
         $1 \
 	--prefix=${EXT_INSTALL_DIR} \

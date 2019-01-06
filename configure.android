@@ -16,8 +16,8 @@ show_help(){
   echo "  --sdk=PREFIX          Use Android SDK from this path [$SDK]"
   echo "  --ndk=DIR             Use Android NDK from this path [$SDK/ndk-bundle]"
   echo "  --kind=KIND           Build for specific android configuration"
-  echo "                        api15_armv7  ARMv7 SDK version 15 (4.0.3)"
-  echo "                        api15_x86      x86 SDK version 15 (4.0.3)"
+  echo "                        api16_armv7  ARMv7 SDK version 16 (4.1)"
+  echo "                        api16_x86      x86 SDK version 16 (4.1)"
   exit 1
 }
 
@@ -46,31 +46,31 @@ for opt do
         --sdk=*)
             SDK="$optval"
             ;;
-        --kind=api15_armv7)
-            ANDROID_MIN_SDK_VERSION=15
-            ANDROID_TARGET_SDK_VERSION=21
+        --kind=api16_armv7)
+            ANDROID_MIN_SDK_VERSION=16
+            ANDROID_TARGET_SDK_VERSION=26
             TOOLCHAIN_NAME=arm-linux-androideabi-4.9
             ANDROID_BUILDKIND_DESCRIMINATOR=1
             ANDROID_ABI=armeabi
-            BUILD=android.api15_armv7
+            BUILD=android.api${ANDROID_MIN_SDK_VERSION}_armv7
             TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/arm-linux-androideabi-
-            ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon -funwind-tables"
+            ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon -funwind-tables -fPIC"
             ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
             LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc"
-            CC=${TOOLCHAIN}clang
-            CXX=${TOOLCHAIN}clang++
+            CC=${TOOLCHAIN}gcc
+            CXX=${TOOLCHAIN}g++
             ;;
-        --kind=api15_x86)
-            ANDROID_MIN_SDK_VERSION=15
-            ANDROID_TARGET_SDK_VERSION=21
+        --kind=api16_x86)
+            ANDROID_MIN_SDK_VERSION=16
+            ANDROID_TARGET_SDK_VERSION=26
             TOOLCHAIN_NAME=x86-linux
             ANDROID_ABI=x86
             ANDROID_BUILDKIND_DESCRIMINATOR=2
-            BUILD=android.api15_x86
+            BUILD=android.api${ANDROID_MIN_SDK_VERSION}_x86
             TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/i686-linux-android-
             LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc --disable-inline-asm"
-            CC="${TOOLCHAIN}clang -mstackrealign"
-            CXX="${TOOLCHAIN}clang++ -mstackrealign"
+            CC="${TOOLCHAIN}gcc -mstackrealign"
+            CXX="${TOOLCHAIN}g++ -mstackrealign"
             ;;
         *)
             common_opt $opt $optval
