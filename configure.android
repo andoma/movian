@@ -68,6 +68,7 @@ for opt do
             ANDROID_BUILDKIND_DESCRIMINATOR=2
             BUILD=android.api${ANDROID_MIN_SDK_VERSION}_x86
             TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/i686-linux-android-
+            ARCH_CFLAGS="-fPIC"
             LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc --disable-inline-asm"
             CC="${TOOLCHAIN}gcc -mstackrealign"
             CXX="${TOOLCHAIN}g++ -mstackrealign"
