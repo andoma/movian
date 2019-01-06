@@ -16,3 +16,6 @@
 [submodule "ext/vmir"]
 	path = ext/vmir
 	url = https://github.com/andoma/vmir
+[submodule "ext/libyuv"]
+	path = ext/libyuv
+	url = https://chromium.googlesource.com/libyuv/libyuv

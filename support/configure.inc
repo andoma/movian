@@ -466,6 +466,7 @@ ext_setup() {
 libyuv_setup() {
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lyuv"
     add_stamp libyuv
+    update_ext_submodule libyuv
 }
 
 

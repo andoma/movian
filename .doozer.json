@@ -1,5 +1,6 @@
 {
-  "submodules": ["ext/libav", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser"],
+  "submodules": ["ext/libav", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser",
+                 "ext/libyuv"],
   "targets": {
     "android": {
       "buildenv": "docker:andoma/movian-android",
