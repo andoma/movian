@@ -22,6 +22,7 @@ show_help(){
 }
 
 enable sqlite_internal
+enable sqlite_vfs
 enable glw_backend_opengl_es
 enable glw
 enable librtmp

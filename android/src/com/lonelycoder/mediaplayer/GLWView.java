@@ -104,6 +104,12 @@ class GLWView extends GLSurfaceView {
         glwId = 0;
     }
 
+    @Override
+    public void onResume() {
+        Core.glwFlush(glwId);
+        super.onResume();
+    }
+
     private class Renderer implements GLSurfaceView.Renderer {
 
         public void onDrawFrame(GL10 gl) {

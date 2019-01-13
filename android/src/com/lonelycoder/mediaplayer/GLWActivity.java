@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.Context;
 import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.KeyEvent;
@@ -199,5 +200,22 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
                     startActivity(startMain);
                 }
             });
+    }
+
+    @Override
+    public void askPermission(final String permission) {
+        runOnUiThread(new Runnable() {
+                public void run() {
+                    requestPermissions(new String[] {permission}, 1);
+                }
+            });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[],
+                                           int[] grantResults) {
+        Core.permissionResult(grantResults[0] ==
+                              PackageManager.PERMISSION_GRANTED);
     }
 }

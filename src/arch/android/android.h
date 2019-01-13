@@ -29,3 +29,4 @@ void android_bitmap_destroy(JNIEnv *env, jobject bitmap);
 
 jobject android_bitmap_create(JNIEnv *env, int width, int height);
 
+int android_get_permission(const char *permission, int interactive);

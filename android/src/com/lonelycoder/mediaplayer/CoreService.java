@@ -40,6 +40,7 @@ public class CoreService extends Service {
 
     @Override
     public void onCreate() {
+        Log.d("Movian", "Coreservice Init");
 
         networkChecker.addAction(android.net.ConnectivityManager.CONNECTIVITY_ACTION);
         Core.init(this);
@@ -75,5 +76,4 @@ public class CoreService extends Service {
         }
         return 0;
     }
-
 }

@@ -15,6 +15,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Canvas;
 import android.text.format.DateFormat;
 import android.widget.FrameLayout;
+import android.content.pm.PackageManager;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -27,7 +28,6 @@ public class Core {
 
     private static Activity currentActivity;
     private static SurfaceView sv;
-    private static Handler courier;
     private static CoreService mService;
 
     static {
@@ -59,6 +59,7 @@ public class Core {
     public static native void glwFini(int id);
     public static native void glwResize(int id, int width, int height);
     public static native void glwStep(int id);
+    public static native void glwFlush(int id);
 
     // The thread for those are not so important I think...
 
@@ -66,6 +67,8 @@ public class Core {
     public static native boolean glwKeyDown(int id, int code, int unicode,
                                             boolean shift);
     public static native boolean glwKeyUp(int id, int code);
+
+    public static native void permissionResult(boolean ok);
 
     // Create / Destroy subscriptions
 
@@ -88,13 +91,6 @@ public class Core {
 
         mService = svc;
 
-        courier = new Handler(svc.getMainLooper(), new Handler.Callback() {
-                public boolean handleMessage(Message msg) {
-                    pollCourier();
-                    return true;
-                }
-            });
-
         int clock_24hrs = DateFormat.is24HourFormat(svc) ? 1 : 0;
 
         coreInit(svc.getFilesDir().getPath(),
@@ -109,17 +105,13 @@ public class Core {
                  svc.getSystemAudioFramesPerBuffer());
     }
 
-    public static void wakeupMainDispatcher() {
-        courier.sendEmptyMessage(0);
-    }
-
-
     public static Bitmap createBitmap(int width, int height) {
         return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
     }
 
-    public static String GetSysPath(String type) {
-        return Environment.getExternalStoragePublicDirectory(type).toString();
+    public static boolean checkPermission(String permission) {
+        return mService.checkSelfPermission(permission) ==
+            PackageManager.PERMISSION_GRANTED;
     }
 
     public static void pushBitmap(final Bitmap b) {
