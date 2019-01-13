@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2019 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1149,9 +1149,12 @@ fa_makedir_p(fa_protocol_t *fap, const char *path)
     memcpy(p, path, l);
     p[l--] = 0;
 
+    if (p[l] == '/')
+      p[l] = 0;
+
     for(; l >= 0; l--)
       if(p[l] == '/')
-	break;
+        break;
     if(l == 0)
       return FAP_NOENT;
 
