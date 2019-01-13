@@ -1187,6 +1187,8 @@ fa_makedirs(const char *url, char *errbuf, size_t errsize)
     r = -1;
   } else {
     r = fa_makedir_p(fap, filename);
+    if(r)
+      snprintf(errbuf, errsize, "Failed to create directory, error %d", r);
   }
   fap_release(fap);
   free(filename);
