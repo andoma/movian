@@ -129,7 +129,7 @@ msg:
 #
 # ./glwskins/flat/loading.view
 #
-id: %d kb/s
+id: %d kB/s
 # Missing translation
 msg: 
 

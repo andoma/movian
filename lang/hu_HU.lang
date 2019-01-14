@@ -118,8 +118,8 @@ msg: Epizód %d - %s
 #
 # ./glwskins/flat/loading.view
 #
-id: %d kb/s
-msg: %d kb/s
+id: %d kB/s
+msg: %d kB/s
 
 id: Bitrate:
 msg: Bitráta:
