@@ -1,0 +1,25 @@
+name: movian
+version: @@VERSION@@
+summary: Media player
+architectures:
+- amd64
+confinement: strict
+grade: stable
+plugs:
+  gnome-3-26-1604:
+    default-provider: gnome-3-26-1604
+    interface: content
+    target: $SNAP/gnome-platform
+apps:
+  movian:
+    command: command-movian.wrapper
+    environment:
+      TMPDIR: $XDG_RUNTIME_DIR
+    plugs:
+    - desktop
+    - home
+    - network
+    - network-bind
+    - opengl
+    - pulseaudio
+    - x11

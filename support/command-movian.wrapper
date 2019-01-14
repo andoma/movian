@@ -1,0 +1,8 @@
+#!/bin/bash
+export PATH="$SNAP/bin:$SNAP/gnome-platform/usr/bin:$PATH"
+export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:$SNAP/gnome-platform/usr/lib/x86_64-linux-gnu:$SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/mesa:$SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/lib"
+export LIBGL_DRIVERS_PATH="$SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/dri"
+export XLOCALEDIR="$SNAP/gnome-platform/usr/share/X11/locale"
+export XCURSOR_PATH="$SNAP/gnome-platform/usr/share/icons"
+export HOME=`getent passwd $UID | cut -d ':' -f 6`
+exec "$SNAP/bin/movian" "$@"

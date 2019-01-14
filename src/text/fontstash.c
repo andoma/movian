@@ -343,11 +343,11 @@ fontstash_init(void)
   pc = prop_concat_create(fontstash_browse_nodes);
 
   prop_t *top = prop_create_root(NULL);
-  settings_create_action(top, _p("Reset main font to default"),
+  settings_create_action(top, _p("Reset main font to default"), NULL,
 			 reset_main, NULL, SETTINGS_RAW_NODES, NULL);
-  settings_create_action(top, _p("Reset narrow font to default"),
+  settings_create_action(top, _p("Reset narrow font to default"), NULL,
 			 reset_cond, NULL, SETTINGS_RAW_NODES, NULL);
-  settings_create_action(top, _p("Reset subtitle font to default"),
+  settings_create_action(top, _p("Reset subtitle font to default"), NULL,
 			 reset_subs, NULL, SETTINGS_RAW_NODES, NULL);
 
   prop_t *x = prop_create_root(NULL);

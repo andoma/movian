@@ -18,8 +18,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <X11/Xlib.h>
-#include <gdk/gdkkeysyms.h>
-#include <gtk/gtk.h>
 
 #include "main.h"
 #include "arch/arch.h"
@@ -28,113 +26,12 @@
 #include "prop/prop.h"
 #include "navigator.h"
 #include "service.h"
-#include "prop/prop_glib_courier.h"
 
-hts_mutex_t gdk_mutex;
-prop_courier_t *glibcourier;
+// https://www.uninformativ.de/blog/postings/2017-04-02/0/POSTING-en.html
 
 static void add_xdg_paths(void);
 
-/**
- *
- */
-static void
-gdk_obtain(void)
-{
-  hts_mutex_lock(&gdk_mutex);
-}
-
-
-/**
- *
- */
-static void
-gdk_release(void)
-{
-  hts_mutex_unlock(&gdk_mutex);
-}
-
-static int running;
-extern const linux_ui_t ui_glw, ui_gu;
-static const linux_ui_t *ui_wanted = &ui_glw, *ui_current;
-
-
-/**
- *
- */
-int
-arch_stop_req(void)
-{
-  running = 0;
-  g_main_context_wakeup(g_main_context_default());
-  return 0;
-}
-
-
-/**
- *
- */
-static void
-switch_ui(void)
-{
-  if(ui_current == &ui_glw)
-    ui_wanted = &ui_gu;
-  else
-    ui_wanted = &ui_glw;
-}
-
-
-/**
- *
- */
-static void
-mainloop(void)
-{
-  void *aux = NULL;
-
-  running = 1;
-
-  while(running) {
-
-    if(ui_current != ui_wanted) {
-
-      prop_t *nav;
-
-      if(ui_current != NULL) {
-	nav = ui_current->stop(aux);
-      } else {
-	nav = NULL;
-      }
-
-      ui_current = ui_wanted;
-
-      aux= ui_current->start(nav);
-    }
-
-#if ENABLE_WEBPOPUP
-    linux_webpopup_check();
-#endif
-    gtk_main_iteration();
-  }
-
-  if(ui_current != NULL) {
-    prop_t *nav = ui_current->stop(aux);
-    if(nav != NULL)
-      prop_destroy(nav);
-  }
-}
-
-
-/**
- *
- */
-static void
-linux_global_eventsink(void *opaque, event_t *e)
-{
-  if(event_is_action(e, ACTION_SWITCH_UI))
-    switch_ui();
-}
-
+static int running = 1;
 
 /**
  * Linux main
@@ -147,14 +44,8 @@ main(int argc, char **argv)
   posix_init();
 
   XInitThreads();
-  hts_mutex_init(&gdk_mutex);
 
-  g_thread_init(NULL);
-  gdk_threads_set_lock_functions(gdk_obtain, gdk_release);
-
-  gdk_threads_init();
-  gdk_threads_enter();
-  gtk_init(&argc, &argv);
+  //  g_thread_init(NULL);
 
   parse_opts(argc, argv);
 
@@ -162,20 +53,9 @@ main(int argc, char **argv)
 
   main_init();
 
-  if(gconf.ui && !strcmp(gconf.ui, "gu"))
-    ui_wanted = &ui_gu;
-
-  glibcourier = glib_courier_create(g_main_context_default());
-
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "eventSink"),
-		 PROP_TAG_CALLBACK_EVENT, linux_global_eventsink, NULL,
-		 PROP_TAG_COURIER, glibcourier, 
-		 NULL);
-
   add_xdg_paths();
 
-  mainloop();
+  glw_x11_main(&running);
 
   main_fini();
 
@@ -191,6 +71,15 @@ arch_exit(void)
 {
   exit(gconf.exit_code);
 }
+
+
+int
+arch_stop_req(void)
+{
+  running = 0;
+  return 0;
+}
+
 
 
 /**

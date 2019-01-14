@@ -196,8 +196,6 @@ static struct strtab actionnames[] = {
   { "Playqueue",             ACTION_PLAYQUEUE },
   { "Sysinfo",               ACTION_SYSINFO },
 
-  { "SwitchUI",              ACTION_SWITCH_UI },
-
 };
 
 
@@ -637,7 +635,7 @@ const static int action_from_fkey[13][2] = {
   { ACTION_SWITCH_VIEW,       ACTION_SEEK_FORWARD },
   { 0,                        ACTION_VOLUME_MUTE_TOGGLE },
   { ACTION_FULLSCREEN_TOGGLE, ACTION_VOLUME_DOWN },
-  { ACTION_SWITCH_UI,         ACTION_VOLUME_UP },
+  { 0,                        ACTION_VOLUME_UP },
 };
 
 

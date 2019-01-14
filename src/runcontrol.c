@@ -293,24 +293,24 @@ runcontrol_init(void)
   if(gconf.can_standby) {
     init_autostandby();
     init_sleeptimer(rc);
-    settings_create_action(dir, _p("Standby"),
+    settings_create_action(dir, _p("Standby"), NULL,
 			   do_standby, NULL, 0, NULL);
   }
 
   if(gconf.can_poweroff)
-    settings_create_action(dir, _p("Power off system"),
+    settings_create_action(dir, _p("Power off system"), NULL,
 			   do_power_off, NULL, 0, NULL);
 
   if(gconf.can_logout)
-    settings_create_action(dir, _p("Logout"),
+    settings_create_action(dir, _p("Logout"), NULL,
 			   do_logout, NULL, 0, NULL);
 
   if(gconf.can_open_shell)
-    settings_create_action(dir, _p("Open shell"),
+    settings_create_action(dir, _p("Open shell"), NULL,
 			   do_open_shell, NULL, 0, NULL);
 
   if(!gconf.can_not_exit)
-    settings_create_action(dir, _p("Quit"),
+    settings_create_action(dir, _p("Quit"), NULL,
 			   do_exit, NULL, 0, NULL);
 
   if(gconf.shell_fd > 0) {

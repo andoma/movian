@@ -50,6 +50,7 @@
 #include "subtitles/subtitles.h"
 #include "db/db_support.h"
 #include "htsmsg/htsmsg_store.h"
+#include "htsmsg/htsmsg_json.h"
 #include "db/kvstore.h"
 #include "upgrade.h"
 #include "usage.h"
@@ -218,10 +219,43 @@ navigator_can_start(void)
  *
  */
 static void *
+geothread(void *aux)
+{
+  for(int i = 0; i < 10; i++) {
+
+    buf_t *b = fa_load("http://ifconfig.co/json", NULL);
+    if(b == NULL) {
+      sleep(i * 2);
+      continue;
+    }
+    htsmsg_t *msg = htsmsg_json_deserialize(buf_cstr(b));
+    buf_release(b);
+    if(msg != NULL) {
+      const char *cc = htsmsg_get_str(msg, "country_iso");
+      if(cc != NULL) {
+        TRACE(TRACE_DEBUG, "GEO", "Current country: %s", cc);
+        prop_setv(prop_get_global(), "location", "cc", NULL,
+                  PROP_SET_STRING, cc);
+      }
+
+      htsmsg_release(msg);
+    }
+    break;
+  }
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
+static void *
 swthread(void *aux)
 {
 #if ENABLE_PLUGINS
-  plugins_init2();
+  plugins_load_all();
 #endif
 
   upgrade_init();
@@ -253,8 +287,6 @@ swthread(void *aux)
     navigator_can_start();
   }
 
-  load_site_news();
-
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 0;
 
@@ -276,7 +308,6 @@ swthread(void *aux)
       plugins_upgrade_check();
 #endif
     upgrade_refresh();
-    load_site_news();
     hts_mutex_lock(&gconf.state_mutex);
   }
   hts_mutex_unlock(&gconf.state_mutex);
@@ -458,6 +489,7 @@ main_init(void)
     TRACE(TRACE_DEBUG, "SYSTEM", "Device type: %s", gconf.device_type);
 
   /* Start software installer thread (plugins, upgrade, etc) */
+  hts_thread_create_detached("geothread", geothread, NULL, THREAD_PRIO_BGTASK);
   hts_thread_create_detached("swinst", swthread, NULL, THREAD_PRIO_BGTASK);
 
   /* Internationalization */

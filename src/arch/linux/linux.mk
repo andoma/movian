@@ -14,7 +14,6 @@ SRCS += src/arch/linux/linux_main.c \
 	src/networking/net_ifaddr.c \
 	src/fileaccess/fa_opencookie.c \
 	src/fileaccess/fa_fs.c \
-	src/prop/prop_glib_courier.c \
 	src/arch/linux/linux_process_monitor.c \
 
 SRCS += src/htsmsg/persistent_file.c
@@ -66,4 +65,50 @@ uninstall:
 	rm -f ${INSTICON}/showtime.svg
 
 #	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
+
+#
+#
+#
+
+SNAPROOT=$(BUILDDIR)/snaproot
+
+SNAPDEPS = \
+	$(SNAPROOT)/bin/movian \
+	$(SNAPROOT)/meta/snap.yaml \
+	$(SNAPROOT)/meta/gui/movian.desktop \
+	$(SNAPROOT)/usr/share/movian/icons/movian-128.png \
+	$(SNAPROOT)/command-movian.wrapper \
+	$(SNAPROOT)/lib/libXss.so.1 \
+
+$(SNAPROOT)/meta/snap.yaml: support/snap.yaml
+	@mkdir -p $(dir $@)
+	sed >$@ -e s/@@VERSION@@/${VERSION}/g -e s/@@APPNAME@@/${APPNAMEUSER}/g -e s/@@VERCODE@@/${NUMVER}/g $<
+
+
+$(SNAPROOT)/lib/%: /usr/lib/x86_64-linux-gnu/%
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/bin/movian: $(BUILDDIR)/movian.sbundle
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/command-movian.wrapper: support/command-movian.wrapper
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/meta/gui/movian.desktop: support/movian.desktop
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+$(SNAPROOT)/usr/share/movian/icons/movian-128.png: support/artwork/movian-128.png
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+
+$(BUILDDIR)/movian.snap: $(SNAPDEPS)
+	rm -f $@
+	mksquashfs $(SNAPROOT) $@ -comp xz
+
+snap: $(BUILDDIR)/movian.snap
 

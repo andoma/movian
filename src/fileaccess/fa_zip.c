@@ -164,6 +164,7 @@ zip_archive_find_file(zip_archive_t *za, zip_file_t *parent,
   const char *s, *n = name;
   char *b;
   int l;
+  int must_be_dir = 0;
 
   if(parent == NULL)
     return NULL;
@@ -174,8 +175,7 @@ zip_archive_find_file(zip_archive_t *za, zip_file_t *parent,
   if(s != NULL) {
     l = s - name;
     s++;
-    if(*s == 0)
-      return NULL; 
+    must_be_dir = *s == 0;
     n = b = alloca(l + 1);
     memcpy(b, name, l);
     b[l] = 0;
@@ -195,7 +195,13 @@ zip_archive_find_file(zip_archive_t *za, zip_file_t *parent,
     zf->zf_name = strdup(n);
     zf->zf_type = s ? CONTENT_DIR : CONTENT_FILE;
     LIST_INSERT_HEAD(&parent->zf_files, zf, zf_link);
-  } 
+  }
+
+  if(must_be_dir) {
+    if(zf->zf_type != CONTENT_DIR)
+      return NULL;
+    return zf;
+  }
 
   return s != NULL ? zip_archive_find_file(za, zf, s, create) : zf;
 }

@@ -154,6 +154,17 @@ posix_init(void)
     }
   }
 
+#ifdef linux
+  const char *snap_user_common = getenv("SNAP_USER_COMMON");
+  if(snap_user_common != NULL) {
+    char buf[PATH_MAX];
+    snprintf(buf, sizeof(buf), "%s/cache", snap_user_common);
+    gconf.cache_path = strdup(buf);
+
+    snprintf(buf, sizeof(buf), "%s/persistent", snap_user_common);
+    gconf.persistent_path = strdup(buf);
+  }
+#endif
   setlocale(LC_ALL, "");
 
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
@@ -161,7 +172,7 @@ posix_init(void)
 #else
   decorate_trace = isatty(2);
 #endif
-  
+
   signal(SIGPIPE, SIG_IGN);
 
 #ifdef RLIMIT_AS

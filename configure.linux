@@ -91,10 +91,8 @@ enable libfontconfig
 enable libpulse
 enable lirc
 enable stdin
-enable gu
 enable avahi
 enable libxss
-enable libxv
 enable openssl
 enable locatedb
 enable vdpau
@@ -386,57 +384,6 @@ fi
 
 
 #
-# GTK2 UI
-#
-if enabled gu; then
-    if pkg-config gtk+-2.0 && pkg-config gthread-2.0; then
-
-	if disabled libx11; then
-	    echo "GU depends on libx11"
-	    die
-	fi
-
-	if disabled libxext; then
-	    echo "GU depends on libxext"
-	    die
-	fi
-
-
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gtk+-2.0`
-	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags gtk+-2.0`
-	echo "Using GTK+:            `pkg-config --modversion gtk+-2.0`"
-
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gthread-2.0`
-	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags gthread-2.0`
-	echo "Using GTK Threading:   `pkg-config --modversion gthread-2.0`"
-
-    else
-	echo "GTK2 not found. Unable to build GU (GTK user interface)."
-	echo "To compile without it, configure with: --disable-gu"
-	die
-    fi
-else
-    disable libxv
-fi
-
-#
-# webkit
-#
-if enabled webkit; then
-    if pkg-config webkit-1.0; then
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs webkit-1.0`
-	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags webkit-1.0`
-	echo "Using WebKit:          `pkg-config --modversion webkit-1.0`"
-	enable webpopup
-    else
-	echo "libwebkitgtk development files not found."
-	echo "To compile without it, configure with: --disable-webkit"
-	die
-    fi
-fi
-
-
-#
 # libXss (Screen saver control library)
 #
 if enabled libxss; then
@@ -476,21 +423,6 @@ if enabled libxrandr; then
 	echo "Using libxrandr:       `pkg-config --modversion xrandr`"
     else
 	echo "libxrandr not found. Unable to build with X11 video mode control."
-	die
-    fi
-fi
-
-
-#
-# libxv (Xvideo)
-#
-if enabled libxv; then
-    if pkg-config xv; then
-	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags xv`
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs xv`
-	echo "Using libXv:           `pkg-config --modversion xv`"
-    else
-	echo "libXv not found. Unable to build with Xv support."
 	die
     fi
 fi
