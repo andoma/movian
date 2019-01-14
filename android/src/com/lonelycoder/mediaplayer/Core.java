@@ -48,6 +48,8 @@ public class Core {
                                        int audio_sample_rate,
                                        int audio_frames_per_buffer);
 
+    public static native void openUri(String uri);
+
     // These two GLW methods should be called on UI thread
 
     public static native int glwCreate(VideoRendererProvider vrp);

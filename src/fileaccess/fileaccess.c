@@ -101,14 +101,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   buf[n] = 0;
 
-  if(!strcmp(buf, "data") && url[0] == ':') {
-    extern fa_protocol_t fa_protocol_data;
-    *p = &fa_protocol_data;
-    return strdup(url + 1);
-  }
-
-
-  if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
+  if(url[0] != ':') {
     /* No protocol specified, assume a plain file */
     if(native_fap == NULL ||
        (url0[0] != '/' &&
@@ -119,8 +112,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
     *p = native_fap;
     return strdup(url0);
   }
-
-  url += 3;
+  url++;
 
   if(!strcmp("dataroot", buf)) {
     const char *pfx = app_dataroot();
@@ -134,7 +126,10 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
 
-    if(fap->fap_match_proto != NULL) {
+    if(fap->fap_match_uri != NULL) {
+      if(fap->fap_match_uri(url0))
+	continue;
+    } else if(fap->fap_match_proto != NULL) {
       if(fap->fap_match_proto(buf))
 	continue;
     } else {
@@ -145,8 +140,15 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
     fap_retain(fap);
     hts_mutex_unlock(&fap_mutex);
 
-    const char *fname = fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url;
+    const char *fname;
 
+    if(fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL) {
+      fname = url0;
+    } else {
+      fname = url;
+      if(fname[0] == '/' && fname[1] == '/')
+        fname += 2;
+    }
 
     if(fap->fap_redirect != NULL) {
       rstr_t *newurl = fap->fap_redirect(fap, fname);

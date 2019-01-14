@@ -48,6 +48,11 @@ typedef struct fa_protocol {
   int (*fap_match_proto)(const char *prefix);
 
   /**
+   * If set, it will superseed fap_match_proto and fap_name. Return 0 for match
+   */
+  int (*fap_match_uri)(const char *uri);
+
+  /**
    * Directory scan url for files.
    */
   int (*fap_scan)(struct fa_protocol *fap, fa_dir_t *fa, const char *url,

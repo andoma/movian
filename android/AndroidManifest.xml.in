@@ -19,8 +19,8 @@
 
   <application android:label="@@APPNAME@@"
                android:icon="@drawable/ic_launcher"
-               android:banner="@drawable/banner">
-
+               android:banner="@drawable/banner"
+               android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
     <service android:name="CoreService"
              android:label="@@APPNAME@@"/>
 
@@ -37,6 +37,355 @@
         <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
       </intent-filter>
 
+      <intent-filter>
+	<action android:name="android.intent.action.SEND" />
+	<category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="application/x-bittorrent" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.torrent" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="application/x-bittorrent" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.torrent" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.torrent" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.torrent" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.torrent" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.torrent" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="application/x-bittorrent" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="application/x-bittorrent" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:scheme="magnet" />
+      </intent-filter>
+
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="video/*" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mkv" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="video/*" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mkv" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mkv" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mkv" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mkv" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mkv" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="video/*" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="video/*" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp4" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp4" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp4" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp4" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mp4" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mp4" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.avi" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.avi" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.avi" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.avi" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.avi" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.avi" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.ts" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.ts" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.ts" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.ts" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.ts" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.ts" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mov" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mov" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mov" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mov" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mov" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mov" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.m2ts" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.m2ts" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.m2ts" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.m2ts" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.m2ts" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.m2ts" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp2ts" android:scheme="file" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp2ts" android:scheme="content" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp2ts" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:pathPattern=".*\\.mp2ts" android:scheme="https" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mp2ts" android:scheme="http" />
+      </intent-filter>
+      <intent-filter>
+	<action android:name="android.intent.action.VIEW" />
+	<category android:name="android.intent.category.DEFAULT" />
+	<category android:name="android.intent.category.BROWSABLE" />
+	<data android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.mp2ts" android:scheme="https" />
+      </intent-filter>
+
     </activity>
+
   </application>
 </manifest>

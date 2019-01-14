@@ -50,6 +50,8 @@ static char android_name[PROP_VALUE_MAX];
 static char android_version[PROP_VALUE_MAX];
 static char android_serialno[PROP_VALUE_MAX];
 
+char android_intent[PATH_MAX];
+
 JavaVM *JVM;
 jclass STCore;
 prop_t *android_nav;
@@ -242,6 +244,46 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
   return JNI_VERSION_1_6;
 }
 
+#if 0
+
+static inline int ishex(int x)
+{
+	return	(x >= '0' && x <= '9')	||
+		(x >= 'a' && x <= 'f')	||
+		(x >= 'A' && x <= 'F');
+}
+
+static int decode(const char *s, char *dec)
+{
+	char *o;
+	const char *end = s + strlen(s);
+	int c;
+
+	for (o = dec; s <= end; o++) {
+		c = *s++;
+		if (c == '+') c = ' ';
+		else if (c == '%' && (	!ishex(*s++)	||
+					!ishex(*s++)	||
+					!sscanf(s - 2, "%2x", &c)))
+			return -1;
+
+		if (dec) *o = c;
+	}
+
+	return o - dec;
+}
+
+JNIEXPORT void JNICALL
+Java_com_lonelycoder_mediaplayer_Core_coreIntent(JNIEnv *env, jobject obj, jstring j_intent)
+{
+   // strcpy(android_intent, (*env)->GetStringUTFChars(env, j_intent, 0));
+    decode((*env)->GetStringUTFChars(env, j_intent, 0), android_intent);
+    if(strstr(android_intent, "magnet:?"))
+	strcat(android_intent, "&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Fopen.demonii.com%3A1337&tr=udp%3A%2F%2F90.180.35.128%3A6969%2Fannonce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.com%3A2710%2Fannounce&tr=http%3A%2F%2Ftracker.tfile.me%2Fannounce&tr=http%3A%2F%2Fmgtracker.org%3A2710%2Fannounce&tr=http%3A%2F%2Fexplodie.org%3A6969%2Fannounce&tr=http%3A%2F%2F90.180.35.128%3A6969%2Fannonce");
+}
+#endif
+
+
 
 /**
  *
@@ -253,6 +295,10 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
   if(initialized)
     return;
   initialized = 1;
+
+  jclass c = (*env)->FindClass(env, "com/lonelycoder/mediaplayer/Core");
+  STCore = (*env)->NewGlobalRef(env, c);
+
 
   char initmsg[128];
   snprintf(initmsg, sizeof(initmsg), "Native core init pid %d SDK:%d",
@@ -306,9 +352,6 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   main_init();
 
-  jclass c = (*env)->FindClass(env, "com/lonelycoder/mediaplayer/Core");
-  STCore = (*env)->NewGlobalRef(env, c);
-
   service_createp("androidstorage", _p("Android Storage"),
                   "es://", "storage", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
@@ -320,6 +363,19 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   android_system_audio_sample_rate = audio_sample_rate;
   android_system_audio_frames_per_buffer = audio_frames_per_buffer;
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_lonelycoder_mediaplayer_Core_openUri(JNIEnv *env, jobject obj, jstring j_uri)
+{
+  const char *uri = (*env)->GetStringUTFChars(env, j_uri, 0);
+
+  event_t *e = event_create_openurl(.url  = uri);
+  prop_send_ext_event(prop_create(android_nav, "eventSink"), e);
+  event_release(e);
+
+  (*env)->ReleaseStringUTFChars(env, j_uri, uri);
 }
 
 

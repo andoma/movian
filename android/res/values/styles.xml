@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<style name="LoadingTheme" parent="@android:style/Theme.Translucent.NoTitleBar.Fullscreen">
+<item name="android:windowDisablePreview">true</item>
+</style>
+</resources>

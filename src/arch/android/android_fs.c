@@ -58,6 +58,8 @@ android_url_to_path(const fa_protocol_t *fap, const char *url, int flags,
     *path = fmt("%s%s", android_fs_settings_path, url);
   } else if(!strcmp(fap->fap_name, "cache")) {
     *path = fmt("%s%s", android_fs_cache_path, url);
+  } else if(!strcmp(fap->fap_name, "file")) {
+    *path = strdup(url);
   } else {
 
     if(!android_get_permission(flags & FA_WRITE ?
@@ -382,7 +384,6 @@ fa_protocol_t fa_protocol_es = {
   .fap_makedir = fs_makedir,
   .fap_ftruncate = fs_ftruncate,
 };
-
 FAP_REGISTER(es);
 
 
@@ -402,7 +403,6 @@ fa_protocol_t fa_protocol_cache = {
   .fap_makedir = fs_makedir,
   .fap_ftruncate = fs_ftruncate,
 };
-
 FAP_REGISTER(cache);
 
 
@@ -422,7 +422,24 @@ fa_protocol_t fa_protocol_persistent = {
   .fap_makedir = fs_makedir,
   .fap_ftruncate = fs_ftruncate,
 };
-
-
-
 FAP_REGISTER(persistent);
+
+
+fa_protocol_t fa_protocol_file = {
+  .fap_name = "file",
+  .fap_scan = fs_scandir,
+  .fap_open  = fs_open,
+  .fap_close = fs_close,
+  .fap_read  = fs_read,
+  .fap_write = fs_write,
+  .fap_seek  = fs_seek,
+  .fap_fsize = fs_fsize,
+  .fap_stat  = fs_stat,
+  .fap_unlink= fs_unlink,
+  .fap_rmdir = fs_rmdir,
+  .fap_rename = fs_rename,
+  .fap_makedir = fs_makedir,
+  .fap_ftruncate = fs_ftruncate,
+};
+
+FAP_REGISTER(file);

@@ -150,3 +150,4 @@ fa_protocol_t fa_protocol_data = {
   .fap_fsize = data_fsize,
 };
 
+FAP_REGISTER(data);

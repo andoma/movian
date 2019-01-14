@@ -113,6 +113,7 @@ Java_com_lonelycoder_mediaplayer_Core_permissionResult(JNIEnv *env, jboolean ok)
 
 }
 
+extern char android_intent[PATH_MAX];
 static void
 dis_screensaver_callback(void *opaque, int value)
 {
@@ -263,6 +264,14 @@ Java_com_lonelycoder_mediaplayer_Core_glwResize(JNIEnv *env,
   TRACE(TRACE_INFO, "GLW", "Resized to %d x %d", width, height);
   agr->gr.gr_width  = width;
   agr->gr.gr_height = height;
+
+  if(android_intent[0])
+  {
+    TRACE(TRACE_INFO, "INTENT", "Loading: %s", android_intent);
+    nav_open(android_intent, NULL);
+    android_intent[0]=0;
+  }
+
 }
 
 
