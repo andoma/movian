@@ -38,32 +38,38 @@ DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFI
 # Install
 #
 
+ifeq ("$(wildcard $(/etc/redhat-release))","");
+     appname := movian
+else
+     appname  := showtime
+endif 
 
-MAN = man/showtime.1
-DESKTOP = support/gnome/showtime.desktop
-ICON = support/gnome/showtime.svg
+
+MAN = man/${appname}.1
+DESKTOP = support/gnome/${appname}.desktop
+ICON = support/gnome/${appname}.svg
 
 INSTDESKTOP= ${DESTDIR}$(prefix)/share/applications
 INSTICON= ${DESTDIR}$(prefix)/share/icons/hicolor/scalable/apps
 
 
 install: ${PROG}.datadir ${MAN} ${DESKTOP} ${ICON}
-	install -D ${PROG}.datadir ${bindir}/showtime
-	install -D ${MAN} ${mandir}/showtime.1
-
-	install -D ${DESKTOP} ${INSTDESKTOP}/showtime.desktop
-	install -D ${ICON} ${INSTICON}/showtime.svg
+	install -D ${PROG}.datadir ${bindir}/${appname}
+	install -D ${MAN} ${mandir}/${appname}.1
+	install -D ${DESKTOP} ${INSTDESKTOP}/${appname}.desktop
+	install -D ${ICON} ${INSTICON}/${appname}.svg
 
 	for bundle in ${BUNDLES}; do \
 		mkdir -p ${datadir}/$$bundle ;\
 		cp -r $$bundle/*  ${datadir}/$$bundle ;\
 	done
 
-uninstall:
-	rm -f ${bindir}/showtime
-	rm -f ${mandir}/showtime.1
-	rm -f ${INSTDESKTOP}/showtime.desktop
-	rm -f ${INSTICON}/showtime.svg
-
 #	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
+
+uninstall:
+	rm -f ${bindir}/${appname}
+	rm -f ${mandir}/${appname}.1
+	rm -f ${INSTDESKTOP}/${appname}.desktop
+	rm -f ${INSTICON}/${appname}.svg
+
 
