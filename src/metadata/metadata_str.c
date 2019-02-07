@@ -154,7 +154,25 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 {
   int year = 0;
 
-  char *s = mystrdupa(filename);
+  //skip the chars between a starting '[' and ']'.
+  char* start=NULL;
+  if(filename[0]=='[') {
+      start = strchr(filename,']');
+      if(start != NULL) {
+          start++;
+          if(start[0]=='.')
+              start++;
+      }
+      if(start>=filename+strlen(filename)) //don't skip if the '[]' includes the whole filename
+          start=NULL;
+  }
+
+  char *s ;
+  
+  if(start==NULL)
+    s = mystrdupa(filename);
+  else
+	s = mystrdupa(start);
 
   url_deescape(s);
 
