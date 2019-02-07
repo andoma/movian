@@ -1285,6 +1285,9 @@ msg: URL
 id: Video
 msg: Video
 
+id: Show bookmarks in a subdirectory
+msg: Lesezeichen in Unterverzeichnis anzeigen
+
 #
 # ./src/networking/connman.c
 #

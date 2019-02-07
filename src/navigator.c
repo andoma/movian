@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2007-2018 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -163,7 +163,7 @@ typedef struct nav_page {
 typedef struct navigator {
 
   LIST_ENTRY(navigator) nav_link;
-  
+
   struct nav_page_queue nav_pages;
   struct nav_page_queue nav_history;
 
@@ -220,7 +220,7 @@ nav_update_bookmarked(void)
   LIST_FOREACH(nav, &navigators, nav_link) {
     nav_page_t *np;
     TAILQ_FOREACH(np, &nav->nav_pages, np_global_link) {
-      prop_set_int_ex(np->np_bookmarked, 
+      prop_set_int_ex(np->np_bookmarked,
 		      np->np_bookmarked_sub, nav_page_is_bookmarked(np));
     }
   }
@@ -637,7 +637,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
 		      np->np_url);
 
   prop_t *prev = prop_create(np->np_prop_root, "previous");
-  
+
   if(np->np_parent_model_src) {
     np->np_parent_model_dst = prop_create_r(prev, "parentModel");
     prop_link(np->np_parent_model_src, np->np_parent_model_dst);
@@ -654,7 +654,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
   prop_set(np->np_prop_root, "how", PROP_SET_STRING, np->np_how);
 
   // XXX Change this into event-style subscription
-  np->np_close_sub = 
+  np->np_close_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAMED_ROOT, np->np_prop_root, "page",
 		   PROP_TAG_NAME("page", "close"),
@@ -665,7 +665,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
   prop_set(np->np_prop_root, "url",       PROP_SET_STRING, np->np_url);
   prop_set(np->np_prop_root, "parentUrl", PROP_SET_STRING, np->np_parent_url);
 
-  np->np_direct_close_sub = 
+  np->np_direct_close_sub =
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_NAMED_ROOT, np->np_prop_root, "page",
 		   PROP_TAG_NAME("page", "directClose"),
@@ -673,7 +673,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
 		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
-  np->np_eventsink_sub = 
+  np->np_eventsink_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAMED_ROOT, np->np_prop_root, "page",
 		   PROP_TAG_NAME("page", "eventSink"),
@@ -687,7 +687,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
 
   prop_set_int(np->np_bookmarked, nav_page_is_bookmarked(np));
 
-  np->np_bookmarked_sub = 
+  np->np_bookmarked_sub =
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		   PROP_TAG_ROOT, np->np_bookmarked,
 		   PROP_TAG_CALLBACK_INT, nav_page_bookmarked_set, np,
@@ -1231,6 +1231,8 @@ bm_delete(void *opaque, prop_event_t event, ...)
 }
 
 
+static int bookmarks_subdir_flag;
+static service_t *bookmarks_subdir_service;
 
 /**
  *
@@ -1267,8 +1269,8 @@ bookmark_add(const char *title, const char *url, const char *type,
     bm->bm_id = rstr_alloc(id);
 
   bm->bm_service = service_create(rstr_get(bm->bm_id),
-				  title, url, type, icon, 1, 1,
-				  SVC_ORIGIN_BOOKMARK);
+                                  title, url, type, icon, 1, !bookmarks_subdir_flag,
+                                  SVC_ORIGIN_BOOKMARK);
 
   prop_link(service_get_status_prop(bm->bm_service),
 	    prop_create(p, "status"));
@@ -1515,6 +1517,70 @@ bookmark_eventsink(void *opaque, event_t *e)
  *
  */
 static void
+bookmarks_subdir_callback(void *opaque, int value)
+{
+  bookmarks_subdir_flag = value;
+
+  prop_set(bookmarks_subdir_service->s_root, "enabled", PROP_SET_INT, value);
+
+  bookmark_t *bm;
+  LIST_FOREACH(bm, &bookmarks, bm_link) {
+    prop_set(bm->bm_service->s_root, "enabled", PROP_SET_INT, !value);
+  }
+}
+
+/**
+ *
+ */
+static int
+bookmarks_subdir_canhandle(const char *url)
+{
+  return !strcmp(url, "bookmarks_subdir:");
+}
+
+/**
+ *
+ */
+static int
+bookmarks_subdir_open_url(prop_t *page, const char *url, int sync)
+{
+  prop_t *model = prop_create_r(page, "model");
+
+  prop_setv(model, "metadata", "title", NULL,
+            PROP_SET_LINK, _p("Bookmarks"));
+
+  prop_set(model, "type",     PROP_SET_STRING, "directory");
+
+  prop_t *nodes = prop_create_r(model, "nodes");
+
+  bookmark_t *bm;
+  LIST_FOREACH(bm, &bookmarks, bm_link) {
+    prop_t *p = prop_create(nodes, NULL);
+    prop_set(p, "type", PROP_SET_STRING, "directory");
+    prop_setv(p, "metadata", "title", NULL, PROP_SET_STRING, rstr_get(bm->bm_title));
+    prop_setv(p, "metadata", "icon", NULL, PROP_SET_STRING, rstr_get(bm->bm_icon));
+    prop_set(p, "url", PROP_SET_STRING, rstr_get(bm->bm_url));
+  }
+
+  prop_ref_dec(nodes);
+  prop_ref_dec(model);
+  return 0;
+}
+
+/**
+ *
+ */
+static backend_t be_bookmarks_subdir = {
+  .be_canhandle = bookmarks_subdir_canhandle,
+  .be_open = bookmarks_subdir_open_url,
+};
+
+BE_REGISTER(bookmarks_subdir);
+
+/**
+ *
+ */
+static void
 bookmarks_init(void)
 {
   htsmsg_field_t *f;
@@ -1524,6 +1590,18 @@ bookmarks_init(void)
                                   "bookmark", NULL,
                                   _p("Add and remove items on homepage"),
                                   "settings:bookmarks");
+
+  bookmarks_subdir_service = service_createp("bookmarks_subdir_service",
+                                             _p("Bookmarks"), "bookmarks_subdir:", "directory",
+                                             "skin://icons/ic_collections_bookmark_24px.svg", 1,
+                                             bookmarks_subdir_flag, SVC_ORIGIN_SYSTEM);
+
+  setting_create(SETTING_BOOL, root, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Show bookmarks in a subdirectory")),
+                 SETTING_VALUE(0),
+                 SETTING_CALLBACK(bookmarks_subdir_callback, NULL),
+                 SETTING_STORE("bookmarks_settings", "bookmarks_subdir"),
+                 NULL);
 
   bookmark_nodes = prop_create(root, "nodes");
   prop_set(root, "mayadd", PROP_SET_INT, 1);
