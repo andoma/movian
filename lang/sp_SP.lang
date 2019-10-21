@@ -5,20 +5,16 @@ maintainer: Diego Franco <diegofernandofranco@gmail.com>
 # ./glwskins/flat/ctxmenu/default_details.view
 #
 id: Bookmark
-# Missing translation
-msg: 
+msg: Marcador
 
 id: Bookmarked
-# Missing translation
-msg: 
+msg: Marcado como favorito
 
 id: Copy to clipboard
-# Missing translation
-msg: 
+msg: Copiar al portapapeles
 
 id: Copy to location...
-# Missing translation
-msg: 
+msg: Copiar a la ubicación...
 
 id: Delete
 msg: Borrar
@@ -30,26 +26,22 @@ msg: Cola
 # ./glwskins/flat/ctxmenu/plugin_details.view
 #
 id: Author:
-# Missing translation
-msg: 
+msg: Autor
 
 id: Available version:
 msg: Versión disponible:
 
 id: Changelog
-# Missing translation
-msg: 
+msg: Registro de cambios
 
 id: Install
 msg: Instalar
 
 id: Installed version:
-# Missing translation
-msg: 
+msg: Versión instalada:
 
 id: Status:
-# Missing translation
-msg: 
+msg: Estado:
 
 id: Uninstall
 msg: Desinstalar
@@ -73,18 +65,16 @@ id: Play from beginning
 msg: Reproducir desde el inicio
 
 id: Play until end of list
-msg: Reproducir hasta fin de lista
+msg: Reproducir hasta el final de la lista
 
 id: Video Cast
-# Missing translation
-msg: 
+msg: Trasmitir vídeo
 
 #
 # ./glwskins/flat/items/details/video.view
 #
 id: Season %d - Episode %d
-# Missing translation
-msg: 
+msg: Temporada %d - Episodio %d
 
 id: Seen %d times, %s
 # Missing plural translation for 'Seen %d times, %s' and 'Seen %d time, %s'
@@ -101,10 +91,10 @@ msg: Agregar nueva entrada
 # ./glwskins/flat/items/list/bool.view
 #
 id: Off
-msg: Inactivo
+msg: Desactivado
 
 id: On
-msg: Activo
+msg: Activado
 
 #
 # ./glwskins/flat/items/list/font.view
@@ -122,8 +112,7 @@ msg: Interfaz de usuario
 # ./glwskins/flat/items/list/tvepisode.view
 #
 id: Episode %d - %s
-# Missing translation
-msg: 
+msg: Episodio %d - %s
 
 #
 # ./glwskins/flat/loading.view
@@ -138,7 +127,7 @@ msg: Calidad:
 # ./glwskins/flat/log.view
 #
 id: System log
-msg: Registro de Sistema
+msg: Registro del sistema
 
 #
 # ./glwskins/flat/mediainfo.view
@@ -148,73 +137,58 @@ id: A/V diff
 msg: 
 
 id: Audio bitrate
-# Missing translation
-msg: 
+msg: Bitrate de audio
 
 id: Audio codec
-# Missing translation
-msg: 
+msg: Códec de audio
 
 id: Audio packets
-# Missing translation
-msg: 
+msg: Paquetes de audio
 
 id: Buffer usage
-# Missing translation
-msg: 
+msg: Uso de buffer
 
 id: No media loaded
-msg: Ningún medio cargado
+msg: No hay medios cargados
 
 id: Remaining buffer
-# Missing translation
-msg: 
+msg: Tiempo restante
 
 id: Source
-# Missing translation
-msg: 
+msg: Fuente
 
 id: Video bitrate
-# Missing translation
-msg: 
+msg: Bitrate de vídeo
 
 id: Video codec
-# Missing translation
-msg: 
+msg: Códec de vídeo
 
 id: Video framerate
-# Missing translation
-msg: 
+msg: Velocidad de fotogramas de vídeo
 
 id: Video packets
-# Missing translation
-msg: 
+msg: Paquetes de video
 
 #
 # ./glwskins/flat/menu/sidebar.view
 #
 id: Bookmark page
-# Missing translation
-msg: 
+msg: Agregar a marcador
 
 id: Page settings
-# Missing translation
-msg: 
+msg: Configuración de página
 
 id: Paste
-# Missing translation
-msg: 
+msg: Pegar
 
 id: Reload page
-# Missing translation
-msg: 
+msg: Recargar página
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Eliminar marcador
 
 id: Settings
-msg: Ajustes
+msg: Configuraciones
 
 #
 # ./glwskins/flat/menu/sidebar_common.view
@@ -226,11 +200,10 @@ id: Disable sleep timer
 msg: Desactivar temporizador de apagado
 
 id: Exit %s
-msg: Salida %s
+msg: Salir de %s
 
 id: Hide media info
-# Missing translation
-msg: 
+msg: Ocultar información multimedia
 
 id: Hide system info
 msg: Ocultar información del sistema
@@ -239,8 +212,7 @@ id: Master volume
 msg: Volumen principal
 
 id: Show media info
-# Missing translation
-msg: 
+msg: Ver información multimedia
 
 id: Show system info
 msg: Ver información del sistema
@@ -252,8 +224,7 @@ id: Time until sleep
 msg: Tiempo para apagar
 
 id: View log
-# Missing translation
-msg: 
+msg: Ver registro del sistema
 
 id: dB
 msg: dB
@@ -271,13 +242,13 @@ msg: Audio
 # ./glwskins/flat/osd/osd_main.view
 #
 id: Audio settings
-msg: Ajustes de Audio
+msg: Configuraciones de audio
 
 id: Subtitle settings
-msg: Ajustes de subtítulos
+msg: Configuraciones de subtítulos
 
 id: Video settings
-msg: Ajustes de vídeo
+msg: Configuraciones de vídeo
 
 #
 # ./glwskins/flat/osk.view
@@ -301,30 +272,25 @@ id: Custom
 msg: Personalizado
 
 id: Grid
-# Missing translation
-msg: 
+msg: Cuadrícula
 
 id: List
 msg: Lista
 
 id: Page layout
-# Missing translation
-msg: 
+msg: Diseño de página
 
 id: Search results
-# Missing translation
-msg: 
+msg: Resultados de la búsqueda
 
 id: TV Season
-# Missing translation
-msg: 
+msg: Temporada de TV
 
 #
 # ./glwskins/flat/pages/empty.view
 #
 id: No contents
-# Missing translation
-msg: 
+msg: Sin contenido
 
 #
 # ./glwskins/flat/pages/home.view
@@ -333,15 +299,13 @@ id: Dismiss
 msg: Descartar
 
 id: Home
-# Missing translation
-msg: 
+msg: Página principal
 
 #
 # ./glwskins/flat/pages/openerror.view
 #
 id: Unable to open resource
-# Missing translation
-msg: 
+msg: No se puede abrir el recurso
 
 #
 # ./glwskins/flat/pages/playqueue.view
@@ -353,8 +317,7 @@ msg: Cola de reproducción
 # ./glwskins/flat/pages/searchresults.view
 #
 id: Show more
-# Missing translation
-msg: 
+msg: Mostrar más
 
 id: %d hits
 # Missing plural translation for '%d hits' and '%d hit'
@@ -365,38 +328,31 @@ msg[1]:
 # ./glwskins/flat/pages/slideshow.view
 #
 id: Interval: %ds
-# Missing translation
-msg: 
+msg: Intervalo: %ds
 
 id: Play/Pause
-# Missing translation
-msg: 
+msg: Reproducir/Pausar
 
 id: Stop
-# Missing translation
-msg: 
+msg: Detener
 
 #
 # ./glwskins/flat/pages/stpp.view
 #
 id: Remote control - %s
-# Missing translation
-msg: 
+msg: Control remoto - %s
 
 id: Remote controlling %s
-# Missing translation
-msg: 
+msg: Control remoto %s
 
 #
 # ./glwskins/flat/pages/stppstpp.view
 #
 id: Nested remote controll is not supported
-# Missing translation
-msg: 
+msg: El control remoto anidado no es compatible
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Control remoto
 
 #
 # ./glwskins/flat/pages/stppvideo.view
@@ -411,19 +367,16 @@ id: CPU is too slow to decode this video
 msg: CPU demasiado lento para decodificar vídeo
 
 id: Next
-# Missing translation
-msg: 
+msg: Siguiente
 
 id: Previous
-# Missing translation
-msg: 
+msg: Anterior
 
 #
 # ./glwskins/flat/pages/tvseason.view
 #
 id: Season %d
-# Missing translation
-msg: 
+msg: Temporada %d
 
 #
 # ./glwskins/flat/pages/upgrade.view
@@ -441,15 +394,13 @@ id: Check for updates now
 msg: Buscar actualizaciones ahora
 
 id: Checking for updates
-# Missing translation
-msg: 
+msg: Comprobando actualizaciones
 
 id: Current version:
 msg: Versión actual:
 
 id: Download and install
-# Missing translation
-msg: 
+msg: Descargar e instalar
 
 id: Downloading %s
 msg: Descargando %s
@@ -461,14 +412,13 @@ id: No upgrade available
 msg: Ninguna actualización disponible
 
 id: Retry
-# Missing translation
-msg: 
+msg: Reintentar
 
 id: Stable
 msg: Estable
 
 id: Testing
-msg: Probando
+msg: Beta
 
 id: Unable to query for new version
 msg: No se pudo encontrar una nueva versión
@@ -495,33 +445,28 @@ id: Cancel
 msg: Cancelar
 
 id: Ok
-# Missing translation
-msg: 
+msg: Ok
 
 #
 # ./glwskins/flat/popups/filepicker.view
 #
 id: Back
-# Missing translation
-msg: 
+msg: Atrás
 
 id: Close
-# Missing translation
-msg: 
+msg: Cerrar
 
 id: Folder select mode, press right to open subfolder
-# Missing translation
-msg: 
+msg: Modo de selección de carpeta, presione hacia la derecha para abrir la subcarpeta
 
 #
 # ./glwskins/flat/popups/resume.view
 #
 id: No, Start over
-msg: No, Empezar de nuevo
+msg: No, empezar de nuevo
 
 id: Resume from %s
-# Missing translation
-msg: 
+msg: Reanudar desde %s
 
 id: Yes
 msg: Sí
@@ -539,15 +484,13 @@ id: CPU Temp
 msg: Temp CPU
 
 id: Connected
-# Missing translation
-msg: 
+msg: Conectado
 
 id: Fragmentation
 msg: Fragmentación
 
 id: Framerate
-# Missing translation
-msg: 
+msg: Cuadros por segundo
 
 id: GPU Temp
 msg: Temp GPU
@@ -556,23 +499,19 @@ id: HDD Avail
 msg: Espacio libre disponible en el disco duro
 
 id: IP Address
-# Missing translation
-msg: 
+msg: Dirección IP
 
 id: Inactive memory
-# Missing translation
-msg: 
+msg: Memoria inactiva
 
 id: Memory usage
 msg: Memoria usada
 
 id: Network
-# Missing translation
-msg: 
+msg: Red
 
 id: Not available
-# Missing translation
-msg: 
+msg: No disponible
 
 id: System Free
 msg: Memoria Libre
@@ -585,40 +524,34 @@ id: VM Page In/Out
 msg: 
 
 id: Version
-# Missing translation
-msg: 
+msg: Versión
 
 #
 # ./glwskins/flat/universe.view
 #
 id: Audio muted
-msg: Audio apagado
+msg: Audio silenciado
 
 id: Copying %d files
-# Missing translation
-msg: 
+msg: Copiando %d archivos
 
 id: Master volume: %d dB
 msg: Volumen principal: %d dB
 
 id: Overscan adjustment\nPosition border at screen edges
-# Missing translation
-msg: 
+msg: Ajuste de sobreexploración\nColoque el borde en los bordes de la pantalla
 
 #
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Permitir control remoto
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Dispositivo no disponible
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Movians para control remoto
 
 #
 # ./src/api/tmdb.c
@@ -633,8 +566,7 @@ msg: Usar título original
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Almacenamiento de Android
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -700,8 +632,7 @@ msg: HDMI
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: Emparejar visualización y velocidad de fotogramas de contenido
 
 #
 # ./src/audio2/audio.c
@@ -710,14 +641,13 @@ id: Audio delay
 msg: Retraso de audio
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Ganancia de audio
 
 id: Setup audio output
 msg: Ajustar la salida de audio
 
 id: Video playback
-msg: Reproducción de Vídeo
+msg: Reproducción de vídeo
 
 #
 # ./src/audio2/audio_test.c
@@ -726,7 +656,7 @@ id: 440Hz sinewave -12dB
 msg: Sonido de onda sinusoidal de 440Hz -12dB
 
 id: Audio test
-msg: Probar audio
+msg: Prueba de audio
 
 id: Center
 msg: Centro
@@ -810,8 +740,7 @@ id: Enable bittorrent
 msg: Habilitar bittorrent
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Máxima velocidad de carga
 
 id: Max usage of free space for caching torrents
 msg: Uso de Max de espacio libre para los torrentes de almacenamiento en caché
@@ -844,30 +773,25 @@ msg: Suplementario
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: Canales
 
 id: Invalid HTSP URL
 msg: URL de HTSP no válida
 
 id: No such channel
-# Missing translation
-msg: 
+msg: No hay tal canal
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: Shows grabados
 
 id: Recorder
-# Missing translation
-msg: 
+msg: Grabadora
 
 #
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: No se puede abrir la lista de reproducción
 
 #
 # ./src/backend/search.c
@@ -882,20 +806,16 @@ msg: Resultados de búsqueda para: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 segundos
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 segundos
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 segundos
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Velocidad de presentación de diapositivas
 
 #
 # ./src/blobcache_file.c
@@ -916,18 +836,16 @@ id: Checking file contents
 msg: Verificar el contenido del archivo
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: URL inválida de redireccionamiento
 
 id: Unable to open file: %s
-msg: No se puede abrir archivo: %s
+msg: No es posible abrir el archivo: %s
 
 #
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Seleccione un archivo
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -945,16 +863,13 @@ id: Filename
 msg: Nombre de Archivo
 
 id: Include in library
-# Missing translation
-msg: 
+msg: Incluir en la biblioteca
 
 id: Newest first
-# Missing translation
-msg: 
+msg: El más reciente primero
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Los más viejos primero
 
 id: Show only supported files
 msg: Mostrar solo archivos soportados
@@ -990,7 +905,7 @@ id: Show filename extensions
 msg: Mostrar extensiones de archivos 
 
 id: Store per-file settings in filesystem
-msg: Guardar ajustes de cada archivo en el sistema
+msg: Guardar configuraciones de cada archivo en el sistema
 
 id: %d archive parts
 msg[0]: %d parte de archivo
@@ -1026,12 +941,10 @@ msg: Nombre del objeto no encontrado
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 Horas
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 Horas
 
 id: Default character set
 msg: Conjunto de caracteres predeterminados
@@ -1064,8 +977,7 @@ id: Secondary subtitle language code
 msg: Código de idioma del subtítulo secundario
 
 id: System default
-# Missing translation
-msg: 
+msg: Sistema por defecto
 
 id: Tertiary audio language code
 msg: Código de idioma del audio terciario
@@ -1074,12 +986,10 @@ id: Tertiary subtitle language code
 msg: Código de idioma del subtítulo terciario
 
 id: Time format
-# Missing translation
-msg: 
+msg: Formato de tiempo
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Zona horaria
 
 #
 # ./src/ipc/libcec.c
@@ -1089,12 +999,10 @@ id: Longpress SELECT for item menu
 msg: 
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: Cambiar fuente de entrada de TV
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: Use la tecla STOP para la entrada combinada
 
 #
 # ./src/keyring.c
@@ -1294,8 +1202,7 @@ id: Add and remove items on homepage
 msg: Agregar y remover items de página principal
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: Se agregó %s a la página principal
 
 id: Added new bookmark: %s
 msg: Nuevo marcador agregado: %s
@@ -1304,8 +1211,7 @@ id: Bookmarks
 msg: Marcadores
 
 id: Icon
-# Missing translation
-msg: 
+msg: Ícono
 
 id: Music
 msg: Música
@@ -1320,8 +1226,7 @@ id: Photos
 msg: Fotos
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: Se eliminó %s de la página principal
 
 id: Removed bookmark: %s
 msg: Marcador removido: %s
@@ -1366,16 +1271,13 @@ msg: Puerto TCP del servidor
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Apagando
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Reiniciando
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Reinicio
 
 id: Standby
 msg: Apagar
@@ -1384,32 +1286,28 @@ msg: Apagar
 # ./src/notifications.c
 #
 id: Show news on home screen
-# Missing translation
-msg: 
+msg: Mostrar noticias en la pantalla principal
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-msg: URL alternativa del repositorio de Plugins
+msg: URL alternativa del repositorio de complementos
 
 id: Audio decoders
-# Missing translation
-msg: 
+msg: Decodificadores de audio
 
 id: Auto install plugins on demand
-# Missing translation
-msg: 
+msg: Instalación automática de complementos bajo demanda
 
 id: Auto installed plugin %s (Version %s)
-# Missing translation
-msg: 
+msg: Complemento instalado automáticamente %s (Versión %s)
 
 id: Automatically upgrade plugins
-msg: Actualizar automáticamente plugins
+msg: Actualiza automáticamente los complementos
 
 id: Available plugins
-msg: Plugins disponibles
+msg: Complementos disponibles
 
 id: Background
 msg: Fondo
@@ -1418,7 +1316,7 @@ id: Beta testing passwords
 msg: Contraseñas para testeo Beta
 
 id: Browse available plugins
-msg: Explorar plugins disponibles
+msg: Explorar complementos disponibles
 
 id: Browsing
 msg: Explorando
@@ -1427,11 +1325,10 @@ id: Cloud services
 msg: Servicios en la nube
 
 id: Corrupt plugin bundle
-msg: Paquete de plugin corrupto
+msg: Paquete de complemento corrupto
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: Los fondos personalizados ahora se pueden configurar en Configuración -> Aspecto y comportamiento
 
 id: Disk write error
 msg: Error en escritura al disco
@@ -1443,17 +1340,16 @@ id: File open error
 msg: Error al abrir archivo
 
 id: Home page
-msg: Página Principal
+msg: Página principal
 
 id: Images
 msg: Imágenes
 
 id: Installed
-# Missing translation
-msg: 
+msg: Instalado
 
 id: Installed plugins
-msg: Plugins instalados
+msg: Complementos instalados
 
 id: Installed version higher than available
 msg: Versión instalada superior a la disponible
@@ -1483,30 +1379,28 @@ id: Not upgradable
 msg: No actualizable
 
 id: On Screen Keyboards
-msg: Teclados de pantalla
+msg: Teclados en pantalla
 
 id: Online TV
 msg: TV en línea
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-msg: Plugin %s %s ha sido desinstalado porque puede causar problemas.\nTrate reinstalando manualmente una versión diferente.
+msg: El complemento %s %s se ha desinstalado porque puede causar problemas.\nPuede intentar reinstalar una versión diferente manualmente.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: El complemento %s ha sido desinstalado - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Categorías de complementos
 
 id: Plugins
-msg: Plugins
+msg: Complementos
 
 id: Preferred views from plugins
-msg: Vistas preferidas de plugins
+msg: Vistas preferidas de complementos
 
 id: Screen saver
-msg: Protector de pantalla
+msg: Salvapantalla
 
 id: TV channels
 msg: Canales de TV
@@ -1521,20 +1415,19 @@ id: Uncategorized
 msg: Sin categoría
 
 id: Up to date
-msg: Actualizado a la fecha
+msg: Ultima actualizado instalada
 
 id: Upgradable
 msg: Actualizable
 
 id: Upgraded plugin %s to version %s
-msg: Plugin %s actualizado a versión %s
+msg: Complemento %s actualizado a la versión %s
 
 id: User interface extensions
 msg: Extensiones del interfaz del usuario
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: La versión %s ya no es compatible con Movian
 
 id: Video streaming
 msg: Transmisión de Vídeo
@@ -1543,8 +1436,7 @@ msg: Transmisión de Vídeo
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: Remoto salido
 
 #
 # ./src/runcontrol.c
@@ -1556,7 +1448,7 @@ id: Enable SSH server
 msg: Activar servidor SSH
 
 id: Logout
-msg: Desconectarse
+msg: Cerrar sesión
 
 id: Open shell
 msg: Abrir consola
@@ -1565,7 +1457,7 @@ id: Power off system
 msg: Apagar sistema
 
 id: Quit
-msg: Dejar
+msg: Salir
 
 id: SSH server
 msg: Servidor SSH
@@ -1586,30 +1478,28 @@ id: Local network
 msg: Red local
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Eliminar de la página de inicio
 
 #
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: Acerca de
 
 id: Applications and installed plugins
-msg: Aplicaciones y plugins instalados
+msg: Aplicaciones y complementos instalados
 
 id: Configure communications with your TV
 msg: Configure las comunicaciones con el televisor
 
 id: Developer settings
-msg: Ajustes para desarrolladores
+msg: Opciones del desarrollador
 
-id: Discovered media sources
+id: Fuentes de medios descubiertas
 msg: Medios Encontrados
 
 id: File browsing
-msg: Exploración de archivos
+msg: Explorador de archivos
 
 id: Fonts and user interface styling
 msg: Fuentes y estilo del interfaz del usuario
@@ -1618,7 +1508,7 @@ id: General
 msg: General
 
 id: Global settings
-msg: Ajustes Globales
+msg: Configuración global
 
 id: Look and feel
 msg: Aspecto y comportamiento
@@ -1630,11 +1520,10 @@ id: Network settings
 msg: Configuración de Red
 
 id: Reset
-# Missing translation
-msg: 
+msg: Reiniciar
 
 id: Settings useful for developers
-msg: Ajustes útiles para desarrolladores
+msg: Opciones útiles para desarrolladores
 
 id: Software upgrade
 msg: Mejora de software
@@ -1646,11 +1535,10 @@ id: System name
 msg: Nombre del sistema
 
 id: System related settings
-msg: Ajustes relacionados al sistema
+msg: Configuraciones relacionadas con el sistema
 
 id: TV Control
-# Missing translation
-msg: 
+msg: Control de TV
 
 #
 # ./src/subtitles/subtitles.c
@@ -1680,7 +1568,7 @@ id: Force subtitles to reside on video frame
 msg: Forzar subtítulo se muestre sobre el cuadro del vídeo
 
 id: Generic settings for video subtitles
-msg: Ajustes genéricos para subtítulos
+msg: Configuraciones genéricas para subtítulos de video
 
 id: Ignore embedded styling
 msg: Ignorar estilo integrado
@@ -1767,19 +1655,16 @@ msg: Usar fuente %s para
 # ./src/ui/clipboard.c
 #
 id: Copy failed: %s
-# Missing translation
-msg: 
+msg: Copia fallida: %s
 
 id: Target folder
-# Missing translation
-msg: 
+msg: Carpeta de destino
 
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Control Remoto Dual-Shock
 
 id: No
 msg: No
@@ -1794,42 +1679,34 @@ msg: Sí con botón SELECT
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Imagen de fondo personalizada
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Emule los botones Arriba/Abajo con la rueda del mouse
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Carpeta de imágenes para salvapantalla
 
 id: Font and icon size
 msg: Tamaño de fuente e ícono
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Encogimiento horizontal de la Interfaz
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: Encogimiento vertical de la Interfaz
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Salvapantalla
 
 id: Screensaver delay
-msg: Espera del protector de pantalla
+msg: Tiempo de espera del salvapantalla
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Segundos por imagen
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Usar imágenes Bing del día
 
 id: Wrap when reaching beginning/end of lists
 msg: Volver al inicio al llegar al fin de las listas
@@ -1838,48 +1715,37 @@ msg: Volver al inicio al llegar al fin de las listas
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: hace %d días
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: hace %d horas
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: hace %d minutos
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: hace %d meses
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: hace %d semanas
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: hace %d años
 
 id: Just now
-# Missing translation
-msg: 
+msg: Justo ahora
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Hace un dia
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Hace una hora
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Hace un minuto
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Hace un mes
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1921,7 +1787,7 @@ id: Date (newest first)
 msg: Fecha (recientes primero)
 
 id: Date (oldest first)
-msg: Fecha (antiguos primero
+msg: Fecha (antiguos primero)
 
 id: Device not found
 msg: Dispositivo no encontrado
@@ -1954,8 +1820,7 @@ id: Enable VDPAU
 msg: Activar VDPAU
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Decodificación acelerada por hardware
 
 id: Maximum resolution for deinterlacer
 msg: Resolución máxima del deinterlacer
@@ -1976,8 +1841,7 @@ id: Resume video playback
 msg: Continuar reproducción de vídeo
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Mostrar reloj durante la reproducción
 
 id: Step when seeking backward
 msg: Cantidad de segundos en la búsqueda hacia atrás
@@ -1998,6 +1862,5 @@ id: Video acceleration and display behaviour
 msg: Aceleración de vídeo y comportamiento de pantalla
 
 id: Video buffer size
-# Missing translation
-msg: 
+msg: Tamaño del búfer de video
 
