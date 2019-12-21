@@ -931,7 +931,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
     dec_type.profile_level = 42;
-    spu_threads = 4;
+    spu_threads = 3;
     break;
 
   default:
