@@ -475,7 +475,7 @@ libyuv_setup() {
 zlib_setup()
 {
     ZLIB_VER="1.2.3"
-    download_file http://commondatastorage.googleapis.com/nativeclient-mirror/nacl/zlib-${ZLIB_VER}.tar.gz zlibtarball
+    download_file https://github.com/madler/zlib/archive/refs/tags/v${ZLIB_VER}.tar.gz zlibtarball
 
     ZLIB_SRC_DIR=${BUILDDIR}/zlib-${ZLIB_VER}
 
@@ -495,7 +495,7 @@ zlib_setup()
 bzip2_setup()
 {
     BZIP2_VER="1.0.6"
-    download_file https://fossies.org/linux/misc/bzip2-${BZIP2_VER}.tar.gz bzip2tarball
+    download_file https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VER}.tar.gz bzip2tarball
 
     BZIP2_SRC_DIR=${BUILDDIR}/bzip2-${BZIP2_VER}
 
@@ -520,7 +520,7 @@ freetype_setup()
 {
     FREETYPE_VER="2.4.9"
 
-    download_file http://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VER}.tar.gz freetypetarball
+    download_file http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-${FREETYPE_VER}.tar.gz freetypetarball
 
     FREETYPE_SRC_DIR=${BUILDDIR}/freetype-${FREETYPE_VER}
     FREETYPE_BUILD_DIR=${BUILDDIR}/freetype/build
