@@ -1,6 +1,6 @@
 language: Russian
-native: Русский 
-maintainer: pvc1 <pvc1@yandex.ru> 
+native: Русский
+maintainer: dutch_ <dutch1@mail.ru>
 #
 # ./glwskins/flat/ctxmenu/default_details.view
 #
@@ -107,7 +107,7 @@ id: Subtitles
 msg: Субтитры
 
 id: User interface
-msg: Пользовательский интерфейс
+msg: Интерфейс
 
 #
 # ./glwskins/flat/items/list/tvepisode.view
@@ -189,7 +189,7 @@ id: Remove bookmark
 msg: Удалить закладку
 
 id: Settings
-msg: Настройки
+msg: Настройки М7
 
 #
 # ./glwskins/flat/menu/sidebar_common.view
@@ -300,7 +300,7 @@ id: Dismiss
 msg: Отклонить
 
 id: Home
-msg: Домашний экран
+msg: Главный экран
 
 #
 # ./glwskins/flat/pages/openerror.view
@@ -654,7 +654,7 @@ msg: Воспроизведение видео
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-msg: 440 Гц синусоидальный -12дб
+msg: 440Гц синусоидальный
 
 id: Audio test
 msg: Звуковой тест
@@ -1191,10 +1191,10 @@ msg: имя папки
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-msg: Добавление и удаление элементов на домашний экран
+msg: Добавление и удаление элементов на главный экран
 
 id: Added %s to home page
-msg: %s добавлено на домашний экран
+msg: %s добавлено на главный экран
 
 id: Added new bookmark: %s
 msg: Добавлены новые закладки: %s
@@ -1218,7 +1218,7 @@ id: Photos
 msg: Фото
 
 id: Removed %s from homepage
-msg: %s удалено с домашнего экрана
+msg: %s удалено с главного экрана
 
 id: Removed bookmark: %s
 msg: Удалены закладки: %s
@@ -1278,7 +1278,7 @@ msg: Режим ожидания
 # ./src/notifications.c
 #
 id: Show news on home screen
-msg: Показывать новости на домашнем экране
+msg: Показывать новости на главном экране
 
 #
 # ./src/plugins.c
@@ -1332,7 +1332,7 @@ id: File open error
 msg: Ошибка при открытии файла
 
 id: Home page
-msg: Домашний экран
+msg: Главный экран
 
 id: Images
 msg: Изображения
@@ -1458,7 +1458,7 @@ msg: SSH-сервер
 # ./src/sd/sd.c
 #
 id: Enabled on home screen
-msg: Показывать на домашнем экране
+msg: Показывать на главном экране
 
 id: Name
 msg: Имя
@@ -1470,7 +1470,7 @@ id: Local network
 msg: Локальная сеть
 
 id: Remove from homepage
-msg: Удалить с домашнего экрана
+msg: Удалить с главного экрана
 
 #
 # ./src/settings.c
@@ -1558,7 +1558,7 @@ id: External file
 msg: Внешний файл
 
 id: Force subtitles to reside on video frame
-msg: Принудительно прописывать субтитры в кадре
+msg: Принудительно размещать субтитры в кадре
 
 id: Generic settings for video subtitles
 msg: Общие настройки для видео субтитров
@@ -1854,6 +1854,342 @@ msg: Контроль вверх/вниз во время воспроизвед
 id: Video acceleration and display behaviour
 msg: Ускорение видео и поведение изображения
 
-id: Video buffer size
+id: Video Buffer Size
 msg: Размер видеобуфера
+
+id: Auto upgrade
+msg: Автоматическое обновление
+
+id: Video Pre-buffer Duration
+msg: Длительность предварительной буферизации
+
+id: HLS Initial Bitrate
+msg: HLS начальный битрейт
+
+id: HLS Live Playback Mode
+msg: HLS режим воспроизведения
+
+id: Standard
+msg: Стандарт
+
+id: Large Pre-Buffer
+msg: Большой предварительный буфер
+
+id: From Start
+msg: С самого начала
+
+id: Standard with Rewind
+msg: Стандартный с перемоткой назад
+
+id: Highest (Best Quality)
+msg: Высочайший (лучшее качество)
+
+id: Channel +/-
+msg: Канал +/-
+
+id: Accelerated Decoding
+msg: Ускоренное декодирование
+
+id: Visuals
+msg: Визуальные эффекты
+
+id: Buffering and HLS Playback
+msg: Буферизация и воспроизведение HLS
+
+id: Download and Re/Install
+msg: Скачать и переустановить
+
+id: M7 upgrade
+msg: M7 обновление
+
+id: DRM7 upgrade
+msg: DRM7 обновление
+
+id: Permissions
+msg: Разрешения
+
+id: Check for DRM7 updates now
+msg: DRM7 проверить обновления сейчас
+
+id: Download DRM7 and Re/Install
+msg: Скачать DRM7 и переустановить
+
+id: DRM7 is up to date
+msg: DRM7 обновления
+
+id: M7 is up to date
+msg: M7 обновления
+
+id: Available DRM7 version:
+msg: Доступная версия:
+
+id: Current DRM7 version:
+msg: Установленная версия:
+
+id: Notify about DRM7 upgrades
+msg: DRM7 уведомлять об обновлениях
+
+id: Checking for DRM7 updates
+msg: Проверка обновлений
+
+id: Media access (image, photo, video)
+msg: Доступ к медиа (изображения, фото, видео)
+
+id: Storage access (all files)
+msg: Доступ к хранилищу (все файлы)
+
+id: Launch plugin on Movian start (i.e. bgTV, skyF1)
+msg: Запустить плагин при запуске Movian (например bgTV skyF1)
+
+id: Pass-through Delay
+msg: Задержка сквозной передачи
+
+id: Transcode Settings
+msg: Настройки перекодирования
+
+id: Transcode Output
+msg: Перекодирование выхода
+
+id: Pass-through Formats
+msg: Форматы сквозной передачи
+
+id: Transcode Delay
+msg: Задержка перекодирования
+
+id: Transcode 2.0 to 5.1
+msg: Перекодирование 2.0-5.1
+
+id: Resample Output
+msg: Повторный выбор выходных данных
+
+id: Device
+msg: Устройство
+
+id: Source or DD
+msg: Источник или DD
+
+id: Source or DD+
+msg: Источник или DD+
+
+id: Source or DTS
+msg: Источник или DTS
+
+id: Subtitle size (DRM7)
+msg: Размер субтитров (DRM7)
+
+id: Bounding box opacity
+msg: Непрозрачность ограничивающей рамки
+
+id: Remove SDH commentary
+msg: Удалить комментарий SDH
+
+id: Source priority
+msg: Приоритет источника
+
+id: Restart required after 'Source priority' change
+msg: После изменения 'Приоритета источника' требуется перезагрузка
+
+id: Keyboard
+msg: Клавиатура
+
+id: Hardware
+msg: Аппаратная
+
+id: M7/Movian
+msg: Встроенная M7
+
+id: Auto
+msg: Автоматически
+
+id: Look
+msg: Вид
+
+id: Feel
+msg: Функции
+
+id: Loading Indicator
+msg: Индикатор загрузки
+
+id: Colors
+msg: Цветной
+
+id: Blue
+msg: Синий
+
+id: White
+msg: Белый
+
+id: Landscape Mode
+msg: Ландшафтный режим
+
+id: Background Playback
+msg: Фоновое воспроизведение
+
+id: Resume Playback After Wake/Unlock
+msg: Воспроизведение после пробуждения/разблокировки
+
+id: Long Press Action (OK/[*] Button)
+msg: Длительное нажатие (кнопка OK/[*])
+
+id: No Action
+msg: Отключен
+
+id: Context Menu
+msg: Контекстное меню
+
+id: Ok
+msg: ОК
+
+id: Pause
+msg: Пауза
+
+id: Pause | Context Menu
+msg: Пауза | Контекстное меню
+
+id: Home Screen
+msg: Главный экран
+
+id: Exit M7
+msg: Выход M7
+
+id: Minimize
+msg: Свернуть
+
+id: Function of [BACK] Button
+msg: Функция кнопки 'Назад'
+
+id: Map 'Menu' button to Device Settings
+msg: Использовать кнопку 'Меню' с настройками устройства
+
+id: Show 'Search'
+msg: Показать 'Поиск'
+
+id: Show 'Settings'
+msg: Показать 'Настройки'
+
+id: Show 'Local Network'
+msg: Показать 'Локальная сеть'
+
+id: Show 'Android Storage'
+msg: Показать 'Хранилище Android'
+
+id: Show 'USB Drives'
+msg: Показать 'USB-накопители'
+
+id: Show 'Movian Data'
+msg: Показать 'Данные Movian'
+
+id: Show 'Plugins'
+msg: Показать 'Плагины'
+
+id: Enable Plugin Uninstall
+msg: Включить удаление плагина
+
+id: Info Banner
+msg: Информационный баннер
+
+id: Duration
+msg: Продолжительность
+
+id: Description
+msg: Описание
+
+id: Audio & Subtitles
+msg: Аудио и субтитры
+
+id: New bookmark
+msg: Новая закладка
+
+id: No handler for URL
+msg: Нет обработчика для URL
+
+id: Enable HTTP Proxy
+msg: Включить HTTP-прокси
+
+id: Proxy Host
+msg: Host-прокси
+
+id: Proxy Port
+msg: Port-прокси
+
+id: SOCKS/HTTP Proxy
+msg: SOCKS/HTTP-прокси
+
+id: Max number of connections
+msg: Максимальное количество подключений
+
+id: Max concurrent requests per peer
+msg: Максимальное кол-во одновременных запросов на узел
+
+id: Max memory for active transfers
+msg: Максимальный объем памяти для активных передач
+
+id: Max cache size per torrent
+msg: Максимальный размер кэша на торрент
+
+id: Inject additional trackers
+msg: Внедрить дополнительные трекеры
+
+id: Tracker protocols
+msg: Протоколы трекера
+
+id: Best
+msg: Лучший
+
+id: Best (IP)
+msg: Лучший (IP)
+
+id: All
+msg: Все
+
+id: All (IP)
+msg: Все (IP)
+
+id: HW Decoder Upscale to Full Frame
+msg: HW декодер масштабирование до полного кадра
+
+id: UI Lock to Video Framerate
+msg: Привязка UI интерфейса к частоте кадров видео
+
+id: UI Framerate
+msg: Частота кадров
+
+id: Used by M7
+msg: Используется M7
+
+id: Exit
+msg: Выход
+
+id: TV Settings
+msg: Настройки ТВ
+
+id: Reset to default
+msg: Сбросить по умолчанию
+
+id: Seeders
+msg: Сиды
+
+id: Leechers
+msg: Личи
+
+id: Peers
+msg: Пиры
+
+id: Connected to
+msg: Подключено к
+
+id: Speed (kb/s)
+msg: Скорость (kb/s)
+
+id: Active pieces
+msg: Активные части
+
+id: Memory use (MB)
+msg: Использование памяти (мб)
+
+id: Cache size (MB)
+msg: Размер кэша (мб)
+
+
+
 
